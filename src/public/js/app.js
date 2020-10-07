@@ -45923,8 +45923,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /home/allison/Documentos/Allison/medical-scheduling/src/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /home/allison/Documentos/Allison/medical-scheduling/src/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /home/allison/Documentos/Allison/dev/medical-consultation/src/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /home/allison/Documentos/Allison/dev/medical-consultation/src/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })
