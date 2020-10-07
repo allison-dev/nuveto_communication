@@ -18,8 +18,10 @@ class DoctorController extends BaseController
 	{
 		$doctors = $this->doctorService->index();
 
+		dd($doctors);
+
 		if (!$doctors) {
-			return $this->responseError(trans('system.not_founds_m', ['value' => trans('system.doctors'),]));
+			return $this->responseError(trans('system.not_founds_m', ['value'=> trans('system.doctors'),]));
 		}
 
 		return $this->responseSuccess($doctors);
