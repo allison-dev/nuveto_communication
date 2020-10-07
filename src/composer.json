@@ -18,11 +18,13 @@
         "jeroennoten/laravel-adminlte": "^3.5",
         "laracasts/flash": "^3.1",
         "laravel/framework": "^8.0",
+        "laravel/passport": "^10.0",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^3.0",
         "laravellegends/pt-br-validator": "^7.0",
         "lucascudo/laravel-pt-br-localization": "^1.1",
-        "snapappointments/bootstrap-select": "^1.13"
+        "snapappointments/bootstrap-select": "^1.13",
+        "your-app-rocks/eloquent-uuid": "^2.4"
     },
     "require-dev": {
         "facade/ignition": "^2.3.6",
