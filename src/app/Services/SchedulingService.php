@@ -16,7 +16,7 @@ class SchedulingService implements SchedulingServiceInterface
 
 	public function index()
 	{
-		$schedules = $this->schedulingRepository->orderBy('name')->get();
+		$schedules = $this->schedulingRepository->orderBy('id', 'DESC')->get();
 
 		if (!count($schedules)) {
 			return false;

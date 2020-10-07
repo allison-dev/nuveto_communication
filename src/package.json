@@ -24,7 +24,10 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.15.1",
+        "bootstrap-select": "^1.13.18",
         "icheck-bootstrap": "^3.0.1",
-        "overlayscrollbars": "^1.13.0"
+        "inputmask": "^5.0.5",
+        "overlayscrollbars": "^1.13.0",
+        "sweetalert2": "^10.3.5"
     }
 }

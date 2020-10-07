@@ -21,7 +21,7 @@ class Patient extends Model
 		'email',
 		'cellphone',
 		'cpf',
-		'birth',
+		'birthday',
 		'sex',
 	];
 

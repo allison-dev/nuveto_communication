@@ -25,7 +25,7 @@ class PatientRequest extends FormRequest
 			case 'POST':
 				return [
 					'name'			=> 'required|max:255',
-					'email' 		=> 'email|max:200|unique:contatos',
+					'email' 		=> 'email|max:200|unique:patients',
 					'cpf'      		=> 'required|formato_cpf|cpf',
 					'postcode' 		=> 'required|max:10',
 				];
@@ -33,7 +33,7 @@ class PatientRequest extends FormRequest
 			case 'PUT':
 				return [
 					'name'			=> 'required|max:255',
-					'email' 		=> 'email|max:200|unique:contatos,email,' . $this->id,
+					'email' 		=> 'email|max:200|unique:patients,email,' . $this->id,
 					'cpf'      		=> 'required|formato_cpf|cpf',
 					'postcode' 		=> 'required|max:10',
 				];
