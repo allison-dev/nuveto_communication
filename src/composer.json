@@ -9,15 +9,21 @@
     "license": "MIT",
     "require": {
         "php": "^7.3",
+        "ext-json": "*",
+        "browner12/helpers": "^3.1",
         "almasaeed2010/adminlte": "~3.0",
         "fideloper/proxy": "^4.2",
+        "laracasts/flash": "^3.1",
+        "laravel/passport": "7.5.1",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "jeroennoten/laravel-adminlte": "^3.5",
         "laravel/framework": "^8.0",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^3.0",
-        "lucascudo/laravel-pt-br-localization": "^1.1"
+        "laravellegends/pt-br-validator": "^7.0",
+		"your-app-rocks/eloquent-uuid": "^2.2",
+        "lucascudo/laravel-pt-br-localization": "^1.1",
     },
     "require-dev": {
         "facade/ignition": "^2.3.6",
