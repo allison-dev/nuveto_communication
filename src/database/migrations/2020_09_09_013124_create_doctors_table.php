@@ -23,7 +23,7 @@ class CreateDoctorsTable extends Migration
 			$table->string('cellphone', 12)->nullable();
 			$table->string('cpf', 11);
 			$table->date('birthday')->nullable();
-			$table->text('schedules')->nullable()->after('crm');
+			$table->text('schedules')->nullable();
 			$table->enum('sex', [
 				'F',
 				'M',

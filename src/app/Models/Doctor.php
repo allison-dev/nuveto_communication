@@ -21,7 +21,7 @@ class Doctor extends Model
 		'email',
 		'cellphone',
 		'cpf',
-		'birth',
+		'birthday',
 		'sex',
 		'crm',
 		'schedules',
