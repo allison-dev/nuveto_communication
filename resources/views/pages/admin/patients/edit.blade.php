@@ -2,13 +2,13 @@
 @include('pages.admin.patients.form.breadcrumbs')
 @section('content')
 	<div class="card-header">
-		<h2><b>@lang('system.edit', ['value' => trans('system.patients')]) {{ $patients->id }}</b></h2>
+		<h2><b>@lang('system.edit', ['value' => trans('system.patients')]) {{ $patient->id }}</b></h2>
 	</div>
 	<div class="card">
-		<form action="{{ route('admin.patients.update', $patients->id) }}" method="POST">
+		<form action="{{ route('admin.patients.update', $patient->id) }}" method="POST">
 			@csrf
 			<input name="_method" type="hidden" value="PUT">
-			<input type="hidden" name="id" value="{{ $patients->id }}" />
+			<input type="hidden" name="id" value="{{ $patient->id }}" />
 			<div class="body">
 				@include('pages.admin.patients.form.inputs')
 			</div>

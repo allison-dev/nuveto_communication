@@ -11,8 +11,8 @@
 			@include('pages.admin.doctors.form.inputs')
 		</div>
 		<div class="card-footer">
-			<button type="submit" class="btn bg-teal btn-icon float-right text-white" data-toggle="tooltip" title="@lang('system.store', ['value' => trans('system.scheduling')])">
-				<span>@lang('system.store', ['value' => trans('system.scheduling')])</span>
+			<button type="submit" class="btn bg-teal btn-icon float-right text-white" data-toggle="tooltip" title="@lang('system.store', ['value' => trans('system.doctors')])">
+				<span>@lang('system.store', ['value' => trans('system.doctors')])</span>
 			</button>
 		</div>
 	</form>
