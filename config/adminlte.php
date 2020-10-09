@@ -30,7 +30,7 @@ return [
     |
     */
 
-    'use_ico_only' => false,
+    'use_ico_only' => true,
     'use_full_favicon' => false,
 
     /*
@@ -46,7 +46,7 @@ return [
     */
 
     'logo' => '<b>Centro Médico</b>',
-    'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
+    'logo_img' => 'vendor/adminlte/dist/img/medical_center_logo.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
@@ -101,12 +101,12 @@ return [
     |
     */
 
-    'classes_auth_card' => 'bg-gradient-dark',
-    'classes_auth_header' => '',
-    'classes_auth_body' => 'bg-gradient-dark',
+    'classes_auth_card' => '',
+    'classes_auth_header' => 'bg-gradient-info',
+    'classes_auth_body' => '',
     'classes_auth_footer' => 'text-center',
-    'classes_auth_icon' => 'text-light',
-    'classes_auth_btn' => 'btn-flat btn-light',
+    'classes_auth_icon' => 'fa-lg text-info',
+    'classes_auth_btn' => 'btn-flat btn-primary',
 
     /*
     |--------------------------------------------------------------------------
@@ -126,9 +126,9 @@ return [
     'classes_content_wrapper' => '',
     'classes_content_header' => '',
     'classes_content' => '',
-    'classes_sidebar' => 'sidebar-dark-primary elevation-4',
+    'classes_sidebar' => 'bg-gradient-medical',
     'classes_sidebar_nav' => '',
-    'classes_topnav' => 'navbar-white navbar-light',
+    'classes_topnav' => 'bg-gradient-medical',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container',
 
@@ -231,31 +231,53 @@ return [
     */
 
     'menu' => [
-        ['header' => 'Serviços'],
         [
             'text' => 'Inico',
             'url'  => 'admin',
             'icon' => 'fas fa-home',
         ],
         [
-            'text' => 'Agendamentos',
-            'url'  => 'admin/agendamentos',
-            'icon' => 'far fa-calendar-plus',
+            'text'  => 'Serviços',
+            'icon'  => 'fas fa-tools',
+            'submenu' => [
+                [
+                    'text' => 'Agendamentos',
+                    'url'  => 'admin/agendamentos',
+                    'icon' => 'far fa-calendar-plus',
+                ]
+            ]
         ],
         [
-            'text' => 'Medicos',
-            'url'  => 'admin/medicos',
-            'icon' => 'fas fa-user-md',
+            'text'  => 'Cadastrar',
+            'icon'  => 'fas fa-user-plus',
+            'submenu' => [
+                [
+                    'text' => 'Medicos',
+                    'url'  => 'admin/medicos',
+                    'icon' => 'fas fa-user-md',
+                ],
+                [
+                    'text' => 'Pacientes',
+                    'url'  => 'admin/pacientes',
+                    'icon' => 'fas fa-user-injured',
+                ],
+            ]
         ],
         [
-            'text' => 'Pacientes',
-            'url'  => 'admin/pacientes',
-            'icon' => 'fas fa-user-injured',
+            'text'  => 'Autenticação',
+            'icon'  => 'fas fa-user-shield',
+            'submenu' => [
+                [
+                    'text' => 'Usuários',
+                    'url'  => 'admin/usuarios',
+                    'icon' => 'fas fa-user-secret',
+                ],
+            ]
         ],
         [
-            'text' => 'Usuários',
-            'url'  => 'admin/usuarios',
-            'icon' => 'fas fa-user-secret',
+            'text' => 'Sair',
+            'url'  => 'admin/logout',
+            'icon' => 'fas fa-sign-out-alt',
         ],
     ],
 
