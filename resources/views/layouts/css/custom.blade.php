@@ -14,4 +14,12 @@
     .card {
         background-color: #fefeffa3 !important ;
     }
+
+    .sidebar-open .wrapper .main-sidebar {
+        background-color: #0745d0 !important;
+    }
+
+    .sidebar-open .wrapper .sidebar nav ul li a, .sidebar-open .wrapper .main-sidebar .brand-text {
+        color: #fff !important;
+    }
 </style>
