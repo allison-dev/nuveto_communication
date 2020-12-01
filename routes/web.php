@@ -24,7 +24,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 /*
 * This is the main app route [Chatify Messenger]
 */
-Route::get('/', 'MessagesController@index')->name(config('chatify.path'));
+Route::get('/chatify', 'MessagesController@index')->name('chatify');
 
 /**
  *  Fetch info for specific id [user/group]

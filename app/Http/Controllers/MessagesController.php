@@ -1,6 +1,6 @@
 <?php
 
-namespace Chatify\Http\Controllers;
+namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -58,6 +58,8 @@ class MessagesController extends Controller
      */
     public function index($id = null)
     {
+
+        dd(Auth::user()->id);
         $config = (array) DB::table('conversation_configs')->first();
         $verify_session = (array) DB::table('conversation_sessions')->where('userId', Auth::user()->id)->first();
 
