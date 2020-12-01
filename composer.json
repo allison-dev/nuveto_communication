@@ -17,7 +17,6 @@
         "laravel/telescope": "^4.3",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.1",
-        "munafio/chatify": "^1.0",
         "spatie/laravel-webhook-client": "^2.7"
     },
     "require-dev": {
