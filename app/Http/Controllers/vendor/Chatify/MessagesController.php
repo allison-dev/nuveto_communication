@@ -9,12 +9,20 @@ use Chatify\Http\Models\Message;
 use Chatify\Http\Models\Favorite;
 use Chatify\Facades\ChatifyMessenger as Chatify;
 use App\Models\User;
+use App\Models\ConversationSession;
+use App\Models\ConversationConfig;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ServerException;
+use Illuminate\Support\Facades\DB;
 
 
 class MessagesController extends Controller
 {
+
     /**
      * Authinticate the connection for pusher
      *
@@ -50,6 +58,65 @@ class MessagesController extends Controller
      */
     public function index($id = null)
     {
+        $config = (array) DB::table('conversation_configs')->first();
+        $verify_session = (array) DB::table('conversation_sessions')->where('userId', Auth::user()->id)->first();
+
+        if (!$verify_session) {
+
+            $header = [
+                'Accept'       => 'application/json',
+                'Content-Type' => 'application/json',
+            ];
+
+            $endpoint = 'auth/anon?cookieless=true';
+
+            $params = [
+                'tenantName' => isset($config['tenantName']) && !empty($config['tenantName']) ? $config['tenantName'] : 'nuveto'
+            ];
+
+            $create_session = $this->apiCall($header, $endpoint, 'POST', $params);
+
+            if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+                $header = [
+                    'Content-Type'  => 'application/json',
+                    'Authorization' => 'Bearer-' . $create_session['tokenId'],
+                    'farmId'        => $create_session['context']['farmId']
+                ];
+
+                $endpoint = 'conversations';
+
+                $params = [
+                    'callbackUrl' => isset($config['callbackUrl']) && !empty($config['callbackUrl']) ? $config['callbackUrl'] : 'http://api.webhookinbox.com/i/zzcunOxO/in/',
+                    'campaignName' => isset($config['campaignName']) && !empty($config['campaignName']) ? $config['campaignName'] : 'Chat_Nuveto',
+                    'contact' => [
+                        'email' => Auth::user()->email,
+                        'firstName' => Auth::user()->name
+                    ],
+                    'disableAutoClose' => true,
+                    'tenantId' => $create_session['orgId'],
+                ];
+
+                $create_conversation = $this->apiCall($header, $endpoint, 'POST', $params);
+
+                if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
+                    $insert_params = [
+                        'tokenId'           => $create_session['tokenId'],
+                        'userId'            => Auth::user()->id,
+                        'conversationId'    => $create_conversation['body']['id'],
+                        'tenantId'          => $create_session['orgId'],
+                        'farmId'            => $create_session['context']['farmId']
+                    ];
+
+                    DB::table('conversation_sessions')->insert($insert_params);
+                }
+            }
+        }
+
+        $verify_session = (array) DB::table('conversation_sessions')->where('userId', Auth::user()->id)->where('terminate', 0)->first();
+
+        dd($verify_session);
+
+
         // get current route
         $route = (in_array(\Request::route()->getName(), ['user', config('chatify.path')]))
             ? 'user'
@@ -472,5 +539,51 @@ class MessagesController extends Controller
         return Response::json([
             'status' => $update,
         ], 200);
+    }
+    public function apiCall($header, $endpoint, $method = 'get', $parameters = false)
+    {
+
+        $baseUrl = 'https://app-atl.five9.com/appsvcs/rs/svc/';
+
+        $url = $baseUrl . $endpoint;
+
+        $data = [
+            'headers' => $header,
+        ];
+
+        if ($parameters) {
+            $data['body'] = json_encode($parameters);
+        }
+
+        $client = new Client();
+        $error = false;
+        $msg = false;
+        try {
+            $response = $client->{$method}($url, $data);
+        } catch (ClientException $e) {
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (ServerException $e) {
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (RequestException $e) {
+            $error = true;
+            $msg = $e->getMessage();
+        }
+        if ($error) {
+            return [
+                'success' => false,
+                'body'    => $msg,
+            ];
+        }
+        $content = json_decode($response->getBody(), true);
+        if ($response->getStatusCode() != 200) {
+            return [
+                'success' => false,
+                'code'    => $response->getStatusCode(),
+                'body'    => $content,
+            ];
+        }
+        return $content;
     }
 }
