@@ -85,7 +85,7 @@ class MessagesController extends Controller
                 $endpoint = 'conversations';
 
                 $params = [
-                    'callbackUrl' => isset($config['callbackUrl']) && !empty($config['callbackUrl']) ? $config['callbackUrl'] : 'http://api.webhookinbox.com/i/zzcunOxO/in/',
+                    'callbackUrl' => isset($config['callbackUrl']) && !empty($config['callbackUrl']) ? $config['callbackUrl'] : 'http://nuveto-chat.herokuapp.com/callback',
                     'campaignName' => isset($config['campaignName']) && !empty($config['campaignName']) ? $config['campaignName'] : 'Chat_Nuveto',
                     'contact' => [
                         'email' => Auth::user()->email,
@@ -245,6 +245,8 @@ class MessagesController extends Controller
      */
     public function fetch(Request $request)
     {
+
+        dd('aq');
         // messages variable
         $allMessages = null;
 
@@ -297,15 +299,11 @@ class MessagesController extends Controller
     public function getContacts(Request $request)
     {
         // get all users that received/sent message from/to [Auth user]
-        $users = Message::join('users',  function ($join) {
-            $join->on('messages.from_id', '=', 'users.id')
-                ->orOn('messages.to_id', '=', 'users.id');
-        })
-            ->where('messages.from_id', Auth::user()->id)
-            ->orWhere('messages.to_id', Auth::user()->id)
-            ->orderBy('messages.created_at', 'desc')
-            ->get()
-            ->unique('id');
+        // $users = Message::join('users',  function ($join) {
+        //     $join->on('messages.from_id', '=', 'users.id')->orOn('messages.to_id', '=', 'users.id');
+        // })->orderBy('messages.created_at', 'desc')->get()->unique('id');
+
+        $users = DB::table('users')->join('messages','to_id','=','users.id')->get()->unique('id');
 
         if ($users->count() > 0) {
             // fetch contacts

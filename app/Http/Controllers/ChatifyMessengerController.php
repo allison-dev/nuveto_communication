@@ -198,7 +198,7 @@ class ChatifyMessengerController extends Controller
      * @return Collection
      */
     public function getLastMessageQuery($user_id){
-        return self::fetchMessagesQuery($user_id)->orderBy('created_at','DESC')->latest()->first();
+        return $this->fetchMessagesQuery($user_id)->orderBy('created_at','DESC')->latest()->first();
     }
 
     /**
