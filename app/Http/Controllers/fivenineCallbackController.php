@@ -5,11 +5,25 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Facades\ChatifyMessenger as Chatify;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 class fivenineCallbackController extends Controller
 {
     public function messageCreateCallback(Request $request)
     {
+        $insert_params = [
+            'id'                => $request['correlationId'],
+            'name'              => $this->faker->name,
+            'email'             => $this->faker->unique()->safeEmail,
+            'email_verified_at' => now(),
+            'password'          => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+            'remember_token'    => Str::random(10),
+        ];
+
+        DB::table('users')->insert($insert_params);
+
         return response()->json(['data' => $request]);
     }
 
@@ -22,6 +36,8 @@ class fivenineCallbackController extends Controller
 
     public function terminateCallback(Request $request)
     {
+
+        // DB::table('users')->where('id', $request['correlationId'])->delete();
 
         return response()->json(['ok' => 'ok']);
     }
