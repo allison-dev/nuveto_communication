@@ -40,7 +40,7 @@ class fivenineCallbackController extends Controller
                 'from_id' => $data['correlationId'],
                 'to_id' => $data['externalId'],
                 'body' => trim(htmlentities($data['text'])),
-                'attachment' => ($attachment) ? $attachment . ',' . $attachment_title : null,
+                'attachment' => null,
             ]);
 
             // fetch message to send it with the response
