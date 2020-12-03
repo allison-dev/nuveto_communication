@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Response;
-use Chatify\Http\Models\Message;
-use Chatify\Http\Models\Favorite;
-use Chatify\Facades\ChatifyMessenger as Chatify;
+use App\Models\Message;
+use App\Models\Favorite;
+use App\Facades\ChatifyMessenger as Chatify;
 use App\Models\User;
 use App\Models\ConversationSession;
 use App\Models\ConversationConfig;
@@ -22,7 +22,6 @@ use Illuminate\Support\Facades\DB;
 
 class MessagesController extends Controller
 {
-
     /**
      * Authinticate the connection for pusher
      *
@@ -92,6 +91,7 @@ class MessagesController extends Controller
                         'email' => Auth::user()->email,
                         'firstName' => Auth::user()->name
                     ],
+                    'externalId' => Auth::user()->id,
                     'disableAutoClose' => true,
                     'tenantId' => $create_session['orgId'],
                 ];
@@ -116,12 +116,10 @@ class MessagesController extends Controller
 
 
         // get current route
-        $route = (in_array(\Request::route()->getName(), ['user', config('chatify.path')]))
-            ? 'user'
-            : \Request::route()->getName();
+        $route = (in_array(\Request::route()->getName(), ['user', config('chatify.path')])) ? 'user' : \Request::route()->getName();
 
         // prepare id
-        return view('Chatify::pages.app', [
+        return view('Chatify.pages.app', [
             'id' => ($id == null) ? 0 : $route . '_' . $id,
             'route' => $route,
             'messengerColor' => Auth::user()->messenger_color,
@@ -383,7 +381,7 @@ class MessagesController extends Controller
         foreach ($favorites->get() as $favorite) {
             // get user data
             $user = User::where('id', $favorite->favorite_id)->first();
-            $favoritesList .= view('Chatify::layouts.favorite', [
+            $favoritesList .= view('Chatify.layouts.favorite', [
                 'user' => $user,
             ]);
         }
@@ -407,7 +405,7 @@ class MessagesController extends Controller
         $input = trim(filter_var($request['input'], FILTER_SANITIZE_STRING));
         $records = User::where('name', 'LIKE', "%{$input}%");
         foreach ($records->get() as $record) {
-            $getRecords .= view('Chatify::layouts.listItem', [
+            $getRecords .= view('Chatify.layouts.listItem', [
                 'get' => 'search_item',
                 'type' => 'user',
                 'user' => $record,
@@ -435,7 +433,7 @@ class MessagesController extends Controller
 
         // shared with its template
         for ($i = 0; $i < count($shared); $i++) {
-            $sharedPhotos .= view('Chatify::layouts.listItem', [
+            $sharedPhotos .= view('Chatify.layouts.listItem', [
                 'get' => 'sharedPhoto',
                 'image' => asset('storage/attachments/' . $shared[$i]),
             ])->render();
@@ -538,6 +536,7 @@ class MessagesController extends Controller
             'status' => $update,
         ], 200);
     }
+
     public function apiCall($header, $endpoint, $method = 'get', $parameters = false)
     {
 
