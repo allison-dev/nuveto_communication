@@ -1,4 +1,4 @@
-@include('Chatify::layouts.headLinks')
+@include('Chatify.layouts.headLinks')
 <div class="messenger">
     {{-- ----------------------Users/Groups lists side---------------------- --}}
     <div class="messenger-listView">
@@ -33,11 +33,11 @@
                 <div class="messenger-favorites app-scroll-thin"></div>
 
                {{-- Saved Messages --}}
-               {!! view('Chatify::layouts.listItem', ['get' => 'saved','id' => $id])->render() !!}
+               {!! view('Chatify.layouts.listItem', ['get' => 'saved','id' => $id])->render() !!}
 
                {{-- Contact --}}
                <div class="listOfContacts" style="width: 100%;height: calc(100% - 200px);"></div>
-               
+
            </div>
 
            {{-- ---------------- [ Group Tab ] ---------------- --}}
@@ -72,7 +72,7 @@
                 {{-- header buttons --}}
                 <nav class="m-header-right">
                     <a href="#" class="add-to-favorite"><i class="fas fa-star"></i></a>
-                    <a href="{{ route('home') }}"><i class="fas fa-home"></i></a>
+                    <a href="{{ route('chatify.') }}"><i class="fas fa-home"></i></a>
                     <a href="#" class="show-infoSide"><i class="fas fa-info-circle"></i></a>
                 </nav>
             </nav>
@@ -101,7 +101,7 @@
                 </div>
             </div>
             {{-- Send Message Form --}}
-            @include('Chatify::layouts.sendForm')
+            @include('Chatify.layouts.sendForm')
         </div>
     </div>
     {{-- ---------------------- Info side ---------------------- --}}
@@ -110,9 +110,9 @@
         <nav>
             <a href="#"><i class="fas fa-times"></i></a>
         </nav>
-        {!! view('Chatify::layouts.info')->render() !!}
+        {!! view('Chatify.layouts.info')->render() !!}
     </div>
 </div>
 
-@include('Chatify::layouts.modals')
-@include('Chatify::layouts.footerLinks')
+@include('Chatify.layouts.modals')
+@include('Chatify.layouts.footerLinks')
