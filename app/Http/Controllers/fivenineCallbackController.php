@@ -10,17 +10,14 @@ class fivenineCallbackController extends Controller
 {
     public function messageCreateCallback(Request $request)
     {
-        $data = $request;
-
-        $this->send($request);
-
         return response()->json(['data' => $request]);
     }
 
     public function messageCallback(Request $request)
     {
+        $this->send($request);
 
-        return response()->json(['ok' => 'ok']);
+        return response()->json(['data' => $request]);
     }
 
     public function terminateCallback(Request $request)
