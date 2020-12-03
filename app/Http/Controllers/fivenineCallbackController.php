@@ -3,16 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Facades\ChatifyMessenger as Chatify;
+use Illuminate\Support\Facades\Response;
 
 class fivenineCallbackController extends Controller
 {
     public function messageCreateCallback(Request $request)
     {
-        $data = json_decode($request, true);
+        $data = $request;
 
-        // $this->send($data);
+        $this->send($request);
 
-        return response()->json(['data' => $data]);
+        return response()->json(['data' => $request]);
     }
 
     public function messageCallback(Request $request)
@@ -27,41 +29,34 @@ class fivenineCallbackController extends Controller
         return response()->json(['ok' => 'ok']);
     }
 
-    // public function send($data)
-    // {
-    //     // default variables
-    //     $error_msg = $attachment = $attachment_title = null;
+    public function send($data)
+    {
+        // default variables
+        $error_msg = $attachment = $attachment_title = null;
 
-    //     if (!$error_msg) {
-    //         // send to database
-    //         $messageID = $data['correlationId'];
-    //         Chatify::newMessage([
-    //             'id' => $messageID,
-    //             'type' => 'API',
-    //             'from_id' => Auth::user()->id,
-    //             'to_id' => Auth::user()->id,
-    //             'body' => trim(htmlentities($data['message'])),
-    //             'attachment' => ($attachment) ? $attachment . ',' . $attachment_title : null,
-    //         ]);
+        if (!$error_msg) {
+            // send to database
+            $messageID = $data['correlationId'];
+            Chatify::newMessage([
+                'id' => $messageID,
+                'type' => 'API',
+                'from_id' => $data['correlationId'],
+                'to_id' => $data['externalId'],
+                'body' => trim(htmlentities($data['text'])),
+                'attachment' => ($attachment) ? $attachment . ',' . $attachment_title : null,
+            ]);
 
-    //         // fetch message to send it with the response
-    //         $messageData = Chatify::fetchMessage($messageID);
+            // fetch message to send it with the response
+            $messageData = Chatify::fetchMessage($messageID);
+        }
 
-    //         // send to user using pusher
-    //         Chatify::push('private-chatify', 'messaging', [
-    //             'from_id' => Auth::user()->id,
-    //             'to_id' => $data['id'],
-    //             'message' => Chatify::messageCard($messageData, 'default')
-    //         ]);
-    //     }
-
-    //     // send the response
-    //     return Response::json([
-    //         'status' => '200',
-    //         'error' => $error_msg ? 1 : 0,
-    //         'error_msg' => $error_msg,
-    //         'message' => Chatify::messageCard(@$messageData),
-    //         'tempID' => $request['temporaryMsgId'],
-    //     ]);
-    // }
+        // send the response
+        return Response::json([
+            'status' => '200',
+            'error' => $error_msg ? 1 : 0,
+            'error_msg' => $error_msg,
+            'message' => Chatify::messageCard(@$messageData),
+            'tempID' => $data['messageId'],
+        ]);
+    }
 }
