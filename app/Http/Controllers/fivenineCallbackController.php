@@ -35,12 +35,12 @@ class fivenineCallbackController extends Controller
             // send to database
             $messageID = $data['correlationId'];
             Chatify::newMessage([
-                'id' => $messageID,
+                'id' => (string) $messageID,
                 'type' => 'API',
-                'from_id' => $data['correlationId'],
-                'to_id' => $data['externalId'],
-                'body' => trim(htmlentities($data['text'])),
-                'attachment' => ($attachment) ? $attachment . ',' . $attachment_title : null,
+                'from_id' => (string) $data['correlationId'],
+                'to_id' => (string) $data['externalId'],
+                'body' => $data['text'],
+                'attachment' => '',
             ]);
 
             // fetch message to send it with the response
