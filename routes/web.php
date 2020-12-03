@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,12 +14,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Auth::routes();
+
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('chatify');
 });
 
 Route::prefix('chatify')->name('chatify.')->group(function () {
-	Auth::routes();
 
 	Route::get('/logout', function () {
 		Auth::logout();
