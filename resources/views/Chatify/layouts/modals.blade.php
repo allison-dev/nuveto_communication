@@ -3,7 +3,7 @@
     <span class="imageModal-close">&times;</span>
     <img class="imageModal-content" id="imageModalBoxSrc">
   </div>
-  
+
   {{-- ---------------------- Delete Modal ---------------------- --}}
   <div class="app-modal" data-name="delete">
       <div class="app-modal-container">
@@ -33,7 +33,7 @@
   <div class="app-modal" data-name="settings">
       <div class="app-modal-container">
           <div class="app-modal-card" data-name="settings" data-modal='0'>
-              <form id="updateAvatar" action="{{ route('avatar.update') }}" enctype="multipart/form-data" method="POST">
+              <form id="updateAvatar" action="{{ route('chatify.avatar.update') }}" enctype="multipart/form-data" method="POST">
                   @csrf
                   <div class="app-modal-header">Update your profile settings</div>
                   <div class="app-modal-body">
