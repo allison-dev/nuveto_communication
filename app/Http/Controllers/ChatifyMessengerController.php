@@ -7,6 +7,7 @@ use App\Models\Favorite;
 use Pusher\Pusher;
 use Illuminate\Support\Facades\Auth;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class ChatifyMessengerController extends Controller
 {
@@ -16,8 +17,8 @@ class ChatifyMessengerController extends Controller
      *
      * @var
      */
-    public static $allowed_images = array('png','jpg','jpeg','gif');
-    public static $allowed_files  = array('zip','rar','txt');
+    public static $allowed_images = array('png', 'jpg', 'jpeg', 'gif');
+    public static $allowed_files  = array('zip', 'rar', 'txt');
 
     /**
      * This method returns the allowed image extensions
@@ -25,7 +26,8 @@ class ChatifyMessengerController extends Controller
      *
      * @return array
      */
-    public function getAllowedImages(){
+    public function getAllowedImages()
+    {
         return self::$allowed_images;
     }
 
@@ -35,7 +37,8 @@ class ChatifyMessengerController extends Controller
      *
      * @return array
      */
-    public function getAllowedFiles(){
+    public function getAllowedFiles()
+    {
         return self::$allowed_files;
     }
 
@@ -44,7 +47,8 @@ class ChatifyMessengerController extends Controller
      *
      * @return array
      */
-    public function getMessengerColors(){
+    public function getMessengerColors()
+    {
         return [
             '1' => '#2180f3',
             '2' => '#2196F3',
@@ -96,7 +100,8 @@ class ChatifyMessengerController extends Controller
      * @param array $data
      * @return void
      */
-    public function pusherAuth($channelName, $socket_id, $data = []){
+    public function pusherAuth($channelName, $socket_id, $data = [])
+    {
         return $this->pusher()->socket_auth($channelName, $socket_id, $data);
     }
 
@@ -107,20 +112,22 @@ class ChatifyMessengerController extends Controller
      * @param int $id
      * @return array
      */
-    public function fetchMessage($id){
+    public function fetchMessage($id)
+    {
         $attachment = $attachment_type = $attachment_title = null;
-        $msg = Message::where('id',$id)->first();
+        $msg = Message::where('id', $id)->first();
+        $user_id = DB::table('users')->where('id', '=', $id)->orWhere('conversation_id', '=', $id)->first();
 
         // If message has attachment
-        if($msg->attachment){
+        if ($msg->attachment) {
             // Get attachment and attachment title
-            $att = explode(',',$msg->attachment);
+            $att = explode(',', $msg->attachment);
             $attachment       = $att[0];
             $attachment_title = $att[1];
 
             // determine the type of the attachment
             $ext = pathinfo($attachment, PATHINFO_EXTENSION);
-            $attachment_type = in_array($ext,$this->getAllowedImages()) ? 'image' : 'file';
+            $attachment_type = in_array($ext, $this->getAllowedImages()) ? 'image' : 'file';
         }
 
         return [
@@ -131,7 +138,7 @@ class ChatifyMessengerController extends Controller
             'attachment' => [$attachment, $attachment_title, $attachment_type],
             'time' => $msg->created_at->diffForHumans(),
             'fullTime' => $msg->created_at,
-            'viewType' => ($msg->from_id == Auth::user()->id) ? 'sender' : 'default',
+            'viewType' => (!empty($user_id) && $msg->from_id == $user_id) ? 'sender' : 'default',
             'seen' => $msg->seen,
         ];
     }
@@ -143,9 +150,10 @@ class ChatifyMessengerController extends Controller
      * @param string $viewType
      * @return void
      */
-    public function messageCard($data, $viewType = null){
+    public function messageCard($data, $viewType = null)
+    {
         $data['viewType'] = ($viewType) ? $viewType : $data['viewType'];
-        return view('Chatify.layouts.messageCard',$data)->render();
+        return view('Chatify.layouts.messageCard', $data)->render();
     }
 
     /**
@@ -154,9 +162,10 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return Collection
      */
-    public function fetchMessagesQuery($user_id){
-        return Message::where('from_id',Auth::user()->id)->where('to_id',$user_id)
-                    ->orWhere('from_id',$user_id)->where('to_id',Auth::user()->id);
+    public function fetchMessagesQuery($user_id)
+    {
+        return Message::where('from_id', Auth::user()->id)->where('to_id', $user_id)
+            ->orWhere('from_id', $user_id)->where('to_id', Auth::user()->id);
     }
 
     /**
@@ -165,7 +174,8 @@ class ChatifyMessengerController extends Controller
      * @param array $data
      * @return void
      */
-    public function newMessage($data){
+    public function newMessage($data)
+    {
         $message = new Message();
         $message->id = $data['id'];
         $message->type = $data['type'];
@@ -183,11 +193,12 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return bool
      */
-    public function makeSeen($user_id){
-        Message::Where('from_id',$user_id)
-                ->where('to_id',Auth::user()->id)
-                ->where('seen',0)
-                ->update(['seen' => 1]);
+    public function makeSeen($user_id)
+    {
+        Message::Where('from_id', $user_id)
+            ->where('to_id', Auth::user()->id)
+            ->where('seen', 0)
+            ->update(['seen' => 1]);
         return 1;
     }
 
@@ -197,8 +208,9 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return Collection
      */
-    public function getLastMessageQuery($user_id){
-        return $this->fetchMessagesQuery($user_id)->orderBy('created_at','DESC')->latest()->first();
+    public function getLastMessageQuery($user_id)
+    {
+        return $this->fetchMessagesQuery($user_id)->orderBy('created_at', 'DESC')->latest()->first();
     }
 
     /**
@@ -207,8 +219,9 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return Collection
      */
-    public function countUnseenMessages($user_id){
-        return Message::where('from_id',$user_id)->where('to_id',Auth::user()->id)->where('seen',0)->count();
+    public function countUnseenMessages($user_id)
+    {
+        return Message::where('from_id', $user_id)->where('to_id', Auth::user()->id)->where('seen', 0)->count();
     }
 
     /**
@@ -219,7 +232,8 @@ class ChatifyMessengerController extends Controller
      * @param Collection $user
      * @return void
      */
-    public function getContactItem($messenger_id, $user){
+    public function getContactItem($messenger_id, $user)
+    {
         // get last message
         $lastMessage = self::getLastMessageQuery($user->id);
 
@@ -231,7 +245,7 @@ class ChatifyMessengerController extends Controller
             'user' => $user,
             'lastMessage' => $lastMessage,
             'unseenCounter' => $unseenCounter,
-            'type'=>'user',
+            'type' => 'user',
             'id' => $messenger_id,
         ])->render();
     }
@@ -242,11 +256,11 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return boolean
      */
-    public function inFavorite($user_id){
+    public function inFavorite($user_id)
+    {
         return Favorite::where('user_id', Auth::user()->id)
-                        ->where('favorite_id', $user_id)->count() > 0
-                        ? true : false;
-
+            ->where('favorite_id', $user_id)->count() > 0
+            ? true : false;
     }
 
     /**
@@ -256,18 +270,19 @@ class ChatifyMessengerController extends Controller
      * @param int $star
      * @return boolean
      */
-    public function makeInFavorite($user_id, $action){
+    public function makeInFavorite($user_id, $action)
+    {
         if ($action > 0) {
             // Star
             $star = new Favorite();
-            $star->id = rand(9,99999999);
+            $star->id = rand(9, 99999999);
             $star->user_id = Auth::user()->id;
             $star->favorite_id = $user_id;
             $star->save();
             return $star ? true : false;
-        }else{
+        } else {
             // UnStar
-            $star = Favorite::where('user_id',Auth::user()->id)->where('favorite_id',$user_id)->delete();
+            $star = Favorite::where('user_id', Auth::user()->id)->where('favorite_id', $user_id)->delete();
             return $star ? true : false;
         }
     }
@@ -278,23 +293,23 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return array
      */
-    public function getSharedPhotos($user_id){
+    public function getSharedPhotos($user_id)
+    {
         $images = array(); // Default
         // Get messages
-        $msgs = $this->fetchMessagesQuery($user_id)->orderBy('created_at','DESC');
-        if($msgs->count() > 0){
+        $msgs = $this->fetchMessagesQuery($user_id)->orderBy('created_at', 'DESC');
+        if ($msgs->count() > 0) {
             foreach ($msgs->get() as $msg) {
                 // If message has attachment
-                if($msg->attachment){
-                    $attachment = explode(',',$msg->attachment)[0]; // Attachment
+                if ($msg->attachment) {
+                    $attachment = explode(',', $msg->attachment)[0]; // Attachment
                     // determine the type of the attachment
                     in_array(pathinfo($attachment, PATHINFO_EXTENSION), $this->getAllowedImages())
-                    ? array_push($images, $attachment) : '';
+                        ? array_push($images, $attachment) : '';
                 }
             }
         }
         return $images;
-
     }
 
     /**
@@ -303,23 +318,23 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return boolean
      */
-    public function deleteConversation($user_id){
+    public function deleteConversation($user_id)
+    {
         try {
             foreach ($this->fetchMessagesQuery($user_id)->get() as $msg) {
                 // delete from database
                 $msg->delete();
                 // delete file attached if exist
                 if ($msg->attachment) {
-                    $path = storage_path('app/public/'.config('chatify.attachments.folder').'/'.explode(',', $msg->attachment)[0]);
-                    if(file_exists($path)){
+                    $path = storage_path('app/public/' . config('chatify.attachments.folder') . '/' . explode(',', $msg->attachment)[0]);
+                    if (file_exists($path)) {
                         @unlink($path);
                     }
                 }
             }
             return 1;
-        }catch(Exception $e) {
+        } catch (Exception $e) {
             return 0;
         }
     }
-
 }
