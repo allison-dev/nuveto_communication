@@ -245,8 +245,6 @@ class MessagesController extends Controller
      */
     public function fetch(Request $request)
     {
-
-        dd('aq');
         // messages variable
         $allMessages = null;
 
