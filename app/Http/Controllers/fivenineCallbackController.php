@@ -13,8 +13,6 @@ class fivenineCallbackController extends Controller
 {
     public function messageCreateCallback(Request $request)
     {
-        // $faker = Faker\Factory::create('pt_BR');
-
         $insert_params = [
             'name'              => 'teste API',
             'email'             => 'teste@tes.com',
@@ -49,7 +47,7 @@ class fivenineCallbackController extends Controller
         // default variables
         $error_msg = $attachment = $attachment_title = null;
 
-        $from_id = DB::table('users')->where('conversation_id', '=', $data['correlationId']);
+        $from_id = DB::table('users')->where('conversation_id', '=', $data['correlationId'])->first();
 
         if (!$error_msg) {
             // send to database
