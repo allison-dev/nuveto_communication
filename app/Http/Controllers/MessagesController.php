@@ -239,7 +239,7 @@ class MessagesController extends Controller
     {
         $data = DB::table('users')->where('id', '=', $user_id)->first();
 
-        $conversation_session = DB::table('conversation_session')->where('id', '=', $data->conversation_id)->first();
+        $conversation_session = DB::table('conversation_sessions')->where('id', '=', $data->conversation_id)->first();
 
         $header = [
             'Content-Type'  => 'application/json',
