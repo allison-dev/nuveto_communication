@@ -309,7 +309,8 @@ class MessagesController extends Controller
             foreach ($users as $user) {
                 if ($user->id != Auth::user()->id) {
                     // Get user data
-                    $userCollection = User::where('id', $user->id)->first();
+                    // $userCollection = User::where('id', $user->id)->first();
+                    $userCollection = DB::table('users')->where('id', '=', $user->id)->orWhere('conversation_id', '=', $user->id)->first();
                     $contacts .= Chatify::getContactItem($request['messenger_id'], $userCollection);
                 }
             }

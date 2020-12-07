@@ -8,6 +8,7 @@ use Pusher\Pusher;
 use Illuminate\Support\Facades\Auth;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ChatifyMessengerController extends Controller
 {
@@ -164,8 +165,9 @@ class ChatifyMessengerController extends Controller
      */
     public function fetchMessagesQuery($user_id)
     {
-        return Message::where('from_id', Auth::user()->id)->where('to_id', $user_id)
-            ->orWhere('from_id', $user_id)->where('to_id', Auth::user()->id);
+        $message = DB::table('messages')->where('from_id', '=', Auth::user()->id)->where('to_id', '=', $user_id)->orWhere('from_id', '=', $user_id)->where('to_id', '=', Auth::user()->id);
+
+        return DB::table('messages')->where('from_id', '=', Auth::user()->id)->where('to_id', '=', $user_id)->orWhere('from_id', '=', $user_id)->where('to_id', '=', Auth::user()->id);
     }
 
     /**
@@ -234,16 +236,25 @@ class ChatifyMessengerController extends Controller
      */
     public function getContactItem($messenger_id, $user)
     {
+        // dd($messenger_id, $user);
         // get last message
-        $lastMessage = self::getLastMessageQuery($user->id);
+        $lastMessageText = $this->getLastMessageQuery($user->id);
+
+        $diffMessage = '';
+
+        $create_at = Carbon::parse($lastMessageText->created_at);
+
+        $diffMessage = $create_at->diffForHumans(Carbon::now());
+
 
         // Get Unseen messages counter
-        $unseenCounter = self::countUnseenMessages($user->id);
+        $unseenCounter = $this->countUnseenMessages($user->id);
 
         return view('Chatify.layouts.listItem', [
             'get' => 'users',
             'user' => $user,
-            'lastMessage' => $lastMessage,
+            'lastMessage' => $lastMessageText,
+            'diffMessage' => $diffMessage,
             'unseenCounter' => $unseenCounter,
             'type' => 'user',
             'id' => $messenger_id,
