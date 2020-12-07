@@ -174,6 +174,7 @@ class MessagesController extends Controller
      */
     public function send(Request $request)
     {
+        $this->sendFivenine($request['id'],trim(htmlentities($request['message'])));
         // default variables
         $error_msg = $attachment = $attachment_title = null;
 
