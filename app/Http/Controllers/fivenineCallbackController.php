@@ -49,13 +49,15 @@ class fivenineCallbackController extends Controller
         // default variables
         $error_msg = $attachment = $attachment_title = null;
 
+        $from_id = DB::table('users')->where('conversation_id', '=', $data['correlationId']);
+
         if (!$error_msg) {
             // send to database
             $messageID = $data['correlationId'];
             Chatify::newMessage([
                 'id' => (string) $messageID,
                 'type' => 'API',
-                'from_id' => (string) $data['correlationId'],
+                'from_id' => (string) $from_id->id,
                 'to_id' => (string) $data['externalId'],
                 'body' => $data['text'],
                 'attachment' => '',
