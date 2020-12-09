@@ -111,7 +111,7 @@ class twitterCallbackController extends Controller
                                 $insert_params_twitter = [
                                     'tokenId'           => $create_session['tokenId'],
                                     'sender_id'         => $sender_id,
-                                    'text'              => $request->direct_message_events->message_data->text,
+                                    'text'              => $events['message_data']['text'],
                                     'conversationId'    => $create_conversation['body']['id'],
                                     'farmId'            => $create_session['context']['farmId'],
                                     'payload'           => $request
@@ -171,7 +171,7 @@ class twitterCallbackController extends Controller
                             $insert_params_twitter = [
                                 'tokenId'           => $create_session['tokenId'],
                                 'sender_id'         => $sender_id,
-                                'text'              => $request->direct_message_events->message_data->text,
+                                'text'              => $events['message_data']['text'],
                                 'conversationId'    => $create_conversation['body']['id'],
                                 'farmId'            => $create_session['context']['farmId'],
                                 'payload'           => $request
