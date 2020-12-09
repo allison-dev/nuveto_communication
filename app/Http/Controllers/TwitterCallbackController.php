@@ -54,6 +54,8 @@ class twitterCallbackController extends Controller
 
                 $sender_id = $events['message_create']['sender_id'];
 
+                $text = $events['message_create']['message_data']['text'];
+
                 $config = DB::table('conversation_configs')->where('channel', '=', 'twitter')->first();
 
                 $twitter_session = DB::table('twitter_conversations')->where('sender_id', $sender_id)->first();
@@ -111,7 +113,7 @@ class twitterCallbackController extends Controller
                                 $insert_params_twitter = [
                                     'tokenId'           => $create_session['tokenId'],
                                     'sender_id'         => $sender_id,
-                                    'text'              => $events['message_data']['text'],
+                                    'text'              => $text,
                                     'conversationId'    => $create_conversation['body']['id'],
                                     'farmId'            => $create_session['context']['farmId'],
                                     'payload'           => $request
@@ -171,7 +173,7 @@ class twitterCallbackController extends Controller
                             $insert_params_twitter = [
                                 'tokenId'           => $create_session['tokenId'],
                                 'sender_id'         => $sender_id,
-                                'text'              => $events['message_data']['text'],
+                                'text'              => $text,
                                 'conversationId'    => $create_conversation['body']['id'],
                                 'farmId'            => $create_session['context']['farmId'],
                                 'payload'           => $request
