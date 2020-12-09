@@ -112,9 +112,6 @@ class MessagesController extends Controller
             }
         }
 
-        $verify_session = (array) DB::table('conversation_sessions')->where('userId', Auth::user()->id)->where('terminate', 0)->first();
-
-
         // get current route
         $route = (in_array(\Request::route()->getName(), ['user', config('chatify.path')])) ? 'user' : \Request::route()->getName();
 
@@ -177,6 +174,7 @@ class MessagesController extends Controller
      */
     public function send(Request $request)
     {
+        $this->sendFivenine($request['id'],trim(htmlentities($request['message'])));
         // default variables
         $error_msg = $attachment = $attachment_title = null;
 
@@ -237,6 +235,28 @@ class MessagesController extends Controller
         ]);
     }
 
+    public function sendFivenine($user_id, $message)
+    {
+        $data = DB::table('users')->where('id', '=', $user_id)->first();
+
+        $conversation_session = DB::table('conversation_sessions')->where('conversationId', '=', $data->conversation_id)->first();
+
+        $header = [
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer-' . $conversation_session->tokenId,
+            'farmId'        => $conversation_session->farmId
+        ];
+
+        $endpoint = 'conversations/' . $conversation_session->conversationId . '/messages';
+
+        $params = [
+            'message'    => $message,
+            'externalId' => Auth::user()->id,
+        ];
+
+        $this->apiCall($header, $endpoint, 'POST', $params);
+    }
+
     /**
      * fetch [user/group] messages from database
      *
@@ -245,8 +265,6 @@ class MessagesController extends Controller
      */
     public function fetch(Request $request)
     {
-
-        dd('aq');
         // messages variable
         $allMessages = null;
 
@@ -303,7 +321,7 @@ class MessagesController extends Controller
         //     $join->on('messages.from_id', '=', 'users.id')->orOn('messages.to_id', '=', 'users.id');
         // })->orderBy('messages.created_at', 'desc')->get()->unique('id');
 
-        $users = DB::table('users')->join('messages','to_id','=','users.id')->get()->unique('id');
+        $users = DB::table('users')->join('messages', 'to_id', '=', 'users.id')->get()->unique('id');
 
         if ($users->count() > 0) {
             // fetch contacts
@@ -311,7 +329,8 @@ class MessagesController extends Controller
             foreach ($users as $user) {
                 if ($user->id != Auth::user()->id) {
                     // Get user data
-                    $userCollection = User::where('id', $user->id)->first();
+                    // $userCollection = User::where('id', $user->id)->first();
+                    $userCollection = DB::table('users')->where('id', '=', $user->id)->orWhere('conversation_id', '=', $user->id)->first();
                     $contacts .= Chatify::getContactItem($request['messenger_id'], $userCollection);
                 }
             }
