@@ -189,7 +189,7 @@ class twitterCallbackController extends Controller
             }
         }
 
-        return response()->json($create_conversation);
+        return response()->json($create_session);
     }
 
     public function twitterPing(Request $request)
