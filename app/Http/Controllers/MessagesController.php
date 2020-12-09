@@ -5,18 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Response;
-use App\Models\Message;
 use App\Models\Favorite;
 use App\Facades\ChatifyMessenger as Chatify;
 use App\Models\User;
-use App\Models\ConversationSession;
-use App\Models\ConversationConfig;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\DB;
 
 
@@ -73,7 +66,7 @@ class MessagesController extends Controller
                 'tenantName' => isset($config['tenantName']) && !empty($config['tenantName']) ? $config['tenantName'] : 'nuveto'
             ];
 
-            $create_session = $this->apiCall($header, $endpoint, 'POST', $params);
+            $create_session = apiCall($header, $endpoint, 'POST', $params);
 
             if (isset($create_session['tokenId']) && $create_session['tokenId']) {
                 $header = [
@@ -96,7 +89,7 @@ class MessagesController extends Controller
                     'tenantId' => $create_session['orgId'],
                 ];
 
-                $create_conversation = $this->apiCall($header, $endpoint, 'POST', $params);
+                $create_conversation = apiCall($header, $endpoint, 'POST', $params);
 
                 if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
                     $insert_params = [
@@ -174,7 +167,7 @@ class MessagesController extends Controller
      */
     public function send(Request $request)
     {
-        $this->sendFivenine($request['id'],trim(htmlentities($request['message'])));
+        sendFivenine($request['id'], trim(htmlentities($request['message'])));
         // default variables
         $error_msg = $attachment = $attachment_title = null;
 
@@ -233,28 +226,6 @@ class MessagesController extends Controller
             'message' => Chatify::messageCard(@$messageData),
             'tempID' => $request['temporaryMsgId'],
         ]);
-    }
-
-    public function sendFivenine($user_id, $message)
-    {
-        $data = DB::table('users')->where('id', '=', $user_id)->first();
-
-        $conversation_session = DB::table('conversation_sessions')->where('conversationId', '=', $data->conversation_id)->first();
-
-        $header = [
-            'Content-Type'  => 'application/json',
-            'Authorization' => 'Bearer-' . $conversation_session->tokenId,
-            'farmId'        => $conversation_session->farmId
-        ];
-
-        $endpoint = 'conversations/' . $conversation_session->conversationId . '/messages';
-
-        $params = [
-            'message'    => $message,
-            'externalId' => Auth::user()->id,
-        ];
-
-        $this->apiCall($header, $endpoint, 'POST', $params);
     }
 
     /**
@@ -552,52 +523,5 @@ class MessagesController extends Controller
         return Response::json([
             'status' => $update,
         ], 200);
-    }
-
-    public function apiCall($header, $endpoint, $method = 'get', $parameters = false)
-    {
-
-        $baseUrl = 'https://app-atl.five9.com/appsvcs/rs/svc/';
-
-        $url = $baseUrl . $endpoint;
-
-        $data = [
-            'headers' => $header,
-        ];
-
-        if ($parameters) {
-            $data['body'] = json_encode($parameters);
-        }
-
-        $client = new Client();
-        $error = false;
-        $msg = false;
-        try {
-            $response = $client->{$method}($url, $data);
-        } catch (ClientException $e) {
-            $error = true;
-            $msg = $e->getMessage();
-        } catch (ServerException $e) {
-            $error = true;
-            $msg = $e->getMessage();
-        } catch (RequestException $e) {
-            $error = true;
-            $msg = $e->getMessage();
-        }
-        if ($error) {
-            return [
-                'success' => false,
-                'body'    => $msg,
-            ];
-        }
-        $content = json_decode($response->getBody(), true);
-        if ($response->getStatusCode() != 200) {
-            return [
-                'success' => false,
-                'code'    => $response->getStatusCode(),
-                'body'    => $content,
-            ];
-        }
-        return $content;
     }
 }

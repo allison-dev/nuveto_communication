@@ -22,17 +22,17 @@ Route::get('/', function () {
 
 Route::prefix('chatify')->name('chatify.')->group(function () {
 
-	Route::get('/logout', function () {
-		Auth::logout();
-		return redirect('chatify');
-	});
+    Route::get('/logout', function () {
+        Auth::logout();
+        return redirect('chatify');
+    });
 
-	Route::middleware(['auth'])->group(function () {
-		Route::get('/', function () {
-			return redirect('chatify');
-		});
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/', function () {
+            return redirect('chatify');
+        });
 
-		/*
+        /*
         * This is the main app route [Chatify Messenger]
         */
         Route::get('', 'MessagesController@index')->name('chatify');
@@ -113,7 +113,7 @@ Route::prefix('chatify')->name('chatify.')->group(function () {
         Route::post('/setActiveStatus', 'MessagesController@setActiveStatus')->name('activeStatus.set');
 
 
-        // Route::post('/callback/conversations/{cid}/create', 'fivenineCallbackController@messageCallback');
+        // Route::post('/callback/conversations/{cid}/create', 'fivenineCallbackController@chatCallback');
 
         /*
         * [Group] view by id
@@ -130,9 +130,21 @@ Route::prefix('chatify')->name('chatify.')->group(function () {
         // Route::get('/route', function(){ return 'Munaf'; }); // works as a route
         Route::get('/{id}', 'MessagesController@index')->name('user');
         // Route::get('/route', function(){ return 'Munaf'; }); // works as a user id
-	});
+    });
 });
 
-Route::post('/callback/conversations/{cid}/create', 'fivenineCallbackController@messageCreateCallback');
-Route::post('/callback/conversations/{cid}/message', 'fivenineCallbackController@messageCallback');
-Route::post('/callback/conversations/{cid}/terminate', 'fivenineCallbackController@terminateCallback');
+Route::prefix('callback')->name('callback.')->group(function () {
+    Route::post('/conversations/{cid}/create', 'FivenineCallbackController@chatSession');
+    Route::post('/conversations/{cid}/message', 'FivenineCallbackController@chatCallback');
+    Route::post('/conversations/{cid}/terminate', 'FivenineCallbackController@chatTerminate');
+    Route::post('/conversations/{cid}/typing', 'FivenineCallbackController@chatTyping');
+});
+
+Route::prefix('twitter')->name('twitter.')->group(function () {
+    Route::post('/callback', 'TwitterCallbackController@twitterCallback');
+    Route::get('/callback', 'TwitterCallbackController@twitterPing');
+    Route::post('/conversations/{cid}/create', 'TwitterCallbackController@twitterSession');
+    Route::post('/conversations/{cid}/message', 'TwitterCallbackController@twitterCallback');
+    Route::post('/conversations/{cid}/terminate', 'TwitterCallbackController@twitterTerminate');
+    Route::post('/conversations/{cid}/typing', 'TwitterCallbackController@twitterTyping');
+});
