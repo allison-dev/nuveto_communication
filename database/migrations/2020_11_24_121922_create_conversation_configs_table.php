@@ -18,6 +18,7 @@ class CreateConversationConfigsTable extends Migration
             $table->string('callbackUrl')->nullable();
             $table->string('campaignName')->nullable();
             $table->string('tenantName')->nullable();
+            $table->string('channel')->dafault('chat');
             $table->timestamps();
         });
     }

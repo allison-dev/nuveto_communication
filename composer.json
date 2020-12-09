@@ -20,7 +20,8 @@
         "laravel/ui": "^3.1",
         "nesbot/carbon": "^2.42",
         "pusher/pusher-php-server": "^4.1",
-        "spatie/laravel-webhook-client": "^2.7"
+        "spatie/laravel-webhook-client": "^2.7",
+        "thujohn/twitter": "^2.3"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
@@ -43,7 +44,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/functions.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

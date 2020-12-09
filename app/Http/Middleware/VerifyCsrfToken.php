@@ -13,6 +13,7 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         '/callback/*',
-        '/chatify/callback/*'
+        '/chatify/callback/*',
+        'twitter/*'
     ];
 }
