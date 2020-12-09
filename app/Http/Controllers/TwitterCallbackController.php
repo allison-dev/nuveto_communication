@@ -123,6 +123,17 @@ class twitterCallbackController extends Controller
                                 DB::table('twitter_conversations')->insert($insert_params_twitter);
                             }
                         }
+                    } else {
+                        $insert_params_twitter = [
+                            'tokenId'           => $verify_session->tokenId,
+                            'sender_id'         => $sender_id,
+                            'text'              => $text,
+                            'conversationId'    => $twitter_session->conversationId,
+                            'farmId'            => $verify_session->farmId,
+                            'payload'           => $request
+                        ];
+
+                        DB::table('twitter_conversations')->insert($insert_params_twitter);
                     }
                 } else {
                     $header = [
