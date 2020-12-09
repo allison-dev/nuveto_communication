@@ -86,7 +86,7 @@ class twitterCallbackController extends Controller
                             $endpoint = 'conversations';
 
                             $params = [
-                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'http://nuveto-chat.herokuapp.com/twitter/callback',
+                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'http://nuveto-chat.herokuapp.com/twitter',
                                 'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                                 'contact' => [
                                     'email' => 'noreply_' . $sender_id . '@twitter.com',
@@ -146,7 +146,7 @@ class twitterCallbackController extends Controller
                         $endpoint = 'conversations';
 
                         $params = [
-                            'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'http://nuveto-chat.herokuapp.com/twitter/callback',
+                            'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'http://nuveto-chat.herokuapp.com/twitter',
                             'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                             'contact' => [
                                 'email' => 'noreply_' . $sender_id . '@twitter.com',
