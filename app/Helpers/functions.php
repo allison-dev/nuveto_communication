@@ -140,7 +140,7 @@ if (!function_exists('sendMessageTwitter')) {
                 "target"    => [
                     "recipient_id" => $data->externalId
                 ],
-                "message"   => [
+                "message_data"   => [
                     "text" => $data->text
                 ]
             ]
