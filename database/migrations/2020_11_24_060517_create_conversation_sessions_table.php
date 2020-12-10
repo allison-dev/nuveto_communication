@@ -16,8 +16,7 @@ class CreateConversationSessionsTable extends Migration
         Schema::create('conversation_sessions', function (Blueprint $table) {
             $table->id();
             $table->string('tokenId')->nullable();
-            $table->bigInteger('userId')->unsigned()->nullable();
-            $table->foreign('userId')->references('id')->on('users')->onDelete('set null')->onUpdate('set null');
+            $table->string('userId')->nullable();
             $table->string('conversationId')->nullable();
             $table->string('tenantId')->nullable();
             $table->string('farmId')->nullable();

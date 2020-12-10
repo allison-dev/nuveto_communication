@@ -144,7 +144,7 @@ Route::prefix('twitter')->name('twitter.')->group(function () {
     Route::post('/callback', 'TwitterCallbackController@twitterCallback');
     Route::get('/callback', 'TwitterCallbackController@twitterPing');
     Route::post('/conversations/{cid}/create', 'TwitterCallbackController@twitterSession');
-    Route::post('/conversations/{cid}/message', 'TwitterCallbackController@twitterCallback');
+    Route::post('/conversations/{cid}/message', 'TwitterCallbackController@twitterMessageCallback');
     Route::post('/conversations/{cid}/terminate', 'TwitterCallbackController@twitterTerminate');
     Route::post('/conversations/{cid}/typing', 'TwitterCallbackController@twitterTyping');
 });

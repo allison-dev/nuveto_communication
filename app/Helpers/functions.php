@@ -15,7 +15,7 @@ if (!function_exists('sendFivenine')) {
     {
         if ($channel == 'twitter') {
 
-            $data = DB::table('twitter_conversations')->where('sender_id', '=', $id)->first();
+            $data = DB::table('twitter_conversations')->where('sender_id', '=', $id)->orderBy('id','desc')->first();
             $message = $data->text;
             $external_id = $data->sender_id;
             $token_id = $data->tokenId;
@@ -140,7 +140,7 @@ if (!function_exists('sendMessageTwitter')) {
                 "target"    => [
                     "recipient_id" => $data->externalId
                 ],
-                "message"   => [
+                "message_data"   => [
                     "text" => $data->text
                 ]
             ]
