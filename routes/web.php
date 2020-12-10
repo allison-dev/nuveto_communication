@@ -137,7 +137,8 @@ Route::prefix('callback')->name('callback.')->group(function () {
     Route::post('/conversations/{cid}/create', 'FivenineCallbackController@chatSession');
     Route::post('/conversations/{cid}/message', 'FivenineCallbackController@chatCallback');
     Route::post('/conversations/{cid}/terminate', 'FivenineCallbackController@chatTerminate');
-    Route::post('/conversations/{cid}/typing', 'FivenineCallbackController@chatTyping');
+    Route::put('/conversations/{cid}/accept', 'FivenineCallbackController@chatAccept');
+    Route::put('/conversations/{cid}/typing', 'FivenineCallbackController@chatTyping');
 });
 
 Route::prefix('twitter')->name('twitter.')->group(function () {
@@ -146,5 +147,6 @@ Route::prefix('twitter')->name('twitter.')->group(function () {
     Route::post('/conversations/{cid}/create', 'TwitterCallbackController@twitterSession');
     Route::post('/conversations/{cid}/message', 'TwitterCallbackController@twitterMessageCallback');
     Route::post('/conversations/{cid}/terminate', 'TwitterCallbackController@twitterTerminate');
-    Route::post('/conversations/{cid}/typing', 'TwitterCallbackController@twitterTyping');
+    Route::put('/conversations/{cid}/accept', 'TwitterCallbackController@twitterAccept');
+    Route::put('/conversations/{cid}/typing', 'TwitterCallbackController@twitterTyping');
 });

@@ -51,7 +51,8 @@ class MessagesController extends Controller
     public function index($id = null)
     {
         $config = (array) DB::table('conversation_configs')->first();
-        $verify_session = (array) DB::table('conversation_sessions')->where('userId', Auth::user()->id)->first();
+
+        $verify_session = (array) DB::table('conversation_sessions')->where('userId', Auth::user()->id)->where('terminate', '=', '0')->first();
 
         if (!$verify_session) {
 
@@ -247,7 +248,7 @@ class MessagesController extends Controller
         if ($query->count() > 0) {
             foreach ($messages as $message) {
                 $allMessages .= Chatify::messageCard(
-                    Chatify::fetchMessage($message->id)
+                    Chatify::fetchMessage($message->identification)
                 );
             }
             // send the response
@@ -287,11 +288,6 @@ class MessagesController extends Controller
      */
     public function getContacts(Request $request)
     {
-        // get all users that received/sent message from/to [Auth user]
-        // $users = Message::join('users',  function ($join) {
-        //     $join->on('messages.from_id', '=', 'users.id')->orOn('messages.to_id', '=', 'users.id');
-        // })->orderBy('messages.created_at', 'desc')->get()->unique('id');
-
         $users = DB::table('users')->join('messages', 'to_id', '=', 'users.id')->get()->unique('id');
 
         if ($users->count() > 0) {
@@ -302,6 +298,7 @@ class MessagesController extends Controller
                     // Get user data
                     // $userCollection = User::where('id', $user->id)->first();
                     $userCollection = DB::table('users')->where('id', '=', $user->id)->orWhere('conversation_id', '=', $user->id)->first();
+
                     $contacts .= Chatify::getContactItem($request['messenger_id'], $userCollection);
                 }
             }

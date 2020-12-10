@@ -116,11 +116,23 @@ class ChatifyMessengerController extends Controller
     public function fetchMessage($id)
     {
         $attachment = $attachment_type = $attachment_title = null;
-        $msg = Message::where('id', $id)->first();
+
+        $diffMessage = '';
+
+        $msg = DB::table('messages')->where('identification', '=', $id)->orWhere('id', '=', $id)->orderBy('identification', 'desc')->first();
+
         $user_id = DB::table('users')->where('id', '=', $id)->orWhere('conversation_id', '=', $id)->first();
 
+        if (isset($msg->created_at)) {
+            $create_at = Carbon::parse($msg->created_at);
+
+            $diffMessage = $create_at->diffForHumans(Carbon::now());
+        } else {
+            $create_at = Carbon::now();
+        }
+
         // If message has attachment
-        if ($msg->attachment) {
+        if (isset($msg->attachment) && $msg->attachment) {
             // Get attachment and attachment title
             $att = explode(',', $msg->attachment);
             $attachment       = $att[0];
@@ -137,9 +149,9 @@ class ChatifyMessengerController extends Controller
             'to_id' => $msg->to_id,
             'message' => $msg->body,
             'attachment' => [$attachment, $attachment_title, $attachment_type],
-            'time' => $msg->created_at->diffForHumans(),
+            'time' => $diffMessage,
             'fullTime' => $msg->created_at,
-            'viewType' => (!empty($user_id) && $msg->from_id == $user_id) ? 'sender' : 'default',
+            'viewType' => $msg->type == 'API' ? 'default' : 'sender',
             'seen' => $msg->seen,
         ];
     }
@@ -165,8 +177,6 @@ class ChatifyMessengerController extends Controller
      */
     public function fetchMessagesQuery($user_id)
     {
-        $message = DB::table('messages')->where('from_id', '=', Auth::user()->id)->where('to_id', '=', $user_id)->orWhere('from_id', '=', $user_id)->where('to_id', '=', Auth::user()->id);
-
         return DB::table('messages')->where('from_id', '=', Auth::user()->id)->where('to_id', '=', $user_id)->orWhere('from_id', '=', $user_id)->where('to_id', '=', Auth::user()->id);
     }
 
@@ -236,29 +246,32 @@ class ChatifyMessengerController extends Controller
      */
     public function getContactItem($messenger_id, $user)
     {
-        // dd($messenger_id, $user);
         // get last message
-        $lastMessageText = $this->getLastMessageQuery($user->id);
 
-        $diffMessage = '';
+        if (isset($user->id)) {
 
-        $create_at = Carbon::parse($lastMessageText->created_at);
+            $lastMessageText = $this->getLastMessageQuery($user->id);
 
-        $diffMessage = $create_at->diffForHumans(Carbon::now());
+            $diffMessage = '';
+
+            $create_at = Carbon::parse($lastMessageText->created_at);
+
+            $diffMessage = $create_at->diffForHumans(Carbon::now());
 
 
-        // Get Unseen messages counter
-        $unseenCounter = $this->countUnseenMessages($user->id);
+            // Get Unseen messages counter
+            $unseenCounter = $this->countUnseenMessages($user->id);
 
-        return view('Chatify.layouts.listItem', [
-            'get' => 'users',
-            'user' => $user,
-            'lastMessage' => $lastMessageText,
-            'diffMessage' => $diffMessage,
-            'unseenCounter' => $unseenCounter,
-            'type' => 'user',
-            'id' => $messenger_id,
-        ])->render();
+            return view('Chatify.layouts.listItem', [
+                'get' => 'users',
+                'user' => $user,
+                'lastMessage' => $lastMessageText,
+                'diffMessage' => $diffMessage,
+                'unseenCounter' => $unseenCounter,
+                'type' => 'user',
+                'id' => $messenger_id,
+            ])->render();
+        }
     }
 
     /**

@@ -31,10 +31,17 @@ class twitterCallbackController extends Controller
 
     public function twitterTerminate(Request $request)
     {
+        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1']);
+
         return response()->json([], 204);
     }
 
     public function twitterTyping(Request $request)
+    {
+        return response()->json([], 204);
+    }
+
+    public function twitterAccept(Request $request)
     {
         return response()->json([], 204);
     }
@@ -61,7 +68,7 @@ class twitterCallbackController extends Controller
                 $twitter_session = DB::table('twitter_conversations')->where('sender_id', $sender_id)->first();
 
                 if (isset($twitter_session->conversationId)) {
-                    $verify_session = DB::table('conversation_sessions')->where('conversationId', $twitter_session->conversationId)->first();
+                    $verify_session = DB::table('conversation_sessions')->where('conversationId', $twitter_session->conversationId)->where('terminate', '=', '0')->first();
 
                     if (!$verify_session) {
 
@@ -200,7 +207,7 @@ class twitterCallbackController extends Controller
             }
         }
 
-        return response()->json();
+        return response()->json([], 204);
     }
 
     public function twitterPing(Request $request)
