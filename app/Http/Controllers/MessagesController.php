@@ -135,11 +135,17 @@ class MessagesController extends Controller
             $fetch = User::where('id', $request['id'])->first();
         }
 
+        if(isset($fetch->avatar) && $fetch->avatar){
+            $avatar_img = $fetch->avatar;
+        } else {
+            $avatar_img = 'avatar.png';
+        }
+
         // send the response
-        return Response::json([
+        return response()->json([
             'favorite' => $favorite,
             'fetch' => $fetch,
-            'user_avatar' => asset('/storage/' . config('chatify.user_avatar.folder') . '/' . $fetch->avatar),
+            'user_avatar' => asset('/storage/' . config('chatify.user_avatar.folder') . '/' . $avatar_img),
         ]);
     }
 
@@ -220,7 +226,7 @@ class MessagesController extends Controller
         }
 
         // send the response
-        return Response::json([
+        return response()->json([
             'status' => '200',
             'error' => $error_msg ? 1 : 0,
             'error_msg' => $error_msg,
@@ -252,13 +258,13 @@ class MessagesController extends Controller
                 );
             }
             // send the response
-            return Response::json([
+            return response()->json([
                 'count' => $query->count(),
                 'messages' => $allMessages,
             ]);
         }
         // send the response
-        return Response::json([
+        return response()->json([
             'count' => $query->count(),
             'messages' => '<p class="message-hint"><span>Say \'hi\' and start messaging</span></p>',
         ]);
@@ -275,7 +281,7 @@ class MessagesController extends Controller
         // make as seen
         $seen = Chatify::makeSeen($request['id']);
         // send the response
-        return Response::json([
+        return response()->json([
             'status' => $seen,
         ], 200);
     }
@@ -305,7 +311,7 @@ class MessagesController extends Controller
         }
 
         // send the response
-        return Response::json([
+        return response()->json([
             'contacts' => $users->count() > 0 ? $contacts : '<br><p class="message-hint"><span>Your contatct list is empty</span></p>',
         ], 200);
     }
@@ -323,7 +329,7 @@ class MessagesController extends Controller
         $contactItem = Chatify::getContactItem($request['messenger_id'], $userCollection);
 
         // send the response
-        return Response::json([
+        return response()->json([
             'contactItem' => $contactItem,
         ], 200);
     }
@@ -348,7 +354,7 @@ class MessagesController extends Controller
         }
 
         // send the response
-        return Response::json([
+        return response()->json([
             'status' => @$status,
         ], 200);
     }
@@ -371,7 +377,7 @@ class MessagesController extends Controller
             ]);
         }
         // send the response
-        return Response::json([
+        return response()->json([
             'favorites' => $favorites->count() > 0
                 ? $favoritesList
                 : '<p class="message-hint"><span>Your favorite list is empty</span></p>',
@@ -397,7 +403,7 @@ class MessagesController extends Controller
             ])->render();
         }
         // send the response
-        return Response::json([
+        return response()->json([
             'records' => $records->count() > 0
                 ? $getRecords
                 : '<p class="message-hint"><span>Nothing to show.</span></p>',
@@ -424,7 +430,7 @@ class MessagesController extends Controller
             ])->render();
         }
         // send the response
-        return Response::json([
+        return response()->json([
             'shared' => count($shared) > 0 ? $sharedPhotos : '<p class="message-hint"><span>Nothing shared yet</span></p>',
         ], 200);
     }
@@ -441,7 +447,7 @@ class MessagesController extends Controller
         $delete = Chatify::deleteConversation($request['id']);
 
         // send the response
-        return Response::json([
+        return response()->json([
             'deleted' => $delete ? 1 : 0,
         ], 200);
     }
@@ -498,7 +504,7 @@ class MessagesController extends Controller
         }
 
         // send the response
-        return Response::json([
+        return response()->json([
             'status' => $success ? 1 : 0,
             'error' => $error ? 1 : 0,
             'message' => $error ? $msg : 0,
@@ -517,7 +523,7 @@ class MessagesController extends Controller
             ? User::where('id', $request['user_id'])->update(['active_status' => 1])
             : User::where('id', $request['user_id'])->update(['active_status' => 0]);
         // send the response
-        return Response::json([
+        return response()->json([
             'status' => $update,
         ], 200);
     }

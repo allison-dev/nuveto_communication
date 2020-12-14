@@ -150,3 +150,15 @@ Route::prefix('twitter')->name('twitter.')->group(function () {
     Route::put('/conversations/{cid}/accept', 'TwitterCallbackController@twitterAccept');
     Route::put('/conversations/{cid}/typing', 'TwitterCallbackController@twitterTyping');
 });
+
+Route::prefix('facebook')->name('facebook.')->group(function () {
+    Route::post('/callback', 'FacebookCallbackController@facebookCallback');
+    Route::get('/callback', 'FacebookCallbackController@facebookPing');
+});
+
+Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
+    return redirect('chatify');
+})->name('dashboard');
+
+Route::get('auth/facebook', 'FacebookController@redirectToFacebook');
+Route::get('auth/facebook/callback', 'FacebookController@handleFacebookCallback');
