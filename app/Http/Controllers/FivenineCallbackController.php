@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use App\Facades\ChatifyMessenger as Chatify;
 use Illuminate\Support\Str;
@@ -13,7 +12,7 @@ class fivenineCallbackController extends Controller
 {
     public function chatSession(Request $request)
     {
-        $faker = Faker::create();
+        $faker = Faker::create('pt_BR');
 
         $insert_params = [
             'name'              => $faker->name(),
@@ -53,7 +52,7 @@ class fivenineCallbackController extends Controller
         }
 
         // send the response
-        return Response::json([
+        return response()->json([
             'status' => '200',
             'error' => $error_msg ? 1 : 0,
             'error_msg' => $error_msg,
