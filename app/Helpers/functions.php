@@ -97,38 +97,6 @@ if (!function_exists('apiCall')) {
 }
 
 if (!function_exists('sendChatCallback')) {
-    function sendChatCallback($data)
-    {
-        // default variables
-        $error_msg = null;
-
-        $from_id = DB::table('users')->where('conversation_id', '=', $data['correlationId'])->first();
-
-        if (!$error_msg) {
-            // send to database
-            $messageID = $data['correlationId'];
-            Chatify::newMessage([
-                'id' => (string) $messageID,
-                'type' => 'API',
-                'from_id' => (string) $from_id->id,
-                'to_id' => (string) $data['externalId'],
-                'body' => $data['text'],
-                'attachment' => '',
-            ]);
-
-            // fetch message to send it with the response
-            $messageData = Chatify::fetchMessage($messageID);
-        }
-
-        // send the response
-        return Response::json([
-            'status' => '200',
-            'error' => $error_msg ? 1 : 0,
-            'error_msg' => $error_msg,
-            'message' => Chatify::messageCard(@$messageData),
-            'tempID' => $data['messageId'],
-        ]);
-    }
 }
 
 if (!function_exists('sendMessageTwitter')) {
