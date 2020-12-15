@@ -50,7 +50,7 @@ class MessagesController extends Controller
      */
     public function index($id = null)
     {
-        $config = (array) DB::table('conversation_configs')->first();
+        $config = (array) DB::table('setting')->first();
 
         $verify_session = (array) DB::table('conversation_sessions')->where('userId', Auth::user()->id)->where('terminate', '=', '0')->first();
 

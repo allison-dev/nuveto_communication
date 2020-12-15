@@ -35,9 +35,9 @@ class FacebookController extends Controller
 
             if ($finduser) {
 
-                Auth::login($finduser);
+                Auth::login($finduser, true);
 
-                return redirect()->intended('dashboard');
+                return redirect()->intended('chatify');
             } else {
                 $newUser = User::create([
                     'name' => $user->name,
@@ -46,9 +46,9 @@ class FacebookController extends Controller
                     'password' => encrypt('abc123456')
                 ]);
 
-                Auth::login($newUser);
+                Auth::login($newUser, true);
 
-                return redirect()->intended('dashboard');
+                return redirect()->intended('chatify');
             }
         } catch (Exception $e) {
             dd($e->getMessage());

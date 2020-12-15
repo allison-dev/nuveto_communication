@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Facades\ChatifyMessenger as Chatify;
 use Illuminate\Support\Facades\Response;
+use NotificationChannels\Facebook\FacebookMessage;
 use Thujohn\Twitter\Facades\Twitter;
 
 if (!function_exists('sendFivenine')) {
@@ -15,7 +16,15 @@ if (!function_exists('sendFivenine')) {
     {
         if ($channel == 'twitter') {
 
-            $data = DB::table('twitter_conversations')->where('sender_id', '=', $id)->orderBy('id','desc')->first();
+            $data = DB::table('twitter_conversations')->where('sender_id', '=', $id)->orderBy('id', 'desc')->first();
+            $message = $data->text;
+            $external_id = $data->sender_id;
+            $token_id = $data->tokenId;
+            $farm_id = $data->farmId;
+            $conversation_id = $data->conversationId;
+        } else if ($channel == 'facebook') {
+
+            $data = DB::table('facebook_conversations')->where('sender_id', '=', $id)->orderBy('id', 'desc')->first();
             $message = $data->text;
             $external_id = $data->sender_id;
             $token_id = $data->tokenId;
@@ -97,6 +106,38 @@ if (!function_exists('apiCall')) {
 }
 
 if (!function_exists('sendChatCallback')) {
+    function sendChatCallback($data)
+    {
+        // default variables
+        $error_msg = null;
+
+        $from_id = DB::table('users')->where('conversation_id', '=', $data['correlationId'])->first();
+
+        if (!$error_msg) {
+            // send to database
+            $messageID = $data['correlationId'];
+            Chatify::newMessage([
+                'id' => (string) $messageID,
+                'type' => 'API',
+                'from_id' => (string) $from_id->id,
+                'to_id' => (string) $data['externalId'],
+                'body' => $data['text'],
+                'attachment' => '',
+            ]);
+
+            // fetch message to send it with the response
+            $messageData = Chatify::fetchMessage($messageID);
+        }
+
+        // send the response
+        return Response::json([
+            'status' => '200',
+            'error' => $error_msg ? 1 : 0,
+            'error_msg' => $error_msg,
+            'message' => Chatify::messageCard(@$messageData),
+            'tempID' => $data['messageId'],
+        ]);
+    }
 }
 
 if (!function_exists('sendMessageTwitter')) {
@@ -115,5 +156,12 @@ if (!function_exists('sendMessageTwitter')) {
         ];
 
         Twitter::postDm($params);
+    }
+}
+
+if (!function_exists('sendMessagefacebook')) {
+    function sendMessagefacebook($data)
+    {
+        FacebookMessage::create($data->text)->to($data->externalId);
     }
 }
