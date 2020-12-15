@@ -154,6 +154,11 @@ Route::prefix('twitter')->name('twitter.')->group(function () {
 Route::prefix('facebook')->name('facebook.')->group(function () {
     Route::post('/callback', 'FacebookCallbackController@facebookCallback');
     Route::get('/callback', 'FacebookCallbackController@facebookPing');
+    Route::post('/conversations/{cid}/create', 'FacebookCallbackController@facebookSession');
+    Route::post('/conversations/{cid}/message', 'FacebookCallbackController@facebookMessageCallback');
+    Route::post('/conversations/{cid}/terminate', 'FacebookCallbackController@facebookTerminate');
+    Route::put('/conversations/{cid}/accept', 'FacebookCallbackController@facebookAccept');
+    Route::put('/conversations/{cid}/typing', 'FacebookCallbackController@facebookTyping');
 });
 
 Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
