@@ -1,7 +1,8 @@
+<script src="https://use.fontawesome.com/releases/v5.15.1/js/all.js" data-auto-replace-svg="nest"></script>
 <x-guest-layout>
     <x-jet-authentication-card>
         <x-slot name="logo">
-            <x-jet-authentication-card-logo />
+            <img src="{{ asset('storage/logo/logo-nuveto-header-v2.png') }}" />
         </x-slot>
 
         <x-jet-validation-errors class="mb-4" />
@@ -45,15 +46,16 @@
                     </a>
                 @endif
 
-                <x-jet-button class="ml-4">
+                <x-jet-button class="ml-4" style="background-color: #28a745">
                     {{ __('Login') }}
                 </x-jet-button>
             </div>
             <div class="flex items-center justify-end mt-4">
                 <a class="ml-1 btn btn-primary" href="{{ url('auth/facebook') }}" style="margin-top: 0px !important;background: blue;color: #ffffff;padding: 5px;border-radius:7px;" id="btn-fblogin">
-                    <i class="fa fa-facebook-square" aria-hidden="true"></i> Login with Facebook
+                    Entrar com Facebook <i class="fab fa-facebook fa-lg"></i>
                 </a>
             </div>
         </form>
     </x-jet-authentication-card>
 </x-guest-layout>
+
