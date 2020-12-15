@@ -24,11 +24,11 @@
                     <x-slot name="trigger">
                         @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
                             <button class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out">
-                                <img class="h-8 w-8 rounded-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" />
+                                <img class="h-8 w-8 rounded-full object-cover" src="{{ optional(auth()->user())->profile_photo_url }}" alt="{{ optional(auth()->user())->name }}" />
                             </button>
                         @else
                             <button class="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                                <div>{{ Auth::user()->name }}</div>
+                                <div>{{ optional(auth()->user())->name }}</div>
 
                                 <div class="ml-1">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -64,7 +64,7 @@
                             </div>
 
                             <!-- Team Settings -->
-                            <x-jet-dropdown-link href="{{ route('teams.show', Auth::user()->currentTeam->id) }}">
+                            <x-jet-dropdown-link href="{{ route('teams.show', optional(auth()->user())->currentTeam->id) }}">
                                 {{ __('Team Settings') }}
                             </x-jet-dropdown-link>
 
@@ -81,7 +81,7 @@
                                 {{ __('Switch Teams') }}
                             </div>
 
-                            @foreach (Auth::user()->allTeams() as $team)
+                            @foreach (optional(auth()->user())->allTeams() as $team)
                                 <x-jet-switchable-team :team="$team" />
                             @endforeach
 
@@ -126,12 +126,12 @@
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="flex items-center px-4">
                 <div class="flex-shrink-0">
-                    <img class="h-10 w-10 rounded-full" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" />
+                    <img class="h-10 w-10 rounded-full" src="{{ optional(auth()->user())->profile_photo_url }}" alt="{{ optional(auth()->user())->name }}" />
                 </div>
 
                 <div class="ml-3">
-                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                    <div class="font-medium text-base text-gray-800">{{ optional(auth()->user())->name }}</div>
+                    <div class="font-medium text-sm text-gray-500">{{ optional(auth()->user())->email }}</div>
                 </div>
             </div>
 
@@ -167,7 +167,7 @@
                     </div>
 
                     <!-- Team Settings -->
-                    <x-jet-responsive-nav-link href="{{ route('teams.show', Auth::user()->currentTeam->id) }}" :active="request()->routeIs('teams.show')">
+                    <x-jet-responsive-nav-link href="{{ route('teams.show', optional(auth()->user())->currentTeam->id) }}" :active="request()->routeIs('teams.show')">
                         {{ __('Team Settings') }}
                     </x-jet-responsive-nav-link>
 
@@ -182,7 +182,7 @@
                         {{ __('Switch Teams') }}
                     </div>
 
-                    @foreach (Auth::user()->allTeams() as $team)
+                    @foreach (optional(auth()->user())->allTeams() as $team)
                         <x-jet-switchable-team :team="$team" component="jet-responsive-nav-link" />
                     @endforeach
                 @endif

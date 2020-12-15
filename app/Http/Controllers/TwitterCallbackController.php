@@ -63,7 +63,7 @@ class twitterCallbackController extends Controller
 
                 $text = $events['message_create']['message_data']['text'];
 
-                $config = DB::table('conversation_configs')->where('channel', '=', 'twitter')->first();
+                $config = DB::table('setting')->where('channel', '=', 'twitter')->first();
 
                 $twitter_session = DB::table('twitter_conversations')->where('sender_id', $sender_id)->first();
 
@@ -95,7 +95,7 @@ class twitterCallbackController extends Controller
                             $endpoint = 'conversations';
 
                             $params = [
-                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'http://nuveto-chat.herokuapp.com/twitter',
+                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://nuveto-chat.herokuapp.com/twitter',
                                 'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                                 'contact' => [
                                     'email' => 'noreply_' . $sender_id . '@twitter.com',
@@ -166,7 +166,7 @@ class twitterCallbackController extends Controller
                         $endpoint = 'conversations';
 
                         $params = [
-                            'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'http://nuveto-chat.herokuapp.com/twitter',
+                            'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://nuveto-chat.herokuapp.com/twitter',
                             'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                             'contact' => [
                                 'email' => 'noreply_' . $sender_id . '@twitter.com',
@@ -207,7 +207,7 @@ class twitterCallbackController extends Controller
             }
         }
 
-        return response()->json([], 204);
+        return response()->json(['success' => true,'response' => 'Menssagem enviada ao Agente'], 200);
     }
 
     public function twitterPing(Request $request)
