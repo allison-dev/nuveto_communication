@@ -7,8 +7,8 @@ use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Facades\ChatifyMessenger as Chatify;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
-use NotificationChannels\Facebook\FacebookMessage;
 use Thujohn\Twitter\Facades\Twitter;
 
 if (!function_exists('sendFivenine')) {
@@ -53,11 +53,22 @@ if (!function_exists('sendFivenine')) {
             'externalId' => $external_id,
         ];
 
-        apiCall($header, $endpoint, 'POST', $params);
+        $log = [
+            'header' => $header,
+            'endpoint' => $endpoint,
+            'params' => $params
+        ];
+
+        Log::debug(json_encode($log));
+
+        $response = apiCall($header, $endpoint, 'POST', $params);
+
+        Log::debug(json_encode($response));
     }
 }
 
 if (!function_exists('apiCall')) {
+
     function apiCall($header, $endpoint, $method = 'get', $parameters = false)
     {
         $baseUrl = 'https://app-atl.five9.com/appsvcs/rs/svc/';
@@ -73,34 +84,47 @@ if (!function_exists('apiCall')) {
         }
 
         $client = new Client();
+
         $error = false;
+
         $msg = false;
+
         try {
+
             $response = $client->{$method}($url, $data);
         } catch (ClientException $e) {
+
             $error = true;
             $msg = $e->getMessage();
         } catch (ServerException $e) {
+
             $error = true;
             $msg = $e->getMessage();
         } catch (RequestException $e) {
+
             $error = true;
             $msg = $e->getMessage();
         }
+
         if ($error) {
+
             return [
                 'success' => false,
                 'body'    => $msg,
             ];
         }
+
         $content = json_decode($response->getBody(), true);
+
         if ($response->getStatusCode() != 200) {
+
             return [
                 'success' => false,
                 'code'    => $response->getStatusCode(),
                 'body'    => $content,
             ];
         }
+
         return $content;
     }
 }
@@ -155,13 +179,101 @@ if (!function_exists('sendMessageTwitter')) {
             ]
         ];
 
-        Twitter::postDm($params);
+        $response = Twitter::postDm($params);
+
+        $log = [
+            "response"  => $response,
+            "params"    => $params
+        ];
+
+        Log::debug(json_encode($log));
     }
 }
 
 if (!function_exists('sendMessagefacebook')) {
-    function sendMessagefacebook($data)
+    function sendMessagefacebook($request)
     {
-        FacebookMessage::create($data->text)->to($data->externalId);
+        $return = [];
+
+        $baseUrl = 'https://graph.facebook.com/';
+
+        $version = '9.0/';
+
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBANeSnZAbealn57yTm4v5GwXzv2lEKS57r9qlnXnZB7k9KhVBZCfVb8JSvwAcriuf2XJOF82ZCiAcWKztuOgDa2JmsDXbqmHgH6fDcWlCO4DrRbmIbD332eKmwcUzZA1ZClQlUUk3Ha7Gz11U03HZAWZB0Q1KmZCotegZDZD');
+
+        $endpoint = 'messages?access_token=' . $page_token;
+
+        $url = $baseUrl . $version . $endpoint;
+
+        $data = [
+            'headers' => [
+                'Content-Type' => 'application/json'
+            ]
+        ];
+
+        $params = [
+            "recipient" => [
+                "id"    => $request->externalId
+            ],
+            "message"   => [
+                "text"  => $request->text
+            ]
+        ];
+
+        if ($params) {
+            $data['body'] = json_encode($params);
+        }
+
+        $method = 'POST';
+
+        $client = new Client();
+
+        $error = false;
+
+        $msg = false;
+
+        try {
+
+            $response = $client->{$method}($url, $data);
+        } catch (ClientException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (ServerException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (RequestException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        }
+
+        if ($error) {
+            $return = [
+                'success' => false,
+                'body'    => $msg,
+            ];
+        } else {
+            $content = json_decode($response->getBody(), true);
+
+            if ($response->getStatusCode() != 200) {
+
+                $return = [
+                    'success' => false,
+                    'code'    => $response->getStatusCode(),
+                    'body'    => $content,
+                ];
+            } else {
+
+                $return = $content;
+            }
+        }
+
+        $data['url'] = $url;
+
+        Log::debug(json_encode($return));
+
+        Log::debug(json_encode($data));
     }
 }
