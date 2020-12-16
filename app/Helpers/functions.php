@@ -197,7 +197,7 @@ if (!function_exists('sendMessagefacebook')) {
 
         $baseUrl = 'https://graph.facebook.com/';
 
-        $version = '9.0/';
+        $version = 'v9.0/';
 
         $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBANeSnZAbealn57yTm4v5GwXzv2lEKS57r9qlnXnZB7k9KhVBZCfVb8JSvwAcriuf2XJOF82ZCiAcWKztuOgDa2JmsDXbqmHgH6fDcWlCO4DrRbmIbD332eKmwcUzZA1ZClQlUUk3Ha7Gz11U03HZAWZB0Q1KmZCotegZDZD');
 
