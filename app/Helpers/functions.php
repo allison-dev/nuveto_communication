@@ -201,7 +201,7 @@ if (!function_exists('sendMessagefacebook')) {
 
         $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBANeSnZAbealn57yTm4v5GwXzv2lEKS57r9qlnXnZB7k9KhVBZCfVb8JSvwAcriuf2XJOF82ZCiAcWKztuOgDa2JmsDXbqmHgH6fDcWlCO4DrRbmIbD332eKmwcUzZA1ZClQlUUk3Ha7Gz11U03HZAWZB0Q1KmZCotegZDZD');
 
-        $endpoint = 'messages?access_token=' . $page_token;
+        $endpoint = 'me/messages?access_token=' . $page_token;
 
         $url = $baseUrl . $version . $endpoint;
 
