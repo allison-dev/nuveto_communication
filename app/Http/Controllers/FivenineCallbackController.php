@@ -63,6 +63,17 @@ class fivenineCallbackController extends Controller
             ];
 
             // localAPI(false, 'callback/updateContactList', 'POST', $localParams);
+
+            $acknowledgeParams = [
+                'messages' => [
+                    [
+                        'type' => 'DELIVERED',
+                        'messageId' => $request['messageId']
+                    ]
+                ]
+            ];
+
+            sendFivenine($from_id->id, '', 'chat', 'put', '/messages/acknowledge', $acknowledgeParams, $request['externalId']);
         }
 
 

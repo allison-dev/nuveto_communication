@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Response;
 use Thujohn\Twitter\Facades\Twitter;
 
 if (!function_exists('sendFivenine')) {
-    function sendFivenine($id, $message = '', $channel = 'chat')
+    function sendFivenine($id, $message = '', $channel = 'chat', $method = 'post', $sendUrl = '/messages', $parameter = false, $external_auth_id = false)
     {
         $send = false;
 
@@ -41,9 +41,10 @@ if (!function_exists('sendFivenine')) {
         } else {
 
             $data = DB::table('users')->where('id', '=', $id)->first();
+
             if (!is_null($data)) {
                 $conversation_session = DB::table('conversation_sessions')->where('conversationId', '=', $data->conversation_id)->first();
-                $external_id = Auth::user()->id;
+                $external_id = $external_auth_id ? $external_auth_id : Auth::user()->id;
                 $token_id = $conversation_session->tokenId;
                 $farm_id = $conversation_session->farmId;
                 $conversation_id = $conversation_session->conversationId;
@@ -58,12 +59,18 @@ if (!function_exists('sendFivenine')) {
                 'farmId'        => $farm_id
             ];
 
-            $endpoint = 'conversations/' . $conversation_id . '/messages';
+            $baseUrl = 'conversations/' . $conversation_id;
 
-            $params = [
-                'message'    => $message,
-                'externalId' => $external_id,
-            ];
+            $endpoint = $baseUrl . $sendUrl;
+
+            if ($parameter) {
+                $params = $parameter;
+            } else {
+                $params = [
+                    'message'    => $message,
+                    'externalId' => $external_id,
+                ];
+            }
 
             $log = [
                 'header' => $header,
@@ -73,7 +80,7 @@ if (!function_exists('sendFivenine')) {
 
             Log::debug(json_encode($log));
 
-            $response = apiCall($header, $endpoint, 'POST', $params);
+            $response = apiCall($header, $endpoint, $method, $params);
 
             Log::debug(json_encode($response));
         }
