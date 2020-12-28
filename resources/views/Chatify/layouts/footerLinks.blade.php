@@ -5,7 +5,7 @@
   var pusher = new Pusher("{{ config('chatify.pusher.key') }}", {
     encrypted: true,
     cluster: "{{ config('chatify.pusher.options.cluster') }}",
-    authEndpoint: '{{route("chatify.pusher.auth")}}',
+    authEndpoint: '{{route("sigma.pusher.auth")}}',
     auth: {
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

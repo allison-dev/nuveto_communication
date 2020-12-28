@@ -14,56 +14,69 @@ use Thujohn\Twitter\Facades\Twitter;
 if (!function_exists('sendFivenine')) {
     function sendFivenine($id, $message = '', $channel = 'chat')
     {
+        $send = false;
+
         if ($channel == 'twitter') {
 
             $data = DB::table('twitter_conversations')->where('sender_id', '=', $id)->orderBy('id', 'desc')->first();
-            $message = $data->text;
-            $external_id = $data->sender_id;
-            $token_id = $data->tokenId;
-            $farm_id = $data->farmId;
-            $conversation_id = $data->conversationId;
+            if (!is_null($data)) {
+                $message = $data->text;
+                $external_id = $data->sender_id;
+                $token_id = $data->tokenId;
+                $farm_id = $data->farmId;
+                $conversation_id = $data->conversationId;
+                $send = true;
+            }
         } else if ($channel == 'facebook') {
 
             $data = DB::table('facebook_conversations')->where('sender_id', '=', $id)->orderBy('id', 'desc')->first();
-            $message = $data->text;
-            $external_id = $data->sender_id;
-            $token_id = $data->tokenId;
-            $farm_id = $data->farmId;
-            $conversation_id = $data->conversationId;
+            if (!is_null($data)) {
+                $message = $data->text;
+                $external_id = $data->sender_id;
+                $token_id = $data->tokenId;
+                $farm_id = $data->farmId;
+                $conversation_id = $data->conversationId;
+                $send = true;
+            }
         } else {
 
             $data = DB::table('users')->where('id', '=', $id)->first();
-            $conversation_session = DB::table('conversation_sessions')->where('conversationId', '=', $data->conversation_id)->first();
-            $external_id = Auth::user()->id;
-            $token_id = $conversation_session->tokenId;
-            $farm_id = $conversation_session->farmId;
-            $conversation_id = $conversation_session->conversationId;
+            if (!is_null($data)) {
+                $conversation_session = DB::table('conversation_sessions')->where('conversationId', '=', $data->conversation_id)->first();
+                $external_id = Auth::user()->id;
+                $token_id = $conversation_session->tokenId;
+                $farm_id = $conversation_session->farmId;
+                $conversation_id = $conversation_session->conversationId;
+                $send = true;
+            }
         }
 
-        $header = [
-            'Content-Type'  => 'application/json',
-            'Authorization' => 'Bearer-' . $token_id,
-            'farmId'        => $farm_id
-        ];
+        if ($send) {
+            $header = [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer-' . $token_id,
+                'farmId'        => $farm_id
+            ];
 
-        $endpoint = 'conversations/' . $conversation_id . '/messages';
+            $endpoint = 'conversations/' . $conversation_id . '/messages';
 
-        $params = [
-            'message'    => $message,
-            'externalId' => $external_id,
-        ];
+            $params = [
+                'message'    => $message,
+                'externalId' => $external_id,
+            ];
 
-        $log = [
-            'header' => $header,
-            'endpoint' => $endpoint,
-            'params' => $params
-        ];
+            $log = [
+                'header' => $header,
+                'endpoint' => $endpoint,
+                'params' => $params
+            ];
 
-        Log::debug(json_encode($log));
+            Log::debug(json_encode($log));
 
-        $response = apiCall($header, $endpoint, 'POST', $params);
+            $response = apiCall($header, $endpoint, 'POST', $params);
 
-        Log::debug(json_encode($response));
+            Log::debug(json_encode($response));
+        }
     }
 }
 
@@ -191,17 +204,17 @@ if (!function_exists('sendMessageTwitter')) {
 }
 
 if (!function_exists('sendMessagefacebook')) {
-    function sendMessagefacebook($request)
+    function sendMessagefacebook($request, $quick_reply = false)
     {
         $return = [];
 
         $baseUrl = 'https://graph.facebook.com/';
 
-        $version = '9.0/';
+        $version = 'v9.0/';
 
-        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBANeSnZAbealn57yTm4v5GwXzv2lEKS57r9qlnXnZB7k9KhVBZCfVb8JSvwAcriuf2XJOF82ZCiAcWKztuOgDa2JmsDXbqmHgH6fDcWlCO4DrRbmIbD332eKmwcUzZA1ZClQlUUk3Ha7Gz11U03HZAWZB0Q1KmZCotegZDZD');
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAczygFwHDkBABeUpjhYaquSHfz2wAhpXfczxtmNj0TabvCU8tgxaFjKokwQx17RyJZC3DkzDezCU7A3ZCZBzmrDivDdifZBUSZBJnStFB2dkGw6SxKKCiHvIF1Lnm4q4KVeK6ZApbak82vLZAU3LdGLt1UlbvDlFDltZBmKTHZB8xQZDZD');
 
-        $endpoint = 'messages?access_token=' . $page_token;
+        $endpoint = 'me/messages?access_token=' . $page_token;
 
         $url = $baseUrl . $version . $endpoint;
 
@@ -211,14 +224,30 @@ if (!function_exists('sendMessagefacebook')) {
             ]
         ];
 
-        $params = [
-            "recipient" => [
-                "id"    => $request->externalId
-            ],
-            "message"   => [
-                "text"  => $request->text
-            ]
-        ];
+        if ($quick_reply) {
+            $params = [
+                "recipient" => [
+                    "id"    => $request['externalId']
+                ],
+                "message"   => [
+                    "text"  => $request['text'],
+                    "quick_replies" => [
+                        [
+                            "content_type" => "user_email"
+                        ]
+                    ]
+                ]
+            ];
+        } else {
+            $params = [
+                "recipient" => [
+                    "id"    => $request->externalId
+                ],
+                "message"   => [
+                    "text"  => $request->text
+                ]
+            ];
+        }
 
         if ($params) {
             $data['body'] = json_encode($params);
@@ -275,5 +304,141 @@ if (!function_exists('sendMessagefacebook')) {
         Log::debug(json_encode($return));
 
         Log::debug(json_encode($data));
+    }
+}
+
+if (!function_exists('getMessengerInfo')) {
+    function getMessengerInfo($sender_id)
+    {
+        $return = [];
+
+        $baseUrl = 'https://graph.facebook.com/';
+
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAczygFwHDkBABeUpjhYaquSHfz2wAhpXfczxtmNj0TabvCU8tgxaFjKokwQx17RyJZC3DkzDezCU7A3ZCZBzmrDivDdifZBUSZBJnStFB2dkGw6SxKKCiHvIF1Lnm4q4KVeK6ZApbak82vLZAU3LdGLt1UlbvDlFDltZBmKTHZB8xQZDZD');
+
+        $endpoint = '?fields=name,gender,profile_pic&access_token=' . $page_token;
+
+        $url = $baseUrl . $sender_id . $endpoint;
+
+        $method = 'get';
+
+        $client = new Client();
+
+        $error = false;
+
+        $msg = false;
+
+        try {
+
+            $response = $client->{$method}($url);
+        } catch (ClientException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (ServerException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (RequestException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        }
+
+        if ($error) {
+            $return = [
+                'success' => false,
+                'body'    => $msg,
+            ];
+        } else {
+            $content = json_decode($response->getBody(), true);
+
+            if ($response->getStatusCode() != 200) {
+
+                $return = [
+                    'success' => false,
+                    'code'    => $response->getStatusCode(),
+                    'body'    => $content,
+                ];
+            } else {
+
+                $return = $content;
+            }
+        }
+
+        $data['url'] = $url;
+
+        Log::debug(json_encode($return));
+
+        Log::debug(json_encode($data));
+
+        return $return;
+    }
+}
+
+if (!function_exists('localAPI')) {
+    function localAPI($header = false, $endpoint, $method = 'get', $parameters = false)
+    {
+        $baseUrl = env('APP_URL', '');
+
+        $url = $baseUrl . $endpoint;
+
+        if (!$header) {
+            $header = [
+                'Content-Type' => 'application/json'
+            ];
+        }
+
+        $data = [
+            'headers' => $header,
+        ];
+
+        if ($parameters) {
+            $data['body'] = json_encode($parameters);
+        }
+
+        $client = new Client();
+
+        $error = false;
+
+        $msg = false;
+
+        try {
+
+            $response = $client->{$method}($url, $data);
+        } catch (ClientException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (ServerException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (RequestException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        }
+
+        if ($error) {
+
+            return [
+                'success' => false,
+                'body'    => $msg,
+            ];
+        }
+
+        $content = json_decode($response->getBody(), true);
+
+        if ($response->getStatusCode() != 200) {
+
+            return [
+                'success' => false,
+                'code'    => $response->getStatusCode(),
+                'body'    => $content,
+            ];
+        }
+
+        return $content;
     }
 }

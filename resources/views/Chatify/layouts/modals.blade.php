@@ -33,9 +33,9 @@
   <div class="app-modal" data-name="settings">
       <div class="app-modal-container">
           <div class="app-modal-card" data-name="settings" data-modal='0'>
-              <form id="updateAvatar" action="{{ route('chatify.avatar.update') }}" enctype="multipart/form-data" method="POST">
+              <form id="updateAvatar" action="{{ route('sigma.avatar.update') }}" enctype="multipart/form-data" method="POST">
                   @csrf
-                  <div class="app-modal-header">Update your profile settings</div>
+                  <div class="app-modal-header">Atualize as configurações do seu perfil</div>
                   <div class="app-modal-body">
                       {{-- Udate profile avatar --}}
                       <div class="avatar av-l upload-avatar-preview"
@@ -43,17 +43,17 @@
                       ></div>
                       <p class="upload-avatar-details"></p>
                       <label class="app-btn a-btn-primary update">
-                          Upload profile photo
+                        Carregar foto de perfil
                           <input class="upload-avatar" accept="image/*" name="avatar" type="file" style="display: none" />
                       </label>
                       {{-- Dark/Light Mode  --}}
                       <p class="divider"></p>
-                      <p class="app-modal-header">Dark Mode <span class="
+                      <p class="app-modal-header">Modo Escuro<span class="
                         {{ Auth::user()->dark_mode > 0 ? 'fas' : 'far' }} fa-moon dark-mode-switch"
                          data-mode="{{ Auth::user()->dark_mode > 0 ? 1 : 0 }}"></span></p>
                       {{-- change messenger color  --}}
                       <p class="divider"></p>
-                      <p class="app-modal-header">Change {{ config('chatify.name') }} Color</p>
+                      <p class="app-modal-header">Alterar a cor do {{ config('chatify.name') }}</p>
                       <div class="update-messengerColor">
                             <a href="javascript:void(0)" class="messengerColor-1"></a>
                             <a href="javascript:void(0)" class="messengerColor-2"></a>
@@ -69,8 +69,8 @@
                       </div>
                   </div>
                   <div class="app-modal-footer">
-                      <a href="javascript:void(0)" class="app-btn cancel">Cancel</a>
-                      <input type="submit" class="app-btn a-btn-success update" value="Update" />
+                      <a href="javascript:void(0)" class="app-btn cancel">Cancelar</a>
+                      <input type="submit" class="app-btn a-btn-success update" value="Atualizar" />
                   </div>
               </form>
           </div>

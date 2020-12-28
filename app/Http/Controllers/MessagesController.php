@@ -109,12 +109,35 @@ class MessagesController extends Controller
         // get current route
         $route = (in_array(\Request::route()->getName(), ['user', config('chatify.path')])) ? 'user' : \Request::route()->getName();
 
+        // \Tinify\setKey("5ShkPhcH7CpWg11vyd2X16gd40LY1DMK");
+
+        // $source = \Tinify\fromFile("https://nuveto.com.br/wp-content/uploads/2020/10/logo-nuveto-header-v2.png"); //image to be resize
+        // $resized = $source->resize(array(
+        //     "method" => "fit",
+        //     "width" => 150,
+        //     "height" => 100
+        // ));
+
+        // $img = $resized->toFile("storage/logo/logo-nuveto-thumbnail.jpg"); //resized image
+
+        // var_dump($img);die;
+
         // prepare id
+
+        $verify_user_avatar = DB::table('users')->where('id', '=', Auth::user()->id)->where('avatar', '=', 'avatar.png')->first();
+
+        if ($verify_user_avatar) {
+            $default_avatar = true;
+        } else {
+            $default_avatar = false;
+        }
+
         return view('Chatify.pages.app', [
             'id' => ($id == null) ? 0 : $route . '_' . $id,
             'route' => $route,
             'messengerColor' => Auth::user()->messenger_color,
             'dark_mode' => Auth::user()->dark_mode < 1 ? 'light' : 'dark',
+            'default_avatar' => $default_avatar
         ]);
     }
 
@@ -132,10 +155,10 @@ class MessagesController extends Controller
 
         // User data
         if ($request['type'] == 'user') {
-            $fetch = User::where('id', $request['id'])->first();
+            $fetch = DB::table('users')->where('id', '=', $request['id'])->first();
         }
 
-        if(isset($fetch->avatar) && $fetch->avatar){
+        if (isset($fetch->avatar) && $fetch->avatar) {
             $avatar_img = $fetch->avatar;
         } else {
             $avatar_img = 'avatar.png';
@@ -146,6 +169,7 @@ class MessagesController extends Controller
             'favorite' => $favorite,
             'fetch' => $fetch,
             'user_avatar' => asset('/storage/' . config('chatify.user_avatar.folder') . '/' . $avatar_img),
+            'avatar_img_path' =>  $avatar_img
         ]);
     }
 
@@ -312,7 +336,7 @@ class MessagesController extends Controller
 
         // send the response
         return response()->json([
-            'contacts' => $users->count() > 0 ? $contacts : '<br><p class="message-hint"><span>Your contatct list is empty</span></p>',
+            'contacts' => $users->count() > 0 ? $contacts : '<br><p class="message-hint"><span>Lista de Contatos Vazia!</span></p>',
         ], 200);
     }
 
@@ -380,7 +404,7 @@ class MessagesController extends Controller
         return response()->json([
             'favorites' => $favorites->count() > 0
                 ? $favoritesList
-                : '<p class="message-hint"><span>Your favorite list is empty</span></p>',
+                : '<p class="message-hint"><span>Lista de Favoritos Vazia!</span></p>',
         ], 200);
     }
 
@@ -400,6 +424,7 @@ class MessagesController extends Controller
                 'get' => 'search_item',
                 'type' => 'user',
                 'user' => $record,
+                'messengerColor' => Auth::user()->messenger_color,
             ])->render();
         }
         // send the response
@@ -427,6 +452,7 @@ class MessagesController extends Controller
             $sharedPhotos .= view('Chatify.layouts.listItem', [
                 'get' => 'sharedPhoto',
                 'image' => asset('storage/attachments/' . $shared[$i]),
+                'messengerColor' => Auth::user()->messenger_color,
             ])->render();
         }
         // send the response
