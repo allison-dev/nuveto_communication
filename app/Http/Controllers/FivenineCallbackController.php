@@ -49,21 +49,35 @@ class fivenineCallbackController extends Controller
 
             // fetch message to send it with the response
             $messageData = Chatify::fetchMessage($messageID);
+
+            Chatify::push('private-chatify', 'messaging', [
+                'from_id' => (string) $from_id->id,
+                'to_id' => (string) $request['externalId'],
+                'message' => Chatify::messageCard($messageData, 'default')
+            ]);
+
+            $localParams = [
+                'user_id' => $from_id->id,
+                'messenger_id' => $messageID,
+                'auth_id' => (string) $request['externalId']
+            ];
+
+            // localAPI(false, 'callback/updateContactList', 'POST', $localParams);
         }
+
 
         // send the response
         return response()->json([
             'status' => '200',
             'error' => $error_msg ? 1 : 0,
             'error_msg' => $error_msg,
-            'message' => Chatify::messageCard(@$messageData),
-            'tempID' => $request['messageId'],
+            'message' => 'Menssagem enviada com Sucesso!',
         ]);
     }
 
     public function chatTerminate(Request $request)
     {
-        DB::table('users')->where('conversation_id', $request['correlationId'])->delete();
+        // DB::table('users')->where('conversation_id', $request['correlationId'])->delete();
         DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1']);
 
         return response()->json([], 204);
@@ -79,5 +93,35 @@ class fivenineCallbackController extends Controller
     public function chatTyping(Request $request)
     {
         return response()->json([], 204);
+    }
+
+    /**
+     * Update user's list item data
+     *
+     * @param Request $request
+     * @return JSON response
+     */
+    public function updateContactItem(Request $request)
+    {
+        $users = DB::table('users')->join('messages', 'to_id', '=', 'users.id')->get()->unique('id');
+
+        if ($users->count() > 0) {
+            // fetch contacts
+            $contacts = null;
+            foreach ($users as $user) {
+                if ($user->id != $request['auth_id']) {
+                    // Get user data
+                    // $userCollection = User::where('id', $user->id)->first();
+                    $userCollection = DB::table('users')->where('id', '=', $user->id)->orWhere('conversation_id', '=', $user->id)->first();
+
+                    $contacts .= Chatify::getContactItem($request['messenger_id'], $userCollection, $request['auth_id']);
+                }
+            }
+        }
+
+        // send the response
+        return response()->json([
+            'contacts' => $users->count() > 0 ? $contacts : '<br><p class="message-hint"><span>Lista de Contatos Vazia!</span></p>',
+        ], 200);
     }
 }

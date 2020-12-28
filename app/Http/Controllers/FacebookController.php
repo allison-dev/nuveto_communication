@@ -37,7 +37,7 @@ class FacebookController extends Controller
 
                 Auth::login($finduser, true);
 
-                return redirect()->intended('chatify');
+                return redirect()->intended('sigma');
             } else {
                 $newUser = User::create([
                     'name' => $user->name,
@@ -48,7 +48,7 @@ class FacebookController extends Controller
 
                 Auth::login($newUser, true);
 
-                return redirect()->intended('chatify');
+                return redirect()->intended('sigma');
             }
         } catch (Exception $e) {
             dd($e->getMessage());

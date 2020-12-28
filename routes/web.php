@@ -17,25 +17,25 @@ use Illuminate\Support\Facades\Auth;
 Auth::routes();
 
 Route::get('/', function () {
-    return redirect('chatify');
+    return redirect('sigma');
 });
 
-Route::prefix('chatify')->name('chatify.')->group(function () {
+Route::prefix('sigma')->name('sigma.')->group(function () {
 
     Route::get('/logout', function () {
         Auth::logout();
-        return redirect('chatify');
+        return redirect('sigma');
     });
 
     Route::middleware(['auth'])->group(function () {
         Route::get('/', function () {
-            return redirect('chatify');
+            return redirect('sigma');
         });
 
         /*
-        * This is the main app route [Chatify Messenger]
+        * This is the main app route [sigma Messenger]
         */
-        Route::get('', 'MessagesController@index')->name('chatify');
+        Route::get('', 'MessagesController@index')->name('sigma');
         /**
          *  Fetch info for specific id [user/group]
          */
@@ -139,6 +139,7 @@ Route::prefix('callback')->name('callback.')->group(function () {
     Route::post('/conversations/{cid}/terminate', 'FivenineCallbackController@chatTerminate');
     Route::put('/conversations/{cid}/accept', 'FivenineCallbackController@chatAccept');
     Route::put('/conversations/{cid}/typing', 'FivenineCallbackController@chatTyping');
+    Route::post('/updateContactList', 'FivenineCallbackController@updateContactItem');
 });
 
 Route::prefix('twitter')->name('twitter.')->group(function () {
@@ -162,7 +163,7 @@ Route::prefix('facebook')->name('facebook.')->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
-    return redirect('chatify');
+    return redirect('sigma');
 })->name('dashboard');
 
 Route::get('auth/facebook', 'FacebookController@redirectToFacebook');

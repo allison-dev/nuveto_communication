@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Thujohn\Twitter\Facades\Twitter;
 
 class twitterCallbackController extends Controller
@@ -55,6 +56,8 @@ class twitterCallbackController extends Controller
 
             $credentials = Twitter::getCredentials([
                 'include_email' => 'true',
+                'include_entities' => 'false',
+                'skip_status' => 'true'
             ]);
 
             if (isset($events['message_create']['sender_id']) && $events['message_create']['sender_id'] != $credentials->id_str) {
@@ -65,7 +68,7 @@ class twitterCallbackController extends Controller
 
                 $config = DB::table('setting')->where('channel', '=', 'twitter')->first();
 
-                $twitter_session = DB::table('twitter_conversations')->where('sender_id', $sender_id)->first();
+                $twitter_session = DB::table('twitter_conversations')->where('sender_id', '=', $sender_id)->orderBy('id', 'desc')->first();
 
                 if (isset($twitter_session->conversationId)) {
                     $verify_session = DB::table('conversation_sessions')->where('conversationId', $twitter_session->conversationId)->where('terminate', '=', '0')->first();
@@ -95,7 +98,7 @@ class twitterCallbackController extends Controller
                             $endpoint = 'conversations';
 
                             $params = [
-                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://nuveto-chat.herokuapp.com/twitter',
+                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/twitter',
                                 'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                                 'contact' => [
                                     'email' => 'noreply_' . $sender_id . '@twitter.com',
@@ -104,6 +107,7 @@ class twitterCallbackController extends Controller
                                 'externalId' => $sender_id,
                                 'disableAutoClose' => true,
                                 'tenantId' => $create_session['orgId'],
+                                'type'  => 'TWITTER'
                             ];
 
                             $create_conversation = apiCall($header, $endpoint, 'POST', $params);
@@ -166,7 +170,7 @@ class twitterCallbackController extends Controller
                         $endpoint = 'conversations';
 
                         $params = [
-                            'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://nuveto-chat.herokuapp.com/twitter',
+                            'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/twitter',
                             'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                             'contact' => [
                                 'email' => 'noreply_' . $sender_id . '@twitter.com',
@@ -175,6 +179,7 @@ class twitterCallbackController extends Controller
                             'externalId' => $sender_id,
                             'disableAutoClose' => true,
                             'tenantId' => $create_session['orgId'],
+                            'type'  => 'TWITTER'
                         ];
 
                         $create_conversation = apiCall($header, $endpoint, 'POST', $params);
@@ -207,7 +212,7 @@ class twitterCallbackController extends Controller
             }
         }
 
-        return response()->json(['success' => true,'response' => 'Menssagem enviada ao Agente'], 200);
+        return response()->json(['success' => true, 'response' => 'Menssagem enviada ao Agente'], 200);
     }
 
     public function twitterPing(Request $request)

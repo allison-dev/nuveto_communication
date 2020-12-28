@@ -4,14 +4,14 @@
         <tr data-action="0">
             {{-- Avatar side --}}
             <td>
-            <div class="avatar av-m" style="background-color: #d9efff; text-align: center;">
-                <span class="far fa-bookmark" style="font-size: 22px; color: #68a5ff; margin-top: calc(50% - 10px);"></span>
+            <div class="avatar av-m" style="background-color:#333e48; text-align: center;">
+                <span class="fas fa-comment" style="margin-left : 4px; font-size: 23px; color: {{ $messengerColor }}; margin-top: calc(50% - 13px);"></span>
             </div>
             </td>
             {{-- center side --}}
             <td>
-                <p data-id="{{ 'user_'.Auth::user()->id }}">Saved Messages <span>You</span></p>
-                <span>Save messages secretly</span>
+                <p data-id="{{ 'user_'.Auth::user()->id }}">Menssagens Salvas <span>Você</span></p>
+                <span>Salve mensagens secretamente</span>
             </td>
         </tr>
     </table>
@@ -37,11 +37,20 @@
             <span>{{ $diffMessage }}</span></p>
         <span>
             {{-- Last Message user indicator --}}
-            {!!
-                $lastMessage->from_id == Auth::user()->id
-                ? '<span class="lastMessageIndicator">You :</span>'
-                : ''
-            !!}
+            @if ($auth_id)
+                {!!
+                    $lastMessage->from_id == $auth_id
+                    ? '<span class="lastMessageIndicator">Você :</span>'
+                    : ''
+                !!}
+            @else
+                {!!
+                    $lastMessage->from_id == Auth::user()->id
+                    ? '<span class="lastMessageIndicator">Você :</span>'
+                    : ''
+                !!}
+            @endif
+
             {{-- Last message body --}}
             @if($lastMessage->attachment == null)
             {{
