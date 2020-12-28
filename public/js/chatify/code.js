@@ -296,9 +296,19 @@ function IDinfo(id, type) {
             data: { '_token': access_token, 'id': id, 'type': type },
             dataType: 'JSON',
             success: (data) => {
+
+                console.log(data.avatar_img_path);
                 // avatar photo
-                $('.messenger-infoView').find('.avatar').css('background-image', 'url("' + data.user_avatar + '")');
-                $('.header-avatar').css('background-image', 'url("' + data.user_avatar + '")');
+                if (data.avatar_img_path && data.avatar_img_path == 'avatar.png') {
+                    $('.messenger-infoView').find('.avatar').css('background-image', 'url("' + data.user_avatar + '")');
+                    $('.header-avatar').css('background-image', 'url("' + data.user_avatar + '")');
+                } else {
+                    if ($('.header-avatar svg').length) {
+                        $('.header-avatar svg').remove();
+                    }
+                    $('.messenger-infoView').find('.avatar').css('background-image', 'url("' + data.user_avatar + '")');
+                    $('.header-avatar').css('background-image', 'url("' + data.user_avatar + '")');
+                }
                 // Show shared and actions
                 $('.messenger-infoView-btns .delete-conversation').show();
                 $('.messenger-infoView-shared').show();

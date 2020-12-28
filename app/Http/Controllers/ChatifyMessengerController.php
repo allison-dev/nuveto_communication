@@ -59,7 +59,7 @@ class ChatifyMessengerController extends Controller
             '6' => '#4CAF50',
             '7' => '#FFC107',
             '8' => '#FF9800',
-            '9' => '#ff2522',
+            '9' => '#d02c2f',
             '10' => '#9C27B0',
         ];
     }
@@ -175,9 +175,15 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return Collection
      */
-    public function fetchMessagesQuery($user_id)
+    public function fetchMessagesQuery($user_id, $auth_id = false)
     {
-        return DB::table('messages')->where('from_id', '=', Auth::user()->id)->where('to_id', '=', $user_id)->orWhere('from_id', '=', $user_id)->where('to_id', '=', Auth::user()->id);
+        if (isset(Auth::user()->id) && !$auth_id) {
+
+            return DB::table('messages')->where('from_id', '=', Auth::user()->id)->where('to_id', '=', $user_id)->orWhere('from_id', '=', $user_id)->where('to_id', '=', Auth::user()->id);
+        } else {
+
+            return DB::table('messages')->where('from_id', '=', $auth_id)->where('to_id', '=', $user_id)->orWhere('from_id', '=', $user_id)->where('to_id', '=', $auth_id);
+        }
     }
 
     /**
@@ -220,9 +226,9 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return Collection
      */
-    public function getLastMessageQuery($user_id)
+    public function getLastMessageQuery($user_id, $auth_id = false)
     {
-        return $this->fetchMessagesQuery($user_id)->orderBy('created_at', 'DESC')->latest()->first();
+        return $this->fetchMessagesQuery($user_id, $auth_id)->orderBy('created_at', 'DESC')->latest()->first();
     }
 
     /**
@@ -231,9 +237,13 @@ class ChatifyMessengerController extends Controller
      * @param int $user_id
      * @return Collection
      */
-    public function countUnseenMessages($user_id)
+    public function countUnseenMessages($user_id, $auth_id = false)
     {
-        return Message::where('from_id', $user_id)->where('to_id', Auth::user()->id)->where('seen', 0)->count();
+        if ($auth_id) {
+            return Message::where('from_id', $user_id)->where('to_id', $auth_id)->where('seen', 0)->count();
+        } else {
+            return Message::where('from_id', $user_id)->where('to_id', Auth::user()->id)->where('seen', 0)->count();
+        }
     }
 
     /**
@@ -244,23 +254,26 @@ class ChatifyMessengerController extends Controller
      * @param Collection $user
      * @return void
      */
-    public function getContactItem($messenger_id, $user)
+    public function getContactItem($messenger_id, $user, $auth_id = false)
     {
         // get last message
 
         if (isset($user->id)) {
 
-            $lastMessageText = $this->getLastMessageQuery($user->id);
+            $lastMessageText = $this->getLastMessageQuery($user->id, $auth_id);
 
             $diffMessage = '';
 
-            $create_at = Carbon::parse($lastMessageText->created_at);
+            if (isset($lastMessageText->created_at)) {
+                $create_at = Carbon::parse($lastMessageText->created_at);
+            } else {
+                $create_at = Carbon::now();
+            }
 
             $diffMessage = $create_at->diffForHumans(Carbon::now());
 
-
             // Get Unseen messages counter
-            $unseenCounter = $this->countUnseenMessages($user->id);
+            $unseenCounter = $this->countUnseenMessages($user->id, $auth_id);
 
             return view('Chatify.layouts.listItem', [
                 'get' => 'users',
@@ -270,6 +283,8 @@ class ChatifyMessengerController extends Controller
                 'unseenCounter' => $unseenCounter,
                 'type' => 'user',
                 'id' => $messenger_id,
+                'messengerColor' => DB::table('users')->where('id','=',$auth_id)->first(['messenger_color']),
+                'auth_id' => $auth_id
             ])->render();
         }
     }
