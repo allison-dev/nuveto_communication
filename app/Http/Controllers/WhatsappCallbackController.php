@@ -30,16 +30,12 @@ class WhatsappCallbackController extends Controller
             'messages' => [
                 [
                     'type' => 'DELIVERED',
-                    'messageId' => $request['messageId']
+                    'messageId' => $request->messageId
                 ]
             ]
         ];
 
-        $teste = sendFivenine($request->correlationId, '', 'chat', 'put', '/messages/acknowledge', $acknowledgeParams, $request['externalId']);
-
-        Log::error(json_encode($teste));
-        Log::error(json_encode($acknowledgeParams));
-
+        sendFivenine($request->externalId, '', 'whatsapp', 'put', '/messages/acknowledge', $acknowledgeParams, $request['externalId']);
 
         return response()->json(['success' => true, 'data' => 'Menssagem Respondida pelo Agente!'], 200);
     }
@@ -64,6 +60,8 @@ class WhatsappCallbackController extends Controller
     public function whatsappCallback(Request $request)
     {
         if (isset($request->WHATSAPP_NUMBER) && isset($request->message) && isset($request->fromCustomer) && $request->fromCustomer) {
+
+            $sender_email = false;
 
             $sender_phone = $request->contactId;
 
@@ -97,6 +95,14 @@ class WhatsappCallbackController extends Controller
 
                     if (isset($create_session['tokenId']) && $create_session['tokenId']) {
 
+                        if (isset($contact_name) && strtolower($contact_name) == "cadu leite") {
+                            $contact_name = "Carlos Eduardo Leite";
+                            $sender_email = "ceduardo@nuveto.com.br";
+                        } else if (isset($request->contactId) && $request->contactId == "5511991239261") {
+                            $contact_name = "Andre Romeiro";
+                            $sender_email = "alromeiro@nuveto.com.br";
+                        }
+
                         $header = [
                             'Content-Type'  => 'application/json',
                             'Authorization' => 'Bearer-' . $create_session['tokenId'],
@@ -111,7 +117,8 @@ class WhatsappCallbackController extends Controller
                             'contact' => [
                                 'firstName' => isset($contact_name) ? trim($contact_name) : 'Whatsapp User',
                                 'socialAccountName' => isset($request->fromName) ? $request->fromName : 'Whatsapp User',
-                                'number1' => isset($request->contactId) ? $request->contactId : '+5511999999999',
+                                'number1' => isset($request->contactId) ? '+' . $request->contactId : '+5511999999999',
+                                'email' => isset($sender_email) && $sender_email ? $sender_email : 'noreply@whatsapp.com.br',
                             ],
                             'externalId' => $sender_phone,
                             'disableAutoClose' => true,
@@ -174,6 +181,15 @@ class WhatsappCallbackController extends Controller
                 $create_session = apiCall($header, $endpoint, 'POST', $params);
 
                 if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                    if (isset($contact_name) && strtolower($contact_name) == "cadu leite") {
+                        $contact_name = "Carlos Eduardo Leite";
+                        $sender_email = "ceduardo@nuveto.com.br";
+                    } else if (isset($request->contactId) && $request->contactId == "5511991239261") {
+                        $contact_name = "Andre Romeiro";
+                        $sender_email = "alromeiro@nuveto.com.br";
+                    }
+
                     $header = [
                         'Content-Type'  => 'application/json',
                         'Authorization' => 'Bearer-' . $create_session['tokenId'],
@@ -188,7 +204,8 @@ class WhatsappCallbackController extends Controller
                         'contact' => [
                             'firstName' => isset($contact_name) ? trim($contact_name) : 'Whatsapp User',
                             'socialAccountName' => isset($request->fromName) ? $request->fromName : 'Whatsapp User',
-                            'number1' => isset($request->contactId) ? $request->contactId : '+5511999999999',
+                            'number1' => isset($request->contactId) ? '+' . $request->contactId : '+5511999999999',
+                            'email' => isset($sender_email) && $sender_email ? $sender_email : 'noreply@whatsapp.com.br',
                         ],
                         'externalId' => $sender_phone,
                         'disableAutoClose' => true,
