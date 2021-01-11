@@ -32,16 +32,12 @@ class FacebookCallbackController extends Controller
             'messages' => [
                 [
                     'type' => 'DELIVERED',
-                    'messageId' => $request['messageId']
+                    'messageId' => $request->messageId
                 ]
             ]
         ];
 
-        $teste = sendFivenine($request->correlationId, '', 'chat', 'put', '/messages/acknowledge', $acknowledgeParams, $request['externalId']);
-
-        Log::error(json_encode($teste));
-        Log::error(json_encode($acknowledgeParams));
-
+        sendFivenine($request->externalId, '', 'facebook', 'put', '/messages/acknowledge', $acknowledgeParams, $request['externalId']);
 
         return response()->json(['success' => true, 'data' => 'Menssagem Respondida pelo Agente!'], 200);
     }
@@ -120,6 +116,14 @@ class FacebookCallbackController extends Controller
 
                                 if (isset($create_session['tokenId']) && $create_session['tokenId']) {
 
+                                    if (isset($getSenderInfo['name']) && strtolower($getSenderInfo['name']) == "cadu leite") {
+                                        $getSenderInfo['name'] = "Carlos Eduardo Leite";
+                                        $sender_email = "ceduardo@nuveto.com.br";
+                                    } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@gmail.com") {
+                                        $getSenderInfo['name'] = "Andre Romeiro";
+                                        $sender_email = "alromeiro@nuveto.com.br";
+                                    }
+
                                     $header = [
                                         'Content-Type'  => 'application/json',
                                         'Authorization' => 'Bearer-' . $create_session['tokenId'],
@@ -135,7 +139,7 @@ class FacebookCallbackController extends Controller
                                             'email' => isset($sender_email) ? $sender_email : 'noreply_' . $sender_id . '@facebook.com',
                                             'firstName' => isset($getSenderInfo['name']) ? $getSenderInfo['name'] : 'Facebook User',
                                             'socialAccountName' => isset($getSenderInfo['name']) ? $getSenderInfo['name'] : 'Facebook User',
-                                            'socialAccountProfileUrl' => isset($getSenderInfo['profile_pic']) ? $getSenderInfo['profile_pic'] : 'https://www.facebook.com/profile.php?id='.$sender_id,
+                                            'socialAccountProfileUrl' => isset($getSenderInfo['profile_pic']) ? $getSenderInfo['profile_pic'] : 'https://www.facebook.com/profile.php?id=' . $sender_id,
                                             'gender' => isset($getSenderInfo['gender']) ? $getSenderInfo['gender'] : 'N',
                                         ],
                                         'externalId' => $sender_id,
@@ -212,6 +216,15 @@ class FacebookCallbackController extends Controller
                             $create_session = apiCall($header, $endpoint, 'POST', $params);
 
                             if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                                if (isset($getSenderInfo['name']) && strtolower($getSenderInfo['name']) == "cadu leite") {
+                                    $getSenderInfo['name'] = "Carlos Eduardo Leite";
+                                    $sender_email = "ceduardo@nuveto.com.br";
+                                } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@gmail.com") {
+                                    $getSenderInfo['name'] = "Andre Romeiro";
+                                    $sender_email = "alromeiro@nuveto.com.br";
+                                }
+
                                 $header = [
                                     'Content-Type'  => 'application/json',
                                     'Authorization' => 'Bearer-' . $create_session['tokenId'],
@@ -227,7 +240,7 @@ class FacebookCallbackController extends Controller
                                         'email' => isset($sender_email) ? $sender_email : 'noreply_' . $sender_id . '@facebook.com',
                                         'firstName' => isset($getSenderInfo['name']) ? $getSenderInfo['name'] : 'Facebook User',
                                         'socialAccountName' => isset($getSenderInfo['name']) ? $getSenderInfo['name'] : 'Facebook User',
-                                        'socialAccountProfileUrl' => isset($getSenderInfo['profile_pic']) ? $getSenderInfo['profile_pic'] : 'https://www.facebook.com/profile.php?id='.$sender_id,
+                                        'socialAccountProfileUrl' => isset($getSenderInfo['profile_pic']) ? $getSenderInfo['profile_pic'] : 'https://www.facebook.com/profile.php?id=' . $sender_id,
                                         'gender' => isset($getSenderInfo['gender']) ? $getSenderInfo['gender'] : 'N',
                                     ],
                                     'externalId' => $sender_id,
