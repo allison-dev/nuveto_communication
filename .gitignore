@@ -18,3 +18,4 @@ Homestead.json
 /.vagrant
 .phpunit.result.cache
 /ngrok
+/.vscode/sftp.json

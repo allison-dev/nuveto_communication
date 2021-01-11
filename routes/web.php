@@ -162,6 +162,16 @@ Route::prefix('facebook')->name('facebook.')->group(function () {
     Route::put('/conversations/{cid}/typing', 'FacebookCallbackController@facebookTyping');
 });
 
+Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
+    Route::post('/callback', 'WhatsappCallbackController@whatsappCallback');
+    Route::post('/status', 'WhatsappCallbackController@whatsappStatus');
+    Route::post('/conversations/{cid}/create', 'WhatsappCallbackController@whatsappSession');
+    Route::post('/conversations/{cid}/message', 'WhatsappCallbackController@whatsappMessageCallback');
+    Route::post('/conversations/{cid}/terminate', 'WhatsappCallbackController@whatsappTerminate');
+    Route::put('/conversations/{cid}/accept', 'WhatsappCallbackController@whatsappAccept');
+    Route::put('/conversations/{cid}/typing', 'WhatsappCallbackController@whatsappTyping');
+});
+
 Route::middleware(['auth:sanctum', 'verified'])->get('/dashboard', function () {
     return redirect('sigma');
 })->name('dashboard');
