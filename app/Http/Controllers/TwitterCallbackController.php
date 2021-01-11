@@ -27,6 +27,17 @@ class twitterCallbackController extends Controller
 
         DB::table('messages')->insert($insert_params_messages);
 
+        $acknowledgeParams = [
+            'messages' => [
+                [
+                    'type' => 'DELIVERED',
+                    'messageId' => $request->messageId
+                ]
+            ]
+        ];
+
+        sendFivenine($request->externalId, '', 'twitter', 'put', '/messages/acknowledge', $acknowledgeParams, $request['externalId']);
+
         return response()->json([], 204);
     }
 
@@ -51,6 +62,7 @@ class twitterCallbackController extends Controller
     {
         $quick_reply = false;
         $sender_email = false;
+        $sender_name = false;
 
         if (isset($request->direct_message_events)) {
             $data = $request->direct_message_events;
@@ -106,6 +118,17 @@ class twitterCallbackController extends Controller
                             $create_session = apiCall($header, $endpoint, 'POST', $params);
 
                             if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                                if (isset($request->users[$sender_id]['name']) && strtolower($request->users[$sender_id]['name']) == "cadu leite") {
+                                    $sender_name = "Carlos Eduardo Leite";
+                                    $sender_email = "ceduardo@nuveto.com.br";
+                                } else if (isset($request->users[$sender_id]['screen_name']) && strtolower($request->users[$sender_id]['screen_name']) == "alromeiro") {
+                                    $sender_name = "Andre Romeiro";
+                                    $sender_email = "alromeiro@nuveto.com.br";
+                                } else if (isset($request->users[$sender_id]['name']) && $request->users[$sender_id]['name']) {
+                                    $sender_name = $request->users[$sender_id]['name'];
+                                }
+
                                 $header = [
                                     'Content-Type'  => 'application/json',
                                     'Authorization' => 'Bearer-' . $create_session['tokenId'],
@@ -118,8 +141,8 @@ class twitterCallbackController extends Controller
                                     'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/twitter',
                                     'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                                     'contact' => [
-                                        'email' => isset($sender_email) ? $sender_email : 'noreply_' . $sender_id . '@twitter.com',
-                                        'firstName' => isset($request->users[$sender_id]['name']) ? $request->users[$sender_id]['name'] : 'Twitter User'
+                                        'email' => isset($sender_email) && $sender_email ? $sender_email : 'noreply_' . $sender_id . '@twitter.com',
+                                        'firstName' => isset($sender_name) && $sender_name ? $sender_name : 'Twitter User'
                                     ],
                                     'externalId' => $sender_id,
                                     'disableAutoClose' => true,
@@ -201,6 +224,17 @@ class twitterCallbackController extends Controller
                         $create_session = apiCall($header, $endpoint, 'POST', $params);
 
                         if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                            if (isset($request->users[$sender_id]['name']) && strtolower($request->users[$sender_id]['name']) == "cadu leite") {
+                                $sender_name = "Carlos Eduardo Leite";
+                                $sender_email = "ceduardo@nuveto.com.br";
+                            } else if (isset($request->users[$sender_id]['screen_name']) && strtolower($request->users[$sender_id]['screen_name']) == "alromeiro") {
+                                $sender_name = "Andre Romeiro";
+                                $sender_email = "alromeiro@nuveto.com.br";
+                            } else if (isset($request->users[$sender_id]['name']) && $request->users[$sender_id]['name']) {
+                                $sender_name = $request->users[$sender_id]['name'];
+                            }
+
                             $header = [
                                 'Content-Type'  => 'application/json',
                                 'Authorization' => 'Bearer-' . $create_session['tokenId'],
@@ -213,8 +247,8 @@ class twitterCallbackController extends Controller
                                 'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/twitter',
                                 'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                                 'contact' => [
-                                    'email' => isset($sender_email) ? $sender_email : 'noreply_' . $sender_id . '@twitter.com',
-                                    'firstName' => isset($request->users[$sender_id]['name']) ? $request->users[$sender_id]['name'] : 'Twitter User'
+                                    'email' => isset($sender_email) && $sender_email ? $sender_email : 'noreply_' . $sender_id . '@twitter.com',
+                                    'firstName' => isset($sender_name) && $sender_name ? $sender_name : 'Twitter User'
                                 ],
                                 'externalId' => $sender_id,
                                 'disableAutoClose' => true,
