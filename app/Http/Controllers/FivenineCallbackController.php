@@ -56,11 +56,11 @@ class fivenineCallbackController extends Controller
                 'message' => Chatify::messageCard($messageData, 'default')
             ]);
 
-            $localParams = [
-                'user_id' => $from_id->id,
-                'messenger_id' => $messageID,
-                'auth_id' => (string) $request['externalId']
-            ];
+            // $localParams = [
+            //     'user_id' => $from_id->id,
+            //     'messenger_id' => $messageID,
+            //     'auth_id' => (string) $request['externalId']
+            // ];
 
             // localAPI(false, 'callback/updateContactList', 'POST', $localParams);
 

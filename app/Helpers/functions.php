@@ -19,6 +19,7 @@ if (!function_exists('sendFivenine')) {
         if ($channel == 'twitter') {
 
             $data = DB::table('twitter_conversations')->where('sender_id', '=', $id)->orderBy('id', 'desc')->first();
+
             if (!is_null($data)) {
                 $message = $data->text;
                 $external_id = $data->sender_id;
@@ -30,9 +31,22 @@ if (!function_exists('sendFivenine')) {
         } else if ($channel == 'facebook') {
 
             $data = DB::table('facebook_conversations')->where('sender_id', '=', $id)->orderBy('id', 'desc')->first();
+
             if (!is_null($data)) {
                 $message = $data->text;
                 $external_id = $data->sender_id;
+                $token_id = $data->tokenId;
+                $farm_id = $data->farmId;
+                $conversation_id = $data->conversationId;
+                $send = true;
+            }
+        } else if ($channel == 'whatsapp') {
+
+            $data = DB::table('whatsapp_conversations')->where('sender_phone', '=', $id)->orderBy('id', 'desc')->first();
+
+            if (!is_null($data)) {
+                $message = $data->text;
+                $external_id = $data->sender_phone;
                 $token_id = $data->tokenId;
                 $farm_id = $data->farmId;
                 $conversation_id = $data->conversationId;
@@ -185,19 +199,68 @@ if (!function_exists('sendChatCallback')) {
 }
 
 if (!function_exists('sendMessageTwitter')) {
-    function sendMessageTwitter($data)
+    function sendMessageTwitter($data, $quick_reply = false, $first_interation = false)
     {
-        $params = [
-            "type"              => "message_create",
-            "message_create"    => [
-                "target"    => [
-                    "recipient_id" => $data->externalId
-                ],
-                "message_data"   => [
-                    "text" => $data->text
+        if ($quick_reply) {
+            $params = [
+                "type"              => "message_create",
+                "message_create"    => [
+                    "target"    => [
+                        "recipient_id" => $data['externalId']
+                    ],
+                    "message_data"   => [
+                        "text" => $data['text'],
+                        "quick_reply" =>
+                        [
+                            "type" => "options",
+                            "options" => [
+                                [
+                                    "label" => $data['email'],
+                                ],
+                                [
+                                    "label" => "Trocar E-mail."
+                                ]
+                            ]
+                        ]
+
+                    ]
                 ]
-            ]
-        ];
+            ];
+        } else if ($first_interation) {
+            $params = [
+                "type"              => "message_create",
+                "message_create"    => [
+                    "target"    => [
+                        "recipient_id" => $data['externalId']
+                    ],
+                    "message_data"   => [
+                        "text" => $data['text'],
+                    ]
+                ]
+            ];
+
+            $insert_params_messages = [
+                'id'        => $data['messageId'],
+                'type'      => 'twitter',
+                'from_id'   => $data['externalId'],
+                'to_id'     => $data['to'],
+                "first_interation" => true
+            ];
+
+            DB::table('messages')->insert($insert_params_messages);
+        } else {
+            $params = [
+                "type"              => "message_create",
+                "message_create"    => [
+                    "target"    => [
+                        "recipient_id" => $data->externalId
+                    ],
+                    "message_data"   => [
+                        "text" => $data->text
+                    ]
+                ]
+            ];
+        }
 
         $response = Twitter::postDm($params);
 
@@ -210,8 +273,8 @@ if (!function_exists('sendMessageTwitter')) {
     }
 }
 
-if (!function_exists('sendMessagefacebook')) {
-    function sendMessagefacebook($request, $quick_reply = false)
+if (!function_exists('sendMessageFacebook')) {
+    function sendMessageFacebook($request, $quick_reply = false)
     {
         $return = [];
 
@@ -219,7 +282,7 @@ if (!function_exists('sendMessagefacebook')) {
 
         $version = 'v9.0/';
 
-        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAczygFwHDkBABeUpjhYaquSHfz2wAhpXfczxtmNj0TabvCU8tgxaFjKokwQx17RyJZC3DkzDezCU7A3ZCZBzmrDivDdifZBUSZBJnStFB2dkGw6SxKKCiHvIF1Lnm4q4KVeK6ZApbak82vLZAU3LdGLt1UlbvDlFDltZBmKTHZB8xQZDZD');
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAMNolX1ZCDUBAFSThAJwEjMVqYZBEZAu0ui0KmZCP6NfaAIXIXCQ3oF0k2hOxQILRNmdZAcYCZCMDv4cH9gGdzBHPeu144MoNI9q1rEcPO0oPPLkX5NwahsKs4dQ3yU3ib51t5YaRZBWxiOE9i3mVtpDyxpXHgot8ysThZBL6qeoRAhJ9h0F4Kz');
 
         $endpoint = 'me/messages?access_token=' . $page_token;
 
@@ -314,6 +377,169 @@ if (!function_exists('sendMessagefacebook')) {
     }
 }
 
+if (!function_exists('sendMessageWhatsapp')) {
+    function sendMessageWhatsapp($request)
+    {
+        $return = [];
+
+        $config = DB::table('setting')->where('channel', '=', 'whatsapp')->first();
+
+        if (!empty($config->clientId) && !empty($config->secretId) && !empty($config->refreshToken) && !empty($config->whatsapp_phone)) {
+            $header = [
+                'clientId'      => $config->clientId,
+                'secretId'      => $config->secretId,
+                'refreshToken'  => $config->refreshToken,
+            ];
+
+            $get_token = getBotmakerToken($header, 'auth/credentials');
+
+            DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'whatsapp')->update(['refreshToken' => $get_token['refreshToken']]);
+
+            $botmaker_token = $get_token['accessToken'];
+
+            $baseUrl = 'https://go.botmaker.com/api/';
+
+            $version = 'v1.0/';
+
+            $endpoint = 'message/v3';
+
+            $url = $baseUrl . $version . $endpoint;
+
+            $data = [
+                'headers' => [
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                    'access-token'  => $botmaker_token,
+                ]
+            ];
+
+            $params = [
+                'chatPlatform'      => 'whatsapp',
+                'chatChannelNumber' => $config->whatsapp_phone,
+                'platformContactId' => $request->externalId,
+                'messageText'       => $request->text
+            ];
+
+            if ($params) {
+                $data['body'] = json_encode($params);
+            }
+
+            $method = 'POST';
+
+            $client = new Client();
+
+            $error = false;
+
+            $msg = false;
+
+            try {
+
+                $response = $client->{$method}($url, $data);
+            } catch (ClientException $e) {
+
+                $error = true;
+                $msg = $e->getMessage();
+            } catch (ServerException $e) {
+
+                $error = true;
+                $msg = $e->getMessage();
+            } catch (RequestException $e) {
+
+                $error = true;
+                $msg = $e->getMessage();
+            }
+
+            if ($error) {
+                $return = [
+                    'success' => false,
+                    'body'    => $msg,
+                ];
+            } else {
+                $content = json_decode($response->getBody(), true);
+
+                if ($response->getStatusCode() != 200) {
+
+                    $return = [
+                        'success' => false,
+                        'code'    => $response->getStatusCode(),
+                        'body'    => $content,
+                    ];
+                } else {
+
+                    $return = $content;
+                }
+            }
+
+            $data['url'] = $url;
+
+            Log::debug(json_encode($return));
+
+            Log::debug(json_encode($data));
+        }
+    }
+}
+
+if (!function_exists('getBotmakerToken')) {
+    function getBotmakerToken($header, $endpoint, $method = 'post', $parameters = false)
+    {
+        $baseUrl = 'https://go.botmaker.com/api/v1.0/';
+
+        $url = $baseUrl . $endpoint;
+
+        $data = [
+            'headers' => $header,
+        ];
+
+        if ($parameters) {
+            $data['body'] = json_encode($parameters);
+        }
+
+        $client = new Client();
+
+        $error = false;
+
+        $msg = false;
+
+        try {
+
+            $response = $client->{$method}($url, $data);
+        } catch (ClientException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (ServerException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (RequestException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        }
+
+        if ($error) {
+
+            return [
+                'success' => false,
+                'body'    => $msg,
+            ];
+        }
+
+        $content = json_decode($response->getBody(), true);
+
+        if ($response->getStatusCode() != 200) {
+
+            return [
+                'success' => false,
+                'code'    => $response->getStatusCode(),
+                'body'    => $content,
+            ];
+        }
+
+        return $content;
+    }
+}
+
 if (!function_exists('getMessengerInfo')) {
     function getMessengerInfo($sender_id)
     {
@@ -321,7 +547,7 @@ if (!function_exists('getMessengerInfo')) {
 
         $baseUrl = 'https://graph.facebook.com/';
 
-        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAczygFwHDkBABeUpjhYaquSHfz2wAhpXfczxtmNj0TabvCU8tgxaFjKokwQx17RyJZC3DkzDezCU7A3ZCZBzmrDivDdifZBUSZBJnStFB2dkGw6SxKKCiHvIF1Lnm4q4KVeK6ZApbak82vLZAU3LdGLt1UlbvDlFDltZBmKTHZB8xQZDZD');
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAMNolX1ZCDUBAFSThAJwEjMVqYZBEZAu0ui0KmZCP6NfaAIXIXCQ3oF0k2hOxQILRNmdZAcYCZCMDv4cH9gGdzBHPeu144MoNI9q1rEcPO0oPPLkX5NwahsKs4dQ3yU3ib51t5YaRZBWxiOE9i3mVtpDyxpXHgot8ysThZBL6qeoRAhJ9h0F4Kz');
 
         $endpoint = '?fields=name,gender,profile_pic&access_token=' . $page_token;
 
