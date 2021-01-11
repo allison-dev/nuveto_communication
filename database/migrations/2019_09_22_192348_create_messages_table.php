@@ -22,6 +22,7 @@ class CreateMessagesTable extends Migration
             $table->string('body',5000)->nullable();
             $table->string('attachment')->nullable();
             $table->boolean('seen')->default(false);
+            $table->boolean('first_interation')->default(false);
             $table->timestamps();
         });
     }

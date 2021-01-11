@@ -17,7 +17,7 @@ class FacebookCallbackController extends Controller
 
     public function facebookMessageCallback(Request $request)
     {
-        sendMessagefacebook($request);
+        sendMessageFacebook($request);
 
         $insert_params_messages = [
             'id'        => $request->correlationId,
@@ -27,6 +27,21 @@ class FacebookCallbackController extends Controller
         ];
 
         DB::table('messages')->insert($insert_params_messages);
+
+        $acknowledgeParams = [
+            'messages' => [
+                [
+                    'type' => 'DELIVERED',
+                    'messageId' => $request['messageId']
+                ]
+            ]
+        ];
+
+        $teste = sendFivenine($request->correlationId, '', 'chat', 'put', '/messages/acknowledge', $acknowledgeParams, $request['externalId']);
+
+        Log::error(json_encode($teste));
+        Log::error(json_encode($acknowledgeParams));
+
 
         return response()->json(['success' => true, 'data' => 'Menssagem Respondida pelo Agente!'], 200);
     }
@@ -161,7 +176,7 @@ class FacebookCallbackController extends Controller
                                     "externalId" => $sender_id
                                 ];
 
-                                sendMessagefacebook($facebook_req, true);
+                                sendMessageFacebook($facebook_req, true);
 
                                 $quick_reply = true;
                             }
@@ -251,7 +266,7 @@ class FacebookCallbackController extends Controller
                                 "externalId" => $sender_id
                             ];
 
-                            sendMessagefacebook($facebook_req, true);
+                            sendMessageFacebook($facebook_req, true);
 
                             $quick_reply = true;
                         }

@@ -16,6 +16,10 @@ class CreateSettingTable extends Migration
         Schema::create('setting', function (Blueprint $table) {
             $table->id();
             $table->string('facebook_page_id')->nullable();
+            $table->string('whatsapp_phone')->nullable();
+            $table->string('clientId')->nullable();
+            $table->string('secretId')->nullable();
+            $table->text('refreshToken')->nullable();
             $table->string('callbackUrl')->nullable();
             $table->string('campaignName')->nullable();
             $table->string('tenantName')->nullable();
