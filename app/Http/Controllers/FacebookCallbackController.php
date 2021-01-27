@@ -110,8 +110,36 @@ class FacebookCallbackController extends Controller
                     }
 
                     if (isset($events['messaging'][0]['message']['quick_reply']['payload'])) {
-                        $verify_facebook_email = true;
-                        $sender_email = $events['messaging'][0]['message']['quick_reply']['payload'];
+                        $payload = $events['messaging'][0]['message']['quick_reply']['payload'];
+
+                        if ($payload == 'five9') {
+
+                            $send_five9 = true;
+                            $verify_facebook_email = true;
+
+                            DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['send_five9' => 1]);
+
+                        } else if (filter_var($payload, FILTER_VALIDATE_EMAIL)) {
+
+                            $verify_facebook_email = true;
+                            $sender_email = $events['messaging'][0]['message']['quick_reply']['payload'];
+
+                        } else {
+
+                            $choice = explode(':', $payload);
+
+                            $bot_response = [
+                                'variable'  => $choice[0],
+                                'choice'    => $choice[1]
+                            ];
+
+                            DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_variable' => $choice[0], 'bot_choice' => $choice[1], 'response' => json_encode($bot_response)]);
+
+                            $bot_order++;
+
+                            $verify_facebook_email = true;
+
+                        }
                     } else {
                         $verify_facebook_email = false;
                     }
@@ -170,6 +198,15 @@ class FacebookCallbackController extends Controller
                                 }
 
                                 if ($send_five9) {
+
+                                    if ($bot_session->bot_variable && $bot_session->bot_choice) {
+                                        $bot_variable = $bot_session->bot_variable;
+                                        $bot_choice = $bot_session->bot_choice;
+                                    } else {
+                                        $bot_variable = false;
+                                        $bot_choice = false;
+                                    }
+
                                     $header = [
                                         'Accept'       => 'application/json',
                                         'Content-Type' => 'application/json',
@@ -216,6 +253,12 @@ class FacebookCallbackController extends Controller
                                             'tenantId' => $create_session['orgId'],
                                             'type'  => 'FACEBOOK'
                                         ];
+
+                                        if ($bot_variable && $bot_choice) {
+                                            $params['attributes'] = [
+                                                'Custom.' . $bot_variable => $bot_choice
+                                            ];
+                                        }
 
                                         $create_conversation = apiCall($header, $endpoint, 'POST', $params);
 
@@ -313,6 +356,16 @@ class FacebookCallbackController extends Controller
                             }
 
                             if ($send_five9) {
+
+                                if ($bot_session->bot_variable && $bot_session->bot_choice) {
+                                    $bot_variable = $bot_session->bot_variable;
+                                    $bot_choice = $bot_session->bot_choice;
+                                } else {
+                                    $bot_variable = false;
+                                    $bot_choice = false;
+                                }
+
+
                                 $header = [
                                     'Accept'       => 'application/json',
                                     'Content-Type' => 'application/json',
@@ -359,6 +412,12 @@ class FacebookCallbackController extends Controller
                                         'tenantId' => $create_session['orgId'],
                                         'type'  => 'FACEBOOK'
                                     ];
+
+                                    if ($bot_variable && $bot_choice) {
+                                        $params['attributes'] = [
+                                            'Custom.' . $bot_variable => $bot_choice
+                                        ];
+                                    }
 
                                     $create_conversation = apiCall($header, $endpoint, 'POST', $params);
 
