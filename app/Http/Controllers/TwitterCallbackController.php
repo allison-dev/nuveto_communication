@@ -44,7 +44,7 @@ class twitterCallbackController extends Controller
     public function twitterTerminate(Request $request)
     {
         DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1']);
-        DB::table('bot_interation')->where('sender_id', '=', $request['externalId'])->update(['terminate' => '1', 'send_five9' => '0']);
+        DB::table('bot_interations')->where('sender_id', '=', $request['externalId'])->update(['terminate' => '1', 'send_five9' => '0']);
         DB::table('messages')->where('from_id', '=', $request['externalId'])->update(['first_interation' => '0']);
 
         $request->session()->flush();
