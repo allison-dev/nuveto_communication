@@ -114,7 +114,7 @@ class twitterCallbackController extends Controller
                         if ($option_choice == 'five9') {
                             $send_five9 = true;
                             $verify_twitter_email = true;
-                            $request->session()->put('send_five9', true);
+                            session(['send_five9', true]);
                         } else {
                             $choice = explode(':', $option_choice);
 
@@ -123,8 +123,8 @@ class twitterCallbackController extends Controller
                                 'choice'    => $choice[1]
                             ];
 
-                            $request->session()->put('bot_variable', $choice[0]);
-                            $request->session()->put('bot_choice', $choice[1]);
+                            session(['bot_variable', $choice[0]]);
+                            session(['bot_choice', $choice[1]]);
 
                             DB::table('bot_interations')->where('order', '=', $bot_order)->update(['response' => json_encode($bot_response)]);
 
@@ -135,7 +135,7 @@ class twitterCallbackController extends Controller
                     } else {
                         $verify_twitter_email = true;
                         $sender_email = $text;
-                        $request->session()->put('sender_email', $text);
+
                     }
                 } else {
                     $verify_twitter_email = false;
@@ -184,7 +184,7 @@ class twitterCallbackController extends Controller
                                         sendMessageTwitter($twitter_req);
                                     }
 
-                                    $request->session()->put('bot_order', $bot_order);
+                                    session(['bot_order', $bot_order]);
                                 } else {
 
                                     $text_options[] = [
@@ -363,7 +363,7 @@ class twitterCallbackController extends Controller
                                     sendMessageTwitter($twitter_req);
                                 }
 
-                                $request->session()->put('bot_order', $bot_order);
+                                session(['bot_order' => $bot_order]);
                             } else {
 
                                 $text_options[] = [
