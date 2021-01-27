@@ -124,6 +124,8 @@ class FacebookCallbackController extends Controller
                             $verify_facebook_email = true;
                             $sender_email = $events['messaging'][0]['message']['quick_reply']['payload'];
 
+                            DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['sender_email' => $sender_email]);
+
                         } else {
 
                             $choice = explode(':', $payload);
