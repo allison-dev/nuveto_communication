@@ -63,6 +63,7 @@ class twitterCallbackController extends Controller
         $quick_reply = false;
         $sender_email = false;
         $sender_name = false;
+        $send_five9 = false;
 
         if (isset($request->direct_message_events)) {
             $data = $request->direct_message_events;
@@ -89,13 +90,46 @@ class twitterCallbackController extends Controller
 
                 $first_interation = DB::table('messages')->where('from_id', "=", $sender_id)->orderBy('id', 'desc')->first(['first_interation']);
 
+                if ($request->session()->has('bot_order')) {
+                    $bot_order = $request->session()->get('bot_order');
+                } else {
+                    $bot_order = 0;
+                }
+
+                if ($request->session()->has('sender_email')) {
+                    $sender_email = $request->session()->get('sender_email');
+                }
 
                 if (isset($events['message_create']['message_data']['quick_reply_response'])) {
-                    $verify_twitter_email = true;
-                    $sender_email = $text;
+                    if (isset($events['message_create']['message_data']['quick_reply_response']['metadata'])) {
+                        $option_choice = $events['message_create']['message_data']['quick_reply_response']['metadata'];
+                        if ($option_choice == 'five9') {
+                            $send_five9 = true;
+                            $verify_twitter_email = true;
+                        } else {
+                            $choice = explode(':', $option_choice);
+
+                            $bot_response = [
+                                'variable'  => $choice[0],
+                                'choice'    => $choice[1]
+                            ];
+
+                            DB::table('bot_interations')->where('order', '=', $bot_order)->update(['response' => json_encode($bot_response)]);
+
+                            $bot_order++;
+
+                            $verify_twitter_email = true;
+                        }
+                    } else {
+                        $verify_twitter_email = true;
+                        $sender_email = $text;
+                        $request->session()->put('sender_email', $text);
+                    }
                 } else {
                     $verify_twitter_email = false;
                 }
+
+                $bot_interations = DB::table('bot_interations')->where('order', '=', $bot_order)->first();
 
                 if (isset($twitter_session->conversationId)) {
 
@@ -104,6 +138,223 @@ class twitterCallbackController extends Controller
                     if (!$verify_session) {
 
                         if ($verify_twitter_email) {
+
+                            if (!$send_five9) {
+                                if (isset($bot_interations) && $bot_interations) {
+                                    if (!empty($bot_interations->options)) {
+
+                                        foreach (json_decode($bot_interations->options, true) as $options) {
+                                            $text_options[] = [
+                                                'label' => $options['label'],
+                                                'metadata' => $options['variable'] . ":" . $options['choice']
+                                            ];
+                                        }
+
+                                        $twitter_req = [
+                                            "text" => $bot_interations->text,
+                                            "to" => $recipient_id,
+                                            "email" => $text,
+                                            "externalId" => $sender_id,
+                                            "messageId" => $events['id']
+                                        ];
+
+                                        sendMessageTwitter($twitter_req, true, false, $text_options);
+                                    } else {
+                                        $twitter_req = [
+                                            "text" => $bot_interations->text,
+                                            "externalId" => $sender_id,
+                                            "to" => $recipient_id,
+                                            "messageId" => $events['id']
+                                        ];
+
+                                        sendMessageTwitter($twitter_req);
+                                    }
+
+                                    $request->session()->put('bot_order', $bot_order);
+                                } else {
+
+                                    $text_options[] = [
+                                        'label' => 'Nuveto',
+                                        'metadata' => 'five9'
+                                    ];
+
+                                    $twitter_req = [
+                                        "text" => "Em qual Central deseja iniciar o Atendimento?",
+                                        "to" => $recipient_id,
+                                        "externalId" => $sender_id,
+                                        "messageId" => $events['id']
+                                    ];
+
+                                    sendMessageTwitter($twitter_req, true, false, $text_options);
+                                }
+                            }
+
+                            if ($send_five9) {
+
+                                $header = [
+                                    'Accept'       => 'application/json',
+                                    'Content-Type' => 'application/json',
+                                ];
+
+                                $endpoint = 'auth/anon?cookieless=true';
+
+                                $params = [
+                                    'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
+                                ];
+
+                                $create_session = apiCall($header, $endpoint, 'POST', $params);
+
+                                if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                                    if (isset($request->users[$sender_id]['name']) && strtolower($request->users[$sender_id]['name']) == "cadu leite") {
+                                        $sender_name = "Carlos Eduardo Leite";
+                                        $sender_email = "ceduardo@nuveto.com.br";
+                                    } else if (isset($request->users[$sender_id]['screen_name']) && strtolower($request->users[$sender_id]['screen_name']) == "alromeiro") {
+                                        $sender_name = "Andre Romeiro";
+                                        $sender_email = "alromeiro@nuveto.com.br";
+                                    } else if (isset($request->users[$sender_id]['name']) && $request->users[$sender_id]['name']) {
+                                        $sender_name = $request->users[$sender_id]['name'];
+                                    }
+
+                                    $header = [
+                                        'Content-Type'  => 'application/json',
+                                        'Authorization' => 'Bearer-' . $create_session['tokenId'],
+                                        'farmId'        => $create_session['context']['farmId']
+                                    ];
+
+                                    $endpoint = 'conversations';
+
+                                    $params = [
+                                        'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/twitter',
+                                        'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
+                                        'contact' => [
+                                            'email' => isset($sender_email) && $sender_email ? $sender_email : 'noreply_' . $sender_id . '@twitter.com',
+                                            'firstName' => isset($sender_name) && $sender_name ? $sender_name : 'Twitter User'
+                                        ],
+                                        'externalId' => $sender_id,
+                                        'disableAutoClose' => true,
+                                        'tenantId' => $create_session['orgId'],
+                                        'type'  => 'TWITTER'
+                                    ];
+
+                                    $create_conversation = apiCall($header, $endpoint, 'POST', $params);
+
+                                    if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
+
+                                        $insert_params_conversation = [
+                                            'tokenId'           => $create_session['tokenId'],
+                                            'userId'            => $sender_id,
+                                            'conversationId'    => $create_conversation['body']['id'],
+                                            'tenantId'          => $create_session['orgId'],
+                                            'farmId'            => $create_session['context']['farmId']
+                                        ];
+
+                                        $insert_params_twitter = [
+                                            'tokenId'           => $create_session['tokenId'],
+                                            'sender_id'         => $sender_id,
+                                            'text'              => $text,
+                                            'conversationId'    => $create_conversation['body']['id'],
+                                            'farmId'            => $create_session['context']['farmId'],
+                                            'payload'           => $request
+                                        ];
+
+                                        DB::table('conversation_sessions')->insert($insert_params_conversation);
+                                        DB::table('twitter_conversations')->insert($insert_params_twitter);
+                                    }
+                                }
+                            }
+                        } else {
+                            if (!$first_interation) {
+                                $twitter_req = [
+                                    "text" => "Por questões de Segurança, Informe o seu e-mail para iniciar seu atendimento!",
+                                    "externalId" => $sender_id,
+                                    "to" => $recipient_id,
+                                    "messageId" => $events['id']
+                                ];
+
+                                sendMessageTwitter($twitter_req, false, true);
+                            } else {
+                                $twitter_req = [
+                                    "text" => "Confirme Abaixo o seu E-mail!",
+                                    "to" => $recipient_id,
+                                    "email" => $text,
+                                    "externalId" => $sender_id,
+                                    "messageId" => $events['id']
+                                ];
+
+                                sendMessageTwitter($twitter_req, true, false);
+                            }
+
+                            $quick_reply = true;
+                        }
+                    } else {
+                        $insert_params_twitter = [
+                            'tokenId'           => $verify_session->tokenId,
+                            'sender_id'         => $sender_id,
+                            'text'              => $text,
+                            'conversationId'    => $twitter_session->conversationId,
+                            'farmId'            => $verify_session->farmId,
+                            'payload'           => $request
+                        ];
+
+                        DB::table('twitter_conversations')->insert($insert_params_twitter);
+                    }
+                } else {
+                    if ($verify_twitter_email) {
+
+                        if (!$send_five9) {
+                            if (isset($bot_interations) && $bot_interations) {
+                                if (!empty($bot_interations->options)) {
+
+                                    $bot_options = json_decode($bot_interations->options, true);
+
+                                    foreach ($bot_options['options'] as $options) {
+                                        $text_options[] = [
+                                            'label' => $options['label'],
+                                            'metadata' => $options['variable'] . ":" . $options['choice']
+                                        ];
+                                    }
+
+                                    $twitter_req = [
+                                        "text" => $bot_interations->text,
+                                        "to" => $recipient_id,
+                                        "email" => $text,
+                                        "externalId" => $sender_id,
+                                        "messageId" => $events['id']
+                                    ];
+
+                                    sendMessageTwitter($twitter_req, true, false, $text_options);
+                                } else {
+                                    $twitter_req = [
+                                        "text" => $bot_interations->text,
+                                        "externalId" => $sender_id,
+                                        "to" => $recipient_id,
+                                        "messageId" => $events['id']
+                                    ];
+
+                                    sendMessageTwitter($twitter_req);
+                                }
+
+                                $request->session()->put('bot_order', $bot_order);
+                            } else {
+
+                                $text_options[] = [
+                                    'label' => 'Nuveto',
+                                    'metadata' => 'five9'
+                                ];
+
+                                $twitter_req = [
+                                    "text" => "Em qual Central deseja iniciar o Atendimento?",
+                                    "to" => $recipient_id,
+                                    "externalId" => $sender_id,
+                                    "messageId" => $events['id']
+                                ];
+
+                                sendMessageTwitter($twitter_req, true, false, $text_options);
+                            }
+                        }
+
+                        if ($send_five9) {
                             $header = [
                                 'Accept'       => 'application/json',
                                 'Content-Type' => 'application/json',
@@ -174,111 +425,6 @@ class twitterCallbackController extends Controller
                                     DB::table('twitter_conversations')->insert($insert_params_twitter);
                                 }
                             }
-                        } else {
-                            if (!$first_interation) {
-                                $twitter_req = [
-                                    "text" => "Por questões de Segurança, Informe o seu e-mail para iniciar seu atendimento!",
-                                    "externalId" => $sender_id,
-                                    "to" => $recipient_id,
-                                    "messageId" => $events['id']
-                                ];
-
-                                sendMessageTwitter($twitter_req, false, true);
-                            } else {
-                                $twitter_req = [
-                                    "text" => "Confirme Abaixo o seu E-mail!",
-                                    "email" => $text,
-                                    "externalId" => $sender_id
-                                ];
-
-                                sendMessageTwitter($twitter_req, true, false);
-                            }
-
-                            $quick_reply = true;
-                        }
-                    } else {
-                        $insert_params_twitter = [
-                            'tokenId'           => $verify_session->tokenId,
-                            'sender_id'         => $sender_id,
-                            'text'              => $text,
-                            'conversationId'    => $twitter_session->conversationId,
-                            'farmId'            => $verify_session->farmId,
-                            'payload'           => $request
-                        ];
-
-                        DB::table('twitter_conversations')->insert($insert_params_twitter);
-                    }
-                } else {
-                    if ($verify_twitter_email) {
-                        $header = [
-                            'Accept'       => 'application/json',
-                            'Content-Type' => 'application/json',
-                        ];
-
-                        $endpoint = 'auth/anon?cookieless=true';
-
-                        $params = [
-                            'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
-                        ];
-
-                        $create_session = apiCall($header, $endpoint, 'POST', $params);
-
-                        if (isset($create_session['tokenId']) && $create_session['tokenId']) {
-
-                            if (isset($request->users[$sender_id]['name']) && strtolower($request->users[$sender_id]['name']) == "cadu leite") {
-                                $sender_name = "Carlos Eduardo Leite";
-                                $sender_email = "ceduardo@nuveto.com.br";
-                            } else if (isset($request->users[$sender_id]['screen_name']) && strtolower($request->users[$sender_id]['screen_name']) == "alromeiro") {
-                                $sender_name = "Andre Romeiro";
-                                $sender_email = "alromeiro@nuveto.com.br";
-                            } else if (isset($request->users[$sender_id]['name']) && $request->users[$sender_id]['name']) {
-                                $sender_name = $request->users[$sender_id]['name'];
-                            }
-
-                            $header = [
-                                'Content-Type'  => 'application/json',
-                                'Authorization' => 'Bearer-' . $create_session['tokenId'],
-                                'farmId'        => $create_session['context']['farmId']
-                            ];
-
-                            $endpoint = 'conversations';
-
-                            $params = [
-                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/twitter',
-                                'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
-                                'contact' => [
-                                    'email' => isset($sender_email) && $sender_email ? $sender_email : 'noreply_' . $sender_id . '@twitter.com',
-                                    'firstName' => isset($sender_name) && $sender_name ? $sender_name : 'Twitter User'
-                                ],
-                                'externalId' => $sender_id,
-                                'disableAutoClose' => true,
-                                'tenantId' => $create_session['orgId'],
-                                'type'  => 'TWITTER'
-                            ];
-
-                            $create_conversation = apiCall($header, $endpoint, 'POST', $params);
-
-                            if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
-                                $insert_params_conversation = [
-                                    'tokenId'           => $create_session['tokenId'],
-                                    'userId'            => $sender_id,
-                                    'conversationId'    => $create_conversation['body']['id'],
-                                    'tenantId'          => $create_session['orgId'],
-                                    'farmId'            => $create_session['context']['farmId']
-                                ];
-
-                                $insert_params_twitter = [
-                                    'tokenId'           => $create_session['tokenId'],
-                                    'sender_id'         => $sender_id,
-                                    'text'              => $text,
-                                    'conversationId'    => $create_conversation['body']['id'],
-                                    'farmId'            => $create_session['context']['farmId'],
-                                    'payload'           => $request
-                                ];
-
-                                DB::table('conversation_sessions')->insert($insert_params_conversation);
-                                DB::table('twitter_conversations')->insert($insert_params_twitter);
-                            }
                         }
                     } else {
                         if (!$first_interation) {
@@ -293,8 +439,10 @@ class twitterCallbackController extends Controller
                         } else {
                             $twitter_req = [
                                 "text" => "Confirme Abaixo o seu E-mail!",
+                                "to" => $recipient_id,
                                 "email" => $text,
-                                "externalId" => $sender_id
+                                "externalId" => $sender_id,
+                                "messageId" => $events['id']
                             ];
 
                             sendMessageTwitter($twitter_req, true, false);
@@ -304,7 +452,7 @@ class twitterCallbackController extends Controller
                     }
                 }
 
-                if (!$quick_reply) {
+                if ($send_five9) {
 
                     sendFivenine($sender_id, '', 'twitter');
                 }

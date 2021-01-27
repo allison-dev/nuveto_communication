@@ -150,7 +150,7 @@ if (!function_exists('apiCall')) {
 
         $content = json_decode($response->getBody(), true);
 
-        if ($response->getStatusCode() != 200) {
+        if ($response->getStatusCode() != 200 && $response->getStatusCode() != 204) {
 
             return [
                 'success' => false,
@@ -199,9 +199,21 @@ if (!function_exists('sendChatCallback')) {
 }
 
 if (!function_exists('sendMessageTwitter')) {
-    function sendMessageTwitter($data, $quick_reply = false, $first_interation = false)
+    function sendMessageTwitter($data, $quick_reply = false, $first_interation = false, $options = false)
     {
         if ($quick_reply) {
+
+            if (!$options) {
+                $options = [
+                    [
+                        "label" => $data['email'],
+                    ],
+                    [
+                        "label" => "Trocar E-mail."
+                    ]
+                ];
+            }
+
             $params = [
                 "type"              => "message_create",
                 "message_create"    => [
@@ -213,14 +225,7 @@ if (!function_exists('sendMessageTwitter')) {
                         "quick_reply" =>
                         [
                             "type" => "options",
-                            "options" => [
-                                [
-                                    "label" => $data['email'],
-                                ],
-                                [
-                                    "label" => "Trocar E-mail."
-                                ]
-                            ]
+                            "options" => $options
                         ]
 
                     ]
