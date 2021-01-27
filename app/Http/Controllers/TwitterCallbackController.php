@@ -92,21 +92,27 @@ class twitterCallbackController extends Controller
 
                 $first_interation = DB::table('messages')->where('from_id', "=", $sender_id)->orderBy('id', 'desc')->first(['first_interation']);
 
-                if ($request->session()->has('bot_order')) {
-                    $bot_order = $request->session()->get('bot_order');
+                $bot_session = DB::table('bot_interations')->where('sender_id', '=', $sender_id)->where('terminate', '=', 0)->orderBy('id', 'desc')->first();
+
+                if (!$bot_session) {
+                    DB::table('bot_interations')->insert(['sender_id' => $sender_id]);
+                } else {
+                    DB::table('bot_interations')->where('terminate', '=', 0)->update(['sender_id' => $sender_id]);
+                }
+
+                if (isset($bot_session->bot_order) && $bot_session->bot_order) {
+                    $bot_order = $bot_session->bot_order;
                 } else {
                     $bot_order = 0;
                 }
 
-                if ($request->session()->has('sender_email')) {
-                    $sender_email = $request->session()->get('sender_email');
+                if (isset($bot_session->sender_email) && $bot_session->sender_email) {
+                    $sender_email = $bot_session->sender_email;
                 }
 
-                if ($request->session()->has('send_five9')) {
-                    $send_five9 = $request->session()->get('send_five9');
+                if (isset($bot_session->send_five9) && $bot_session->send_five9) {
+                    $send_five9 = $bot_session->send_five9;
                 }
-
-                Log::error(json_encode($_SESSION));
 
                 if (isset($events['message_create']['message_data']['quick_reply_response'])) {
                     if (isset($events['message_create']['message_data']['quick_reply_response']['metadata'])) {
@@ -114,7 +120,9 @@ class twitterCallbackController extends Controller
                         if ($option_choice == 'five9') {
                             $send_five9 = true;
                             $verify_twitter_email = true;
-                            session(['send_five9', true]);
+
+                            DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['send_five9' => 1]);
+
                         } else {
                             $choice = explode(':', $option_choice);
 
@@ -123,10 +131,7 @@ class twitterCallbackController extends Controller
                                 'choice'    => $choice[1]
                             ];
 
-                            session(['bot_variable', $choice[0]]);
-                            session(['bot_choice', $choice[1]]);
-
-                            DB::table('bot_interations')->where('order', '=', $bot_order)->update(['response' => json_encode($bot_response)]);
+                            DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_variable' => $choice[0],'bot_choice' => $choice[1],'response' => json_encode($bot_response)]);
 
                             $bot_order++;
 
@@ -135,7 +140,7 @@ class twitterCallbackController extends Controller
                     } else {
                         $verify_twitter_email = true;
                         $sender_email = $text;
-
+                        DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['sender_email' => $text]);
                     }
                 } else {
                     $verify_twitter_email = false;
@@ -155,9 +160,7 @@ class twitterCallbackController extends Controller
                                 if (isset($bot_interations) && $bot_interations) {
                                     if (!empty($bot_interations->options)) {
 
-                                        $bot_options = json_decode($bot_interations->options, true);
-
-                                        foreach ($bot_options['options'] as $options) {
+                                        foreach (json_decode($bot_interations->options, true) as $options) {
                                             $text_options[] = [
                                                 'label' => $options['label'],
                                                 'metadata' => $options['variable'] . ":" . $options['choice']
@@ -184,7 +187,7 @@ class twitterCallbackController extends Controller
                                         sendMessageTwitter($twitter_req);
                                     }
 
-                                    session(['bot_order', $bot_order]);
+                                    DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order]);
                                 } else {
 
                                     $text_options[] = [
@@ -363,7 +366,8 @@ class twitterCallbackController extends Controller
                                     sendMessageTwitter($twitter_req);
                                 }
 
-                                session(['bot_order' => $bot_order]);
+                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order]);
+
                             } else {
 
                                 $text_options[] = [

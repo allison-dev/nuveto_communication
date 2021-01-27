@@ -19,6 +19,13 @@ class CreateBotInterationsTable extends Migration
             $table->text('order')->nullable();
             $table->text('options')->nullable();
             $table->text('response')->nullable();
+            $table->tinyInteger('send_five9')->nullable()->default(0);
+            $table->tinyInteger('terminate')->nullable()->default(0);
+            $table->text('bot_variable')->nullable();
+            $table->text('bot_choice')->nullable();
+            $table->text('sender_email')->nullable();
+            $table->text('sender_id')->nullable();
+            $table->int('bot_order')->nullable();
             $table->timestamps();
         });
     }
