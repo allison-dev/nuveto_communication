@@ -65,6 +65,8 @@ class FacebookCallbackController extends Controller
     {
         $quick_reply = false;
         $sender_email = false;
+        $sender_name = false;
+        $send_five9 = false;
 
         if (isset($request->entry)) {
             $data = $request->entry;
