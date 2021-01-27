@@ -279,7 +279,7 @@ if (!function_exists('sendMessageTwitter')) {
 }
 
 if (!function_exists('sendMessageFacebook')) {
-    function sendMessageFacebook($request, $quick_reply = false)
+    function sendMessageFacebook($request, $quick_reply = false, $type = 'email', $reply_options = false)
     {
         $return = [];
 
@@ -300,19 +300,31 @@ if (!function_exists('sendMessageFacebook')) {
         ];
 
         if ($quick_reply) {
-            $params = [
-                "recipient" => [
-                    "id"    => $request['externalId']
-                ],
-                "message"   => [
-                    "text"  => $request['text'],
-                    "quick_replies" => [
-                        [
-                            "content_type" => "user_email"
+            if ($type == 'email') {
+                $params = [
+                    "recipient" => [
+                        "id"    => $request['externalId']
+                    ],
+                    "message"   => [
+                        "text"  => $request['text'],
+                        "quick_replies" => [
+                            [
+                                "content_type" => "user_email"
+                            ]
                         ]
                     ]
-                ]
-            ];
+                ];
+            } else if ($type == "text") {
+                $params = [
+                    "recipient" => [
+                        "id"    => $request['externalId']
+                    ],
+                    "message"   => [
+                        "text"  => $request['text'],
+                        "quick_replies" => $reply_options
+                    ]
+                ];
+            }
         } else {
             $params = [
                 "recipient" => [
