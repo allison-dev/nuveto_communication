@@ -150,6 +150,8 @@ if (!function_exists('apiCall')) {
 
         $content = json_decode($response->getBody(), true);
 
+        Log::error($response->getBody());
+
         if ($response->getStatusCode() != 200 && $response->getStatusCode() != 204) {
 
             return [
