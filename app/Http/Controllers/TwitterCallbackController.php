@@ -102,12 +102,17 @@ class twitterCallbackController extends Controller
                     $sender_email = $request->session()->get('sender_email');
                 }
 
+                if ($request->session()->has('send_five9')) {
+                    $send_five9 = $request->session()->get('send_five9');
+                }
+
                 if (isset($events['message_create']['message_data']['quick_reply_response'])) {
                     if (isset($events['message_create']['message_data']['quick_reply_response']['metadata'])) {
                         $option_choice = $events['message_create']['message_data']['quick_reply_response']['metadata'];
                         if ($option_choice == 'five9') {
                             $send_five9 = true;
                             $verify_twitter_email = true;
+                            $request->session()->put('send_five9', true);
                         } else {
                             $choice = explode(':', $option_choice);
 
