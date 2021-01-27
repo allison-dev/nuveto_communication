@@ -262,6 +262,9 @@ class FacebookCallbackController extends Controller
 
                                         $create_conversation = apiCall($header, $endpoint, 'POST', $params);
 
+                                        Log::error(json_encode($create_conversation));
+                                        Log::error(json_encode($params));
+
                                         if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
                                             $insert_params_conversation = [
                                                 'tokenId'           => $create_session['tokenId'],
