@@ -288,7 +288,7 @@ class twitterCallbackController extends Controller
                                 }
                             }
                         } else {
-                            if (!$first_interation || $first_interation == '0') {
+                            if (!$first_interation) {
                                 $twitter_req = [
                                     "text" => "Por questões de Segurança, Informe o seu e-mail para iniciar seu atendimento!",
                                     "externalId" => $sender_id,
@@ -465,7 +465,7 @@ class twitterCallbackController extends Controller
                             }
                         }
                     } else {
-                        if (!$first_interation || $first_interation == '0') {
+                        if (!$first_interation) {
                             $twitter_req = [
                                 "text" => "Por questões de Segurança, Informe o seu e-mail para iniciar seu atendimento!",
                                 "externalId" => $sender_id,
