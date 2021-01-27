@@ -189,7 +189,7 @@ class FacebookCallbackController extends Controller
                                         ];
 
                                         $facebook_req = [
-                                            "text" => $bot_interations->text,
+                                            "text" => 'Em qual Central deseja iniciar o Atendimento?',
                                             "externalId" => $sender_id
                                         ];
 
