@@ -90,7 +90,7 @@ class twitterCallbackController extends Controller
 
                 $twitter_session = DB::table('twitter_conversations')->where('sender_id', '=', $sender_id)->orderBy('id', 'desc')->first();
 
-                $first_interation = DB::table('messages')->where('from_id', "=", $sender_id)->orderBy('id', 'desc')->first(['first_interation']);
+                $first_interation = DB::table('messages')->where('from_id', "=", $sender_id)->where('first_interation', '=', 1)->orderBy('id', 'desc')->first(['first_interation']);
 
                 $bot_session = DB::table('bot_interations')->where('sender_id', '=', $sender_id)->where('terminate', '=', 0)->orderBy('id', 'desc')->first();
 
