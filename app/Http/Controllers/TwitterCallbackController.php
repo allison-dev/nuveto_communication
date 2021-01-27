@@ -155,7 +155,9 @@ class twitterCallbackController extends Controller
                                 if (isset($bot_interations) && $bot_interations) {
                                     if (!empty($bot_interations->options)) {
 
-                                        foreach (json_decode($bot_interations->options, true) as $options) {
+                                        $bot_options = json_decode($bot_interations->options, true);
+
+                                        foreach ($bot_options['options'] as $options) {
                                             $text_options[] = [
                                                 'label' => $options['label'],
                                                 'metadata' => $options['variable'] . ":" . $options['choice']
