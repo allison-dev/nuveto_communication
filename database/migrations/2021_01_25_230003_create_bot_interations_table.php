@@ -25,7 +25,7 @@ class CreateBotInterationsTable extends Migration
             $table->text('bot_choice')->nullable();
             $table->text('sender_email')->nullable();
             $table->text('sender_id')->nullable();
-            $table->int('bot_order')->nullable();
+            $table->integer('bot_order')->nullable();
             $table->timestamps();
         });
     }
