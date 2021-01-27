@@ -45,6 +45,8 @@ class twitterCallbackController extends Controller
     {
         DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1']);
 
+        $request->session()->flush();
+
         return response()->json([], 204);
     }
 
@@ -113,6 +115,9 @@ class twitterCallbackController extends Controller
                                 'variable'  => $choice[0],
                                 'choice'    => $choice[1]
                             ];
+
+                            $request->session()->put('bot_variable', $choice[0]);
+                            $request->session()->put('bot_choice', $choice[1]);
 
                             DB::table('bot_interations')->where('order', '=', $bot_order)->update(['response' => json_encode($bot_response)]);
 
@@ -206,6 +211,14 @@ class twitterCallbackController extends Controller
 
                                 if (isset($create_session['tokenId']) && $create_session['tokenId']) {
 
+                                    if ($request->session()->has('bot_variable') && $request->session()->has('bot_choice')) {
+                                        $bot_variable = $request->session()->get('bot_variable');
+                                        $bot_choice = $request->session()->get('bot_choice');
+                                    } else {
+                                        $bot_variable = false;
+                                        $bot_choice = false;
+                                    }
+
                                     if (isset($request->users[$sender_id]['name']) && strtolower($request->users[$sender_id]['name']) == "cadu leite") {
                                         $sender_name = "Carlos Eduardo Leite";
                                         $sender_email = "ceduardo@nuveto.com.br";
@@ -236,6 +249,12 @@ class twitterCallbackController extends Controller
                                         'tenantId' => $create_session['orgId'],
                                         'type'  => 'TWITTER'
                                     ];
+
+                                    if ($bot_variable && $bot_choice) {
+                                        $params['attributes'] = [
+                                            'Custom.' . $bot_variable => $bot_choice
+                                        ];
+                                    }
 
                                     $create_conversation = apiCall($header, $endpoint, 'POST', $params);
 
@@ -370,6 +389,14 @@ class twitterCallbackController extends Controller
 
                             if (isset($create_session['tokenId']) && $create_session['tokenId']) {
 
+                                if ($request->session()->has('bot_variable') && $request->session()->has('bot_choice')) {
+                                    $bot_variable = $request->session()->get('bot_variable');
+                                    $bot_choice = $request->session()->get('bot_choice');
+                                } else {
+                                    $bot_variable = false;
+                                    $bot_choice = false;
+                                }
+
                                 if (isset($request->users[$sender_id]['name']) && strtolower($request->users[$sender_id]['name']) == "cadu leite") {
                                     $sender_name = "Carlos Eduardo Leite";
                                     $sender_email = "ceduardo@nuveto.com.br";
@@ -400,6 +427,12 @@ class twitterCallbackController extends Controller
                                     'tenantId' => $create_session['orgId'],
                                     'type'  => 'TWITTER'
                                 ];
+
+                                if ($bot_variable && $bot_choice) {
+                                    $params['attributes'] = [
+                                        'Custom.' . $bot_variable => $bot_choice
+                                    ];
+                                }
 
                                 $create_conversation = apiCall($header, $endpoint, 'POST', $params);
 
