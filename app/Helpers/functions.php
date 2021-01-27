@@ -249,7 +249,7 @@ if (!function_exists('sendMessageTwitter')) {
                 'type'      => 'twitter',
                 'from_id'   => $data['externalId'],
                 'to_id'     => $data['to'],
-                "first_interation" => true
+                "first_interation" => 1
             ];
 
             DB::table('messages')->insert($insert_params_messages);
