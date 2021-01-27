@@ -106,6 +106,8 @@ class twitterCallbackController extends Controller
                     $send_five9 = $request->session()->get('send_five9');
                 }
 
+                Log::error(json_encode($request->session()->all()));
+
                 if (isset($events['message_create']['message_data']['quick_reply_response'])) {
                     if (isset($events['message_create']['message_data']['quick_reply_response']['metadata'])) {
                         $option_choice = $events['message_create']['message_data']['quick_reply_response']['metadata'];
