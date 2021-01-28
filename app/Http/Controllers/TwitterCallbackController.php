@@ -199,7 +199,7 @@ class twitterCallbackController extends Controller
                                     ];
 
                                     $twitter_req = [
-                                        "text" => "Em qual Central deseja iniciar o Atendimento?",
+                                        "text" => "Deseja Interagir com o Atendente?",
                                         "to" => $recipient_id,
                                         "externalId" => $sender_id,
                                         "messageId" => $events['id']
@@ -378,7 +378,7 @@ class twitterCallbackController extends Controller
                                 ];
 
                                 $twitter_req = [
-                                    "text" => "Em qual Central deseja iniciar o Atendimento?",
+                                    "text" => "Deseja Interagir com o Atendente?",
                                     "to" => $recipient_id,
                                     "externalId" => $sender_id,
                                     "messageId" => $events['id']
