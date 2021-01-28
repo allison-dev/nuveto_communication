@@ -61,7 +61,10 @@ class WhatsappCallbackController extends Controller
     {
         if (isset($request->WHATSAPP_NUMBER) && isset($request->message) && isset($request->fromCustomer) && $request->fromCustomer) {
 
+            $quick_reply = false;
             $sender_email = false;
+            $sender_name = false;
+            $send_five9 = false;
 
             $sender_phone = $request->contactId;
 
@@ -73,6 +76,16 @@ class WhatsappCallbackController extends Controller
 
             $whatsapp_session = DB::table('whatsapp_conversations')->where('sender_phone', '=', $sender_phone)->orderBy('id', 'desc')->first();
 
+            $bot_interations = DB::table('whatsapp_bots')->get();
+
+            $interations_verify = DB::table('whatsapp_bots')->where('choice', '=', $text)->first();
+
+            if (!is_null($interations_verify)) {
+                $bot_variable = $interations_verify->variable;
+                $bot_choice = $interations_verify->value;
+                $send_five9 = true;
+            }
+
             if (isset($whatsapp_session->conversationId)) {
 
                 $verify_session = DB::table('conversation_sessions')->where('conversationId', $whatsapp_session->conversationId)->where('terminate', '=', '0')->first();
@@ -80,6 +93,148 @@ class WhatsappCallbackController extends Controller
                 if (!$verify_session) {
                     /* Create Session */
 
+                    if (!$send_five9) {
+                        if (isset($bot_interations) && $bot_interations) {
+
+                            $message = 'Digite o Numero da Central que melhor ira lhe atender agora :';
+
+                            $message .= "
+";
+
+                            foreach ($bot_interations as $options) {
+                                $message .= "
+";
+                                $message .= '*' . $options->choice . '-* ' . $options->options;
+                            }
+
+                            $request = (object) [
+                                'externalId' => $sender_phone,
+                                'text' => $message
+                            ];
+
+                            sendMessageWhatsapp($request);
+                        }
+                    }
+
+                    if ($send_five9) {
+                        $header = [
+                            'Accept'       => 'application/json',
+                            'Content-Type' => 'application/json',
+                        ];
+
+                        $endpoint = 'auth/anon?cookieless=true';
+
+                        $params = [
+                            'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
+                        ];
+
+                        $create_session = apiCall($header, $endpoint, 'POST', $params);
+
+                        if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                            if (isset($contact_name) && strtolower($contact_name) == "cadu leite") {
+                                $contact_name = "Carlos Eduardo Leite";
+                                $sender_email = "ceduardo@nuveto.com.br";
+                            } else if (isset($request->contactId) && $request->contactId == "5511991239261") {
+                                $contact_name = "Andre Romeiro";
+                                $sender_email = "alromeiro@nuveto.com.br";
+                            }
+
+                            $header = [
+                                'Content-Type'  => 'application/json',
+                                'Authorization' => 'Bearer-' . $create_session['tokenId'],
+                                'farmId'        => $create_session['context']['farmId']
+                            ];
+
+                            $endpoint = 'conversations';
+
+                            $params = [
+                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/whatsapp',
+                                'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
+                                'contact' => [
+                                    'firstName' => isset($contact_name) ? trim($contact_name) : 'Whatsapp User',
+                                    'socialAccountName' => isset($request->fromName) ? $request->fromName : 'Whatsapp User',
+                                    'number1' => isset($request->contactId) ? '+' . $request->contactId : '+5511999999999',
+                                    'email' => isset($sender_email) && $sender_email ? $sender_email : 'noreply@whatsapp.com.br',
+                                ],
+                                'externalId' => $sender_phone,
+                                'disableAutoClose' => true,
+                                'tenantId' => $create_session['orgId'],
+                                'type'  => 'WHATSAPP'
+                            ];
+
+                            if ($bot_variable && $bot_choice) {
+                                $params['attributes'] = [
+                                    'Custom.' . $bot_variable => $bot_choice
+                                ];
+                            }
+
+                            $create_conversation = apiCall($header, $endpoint, 'POST', $params);
+
+                            if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
+                                $insert_params_conversation = [
+                                    'tokenId'           => $create_session['tokenId'],
+                                    'userId'            => $sender_phone,
+                                    'conversationId'    => $create_conversation['body']['id'],
+                                    'tenantId'          => $create_session['orgId'],
+                                    'farmId'            => $create_session['context']['farmId']
+                                ];
+
+                                $insert_params_whatsapp = [
+                                    'tokenId'           => $create_session['tokenId'],
+                                    'sender_phone'      => $sender_phone,
+                                    'text'              => $text,
+                                    'conversationId'    => $create_conversation['body']['id'],
+                                    'farmId'            => $create_session['context']['farmId'],
+                                    'farmId'            => $create_session['context']['farmId'],
+                                    'payload'           => $request
+                                ];
+
+                                DB::table('conversation_sessions')->insert($insert_params_conversation);
+                                DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
+                            }
+                        }
+                    }
+                } else {
+                    $insert_params_whatsapp = [
+                        'tokenId'           => $verify_session->tokenId,
+                        'sender_phone'      => $sender_phone,
+                        'text'              => $text,
+                        'conversationId'    => $whatsapp_session->conversationId,
+                        'farmId'            => $verify_session->farmId,
+                        'payload'           => $request
+                    ];
+
+                    DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
+                }
+            } else {
+
+                /* Create Session */
+
+                if (!$send_five9) {
+                    if (isset($bot_interations) && $bot_interations) {
+
+                        $message = 'Digite o Numero da Central que melhor ira lhe atender agora :';
+
+                        $message .= "
+";
+
+                        foreach ($bot_interations as $options) {
+                            $message .= "
+";
+                            $message .= '*' . $options->choice . '-* ' . $options->options;
+                        }
+
+                        $request = (object) [
+                            'externalId' => $sender_phone,
+                            'text' => $message
+                        ];
+
+                        sendMessageWhatsapp($request);
+                    }
+                }
+
+                if ($send_five9) {
                     $header = [
                         'Accept'       => 'application/json',
                         'Content-Type' => 'application/json',
@@ -126,6 +281,12 @@ class WhatsappCallbackController extends Controller
                             'type'  => 'WHATSAPP'
                         ];
 
+                        if ($bot_variable && $bot_choice) {
+                            $params['attributes'] = [
+                                'Custom.' . $bot_variable => $bot_choice
+                            ];
+                        }
+
                         $create_conversation = apiCall($header, $endpoint, 'POST', $params);
 
                         if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
@@ -143,7 +304,6 @@ class WhatsappCallbackController extends Controller
                                 'text'              => $text,
                                 'conversationId'    => $create_conversation['body']['id'],
                                 'farmId'            => $create_session['context']['farmId'],
-                                'farmId'            => $create_session['context']['farmId'],
                                 'payload'           => $request
                             ];
 
@@ -151,95 +311,13 @@ class WhatsappCallbackController extends Controller
                             DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
                         }
                     }
-                } else {
-                    $insert_params_whatsapp = [
-                        'tokenId'           => $verify_session->tokenId,
-                        'sender_phone'      => $sender_phone,
-                        'text'              => $text,
-                        'conversationId'    => $whatsapp_session->conversationId,
-                        'farmId'            => $verify_session->farmId,
-                        'payload'           => $request
-                    ];
-
-                    DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
-                }
-            } else {
-
-                /* Create Session */
-
-                $header = [
-                    'Accept'       => 'application/json',
-                    'Content-Type' => 'application/json',
-                ];
-
-                $endpoint = 'auth/anon?cookieless=true';
-
-                $params = [
-                    'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
-                ];
-
-                $create_session = apiCall($header, $endpoint, 'POST', $params);
-
-                if (isset($create_session['tokenId']) && $create_session['tokenId']) {
-
-                    if (isset($contact_name) && strtolower($contact_name) == "cadu leite") {
-                        $contact_name = "Carlos Eduardo Leite";
-                        $sender_email = "ceduardo@nuveto.com.br";
-                    } else if (isset($request->contactId) && $request->contactId == "5511991239261") {
-                        $contact_name = "Andre Romeiro";
-                        $sender_email = "alromeiro@nuveto.com.br";
-                    }
-
-                    $header = [
-                        'Content-Type'  => 'application/json',
-                        'Authorization' => 'Bearer-' . $create_session['tokenId'],
-                        'farmId'        => $create_session['context']['farmId']
-                    ];
-
-                    $endpoint = 'conversations';
-
-                    $params = [
-                        'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/whatsapp',
-                        'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
-                        'contact' => [
-                            'firstName' => isset($contact_name) ? trim($contact_name) : 'Whatsapp User',
-                            'socialAccountName' => isset($request->fromName) ? $request->fromName : 'Whatsapp User',
-                            'number1' => isset($request->contactId) ? '+' . $request->contactId : '+5511999999999',
-                            'email' => isset($sender_email) && $sender_email ? $sender_email : 'noreply@whatsapp.com.br',
-                        ],
-                        'externalId' => $sender_phone,
-                        'disableAutoClose' => true,
-                        'tenantId' => $create_session['orgId'],
-                        'type'  => 'WHATSAPP'
-                    ];
-
-                    $create_conversation = apiCall($header, $endpoint, 'POST', $params);
-
-                    if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
-                        $insert_params_conversation = [
-                            'tokenId'           => $create_session['tokenId'],
-                            'userId'            => $sender_phone,
-                            'conversationId'    => $create_conversation['body']['id'],
-                            'tenantId'          => $create_session['orgId'],
-                            'farmId'            => $create_session['context']['farmId']
-                        ];
-
-                        $insert_params_whatsapp = [
-                            'tokenId'           => $create_session['tokenId'],
-                            'sender_phone'      => $sender_phone,
-                            'text'              => $text,
-                            'conversationId'    => $create_conversation['body']['id'],
-                            'farmId'            => $create_session['context']['farmId'],
-                            'payload'           => $request
-                        ];
-
-                        DB::table('conversation_sessions')->insert($insert_params_conversation);
-                        DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
-                    }
                 }
             }
 
-            sendFivenine($sender_phone, '', 'whatsapp');
+            if ($send_five9) {
+
+                sendFivenine($sender_phone, '', 'whatsapp');
+            }
         }
 
         return response()->json(['success' => true, 'response' => 'Menssagem enviada ao Agente'], 200);
