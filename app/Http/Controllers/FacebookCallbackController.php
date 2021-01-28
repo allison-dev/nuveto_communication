@@ -118,14 +118,12 @@ class FacebookCallbackController extends Controller
                             $verify_facebook_email = true;
 
                             DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['send_five9' => 1]);
-
                         } else if (filter_var($payload, FILTER_VALIDATE_EMAIL)) {
 
                             $verify_facebook_email = true;
                             $sender_email = $events['messaging'][0]['message']['quick_reply']['payload'];
 
                             DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['sender_email' => $sender_email]);
-
                         } else {
 
                             $choice = explode(':', $payload);
@@ -140,7 +138,6 @@ class FacebookCallbackController extends Controller
                             $bot_order++;
 
                             $verify_facebook_email = true;
-
                         }
                     } else {
                         $verify_facebook_email = false;
@@ -186,12 +183,12 @@ class FacebookCallbackController extends Controller
 
                                         $text_options[] = [
                                             'content_type' => 'text',
-                                            "title" => "Nuveto",
+                                            "title" => "Iniciar Chat",
                                             "payload" => 'five9',
                                         ];
 
                                         $facebook_req = [
-                                            "text" => 'Em qual Central deseja iniciar o Atendimento?',
+                                            "text" => 'Deseja Interagir com o Atendente?',
                                             "externalId" => $sender_id
                                         ];
 
@@ -227,7 +224,7 @@ class FacebookCallbackController extends Controller
                                         if (isset($getSenderInfo['name']) && strtolower($getSenderInfo['name']) == "cadu leite") {
                                             $getSenderInfo['name'] = "Carlos Eduardo Leite";
                                             $sender_email = "ceduardo@nuveto.com.br";
-                                        } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@gmail.com") {
+                                        } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@hotmail.com") {
                                             $getSenderInfo['name'] = "Andre Romeiro";
                                             $sender_email = "alromeiro@nuveto.com.br";
                                         }
@@ -299,8 +296,6 @@ class FacebookCallbackController extends Controller
                                 ];
 
                                 sendMessageFacebook($facebook_req, true);
-
-                                $quick_reply = true;
                             }
                         } else {
                             $insert_params_facebook = [
@@ -347,12 +342,12 @@ class FacebookCallbackController extends Controller
 
                                     $text_options[] = [
                                         'content_type' => 'text',
-                                        "title" => "Nuveto",
+                                        "title" => "Iniciar Chat",
                                         "payload" => 'five9',
                                     ];
 
                                     $facebook_req = [
-                                        "text" => "Em qual Central deseja iniciar o Atendimento?",
+                                        "text" => "Deseja Interagir com o Atendente?",
                                         "externalId" => $sender_id
                                     ];
 
@@ -389,7 +384,7 @@ class FacebookCallbackController extends Controller
                                     if (isset($getSenderInfo['name']) && strtolower($getSenderInfo['name']) == "cadu leite") {
                                         $getSenderInfo['name'] = "Carlos Eduardo Leite";
                                         $sender_email = "ceduardo@nuveto.com.br";
-                                    } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@gmail.com") {
+                                    } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@hotmail.com") {
                                         $getSenderInfo['name'] = "Andre Romeiro";
                                         $sender_email = "alromeiro@nuveto.com.br";
                                     }
@@ -456,8 +451,6 @@ class FacebookCallbackController extends Controller
                             ];
 
                             sendMessageFacebook($facebook_req, true);
-
-                            $quick_reply = true;
                         }
                     }
 
