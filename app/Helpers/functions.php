@@ -114,6 +114,7 @@ if (!function_exists('apiCall')) {
         ];
 
         if ($parameters) {
+            Log::error(json_encode($parameters));
             $data['body'] = json_encode($parameters);
         }
 
@@ -150,7 +151,7 @@ if (!function_exists('apiCall')) {
 
         $content = json_decode($response->getBody(), true);
 
-        if ($response->getStatusCode() != 200) {
+        if ($response->getStatusCode() != 200 && $response->getStatusCode() != 204) {
 
             return [
                 'success' => false,
@@ -199,9 +200,21 @@ if (!function_exists('sendChatCallback')) {
 }
 
 if (!function_exists('sendMessageTwitter')) {
-    function sendMessageTwitter($data, $quick_reply = false, $first_interation = false)
+    function sendMessageTwitter($data, $quick_reply = false, $first_interation = false, $options = false)
     {
         if ($quick_reply) {
+
+            if (!$options) {
+                $options = [
+                    [
+                        "label" => $data['email'],
+                    ],
+                    [
+                        "label" => "Trocar E-mail."
+                    ]
+                ];
+            }
+
             $params = [
                 "type"              => "message_create",
                 "message_create"    => [
@@ -213,14 +226,7 @@ if (!function_exists('sendMessageTwitter')) {
                         "quick_reply" =>
                         [
                             "type" => "options",
-                            "options" => [
-                                [
-                                    "label" => $data['email'],
-                                ],
-                                [
-                                    "label" => "Trocar E-mail."
-                                ]
-                            ]
+                            "options" => $options
                         ]
 
                     ]
@@ -244,7 +250,7 @@ if (!function_exists('sendMessageTwitter')) {
                 'type'      => 'twitter',
                 'from_id'   => $data['externalId'],
                 'to_id'     => $data['to'],
-                "first_interation" => true
+                "first_interation" => 1
             ];
 
             DB::table('messages')->insert($insert_params_messages);
@@ -274,7 +280,7 @@ if (!function_exists('sendMessageTwitter')) {
 }
 
 if (!function_exists('sendMessageFacebook')) {
-    function sendMessageFacebook($request, $quick_reply = false)
+    function sendMessageFacebook($request, $quick_reply = false, $type = 'email', $reply_options = false)
     {
         $return = [];
 
@@ -282,7 +288,7 @@ if (!function_exists('sendMessageFacebook')) {
 
         $version = 'v9.0/';
 
-        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAMNolX1ZCDUBAFSThAJwEjMVqYZBEZAu0ui0KmZCP6NfaAIXIXCQ3oF0k2hOxQILRNmdZAcYCZCMDv4cH9gGdzBHPeu144MoNI9q1rEcPO0oPPLkX5NwahsKs4dQ3yU3ib51t5YaRZBWxiOE9i3mVtpDyxpXHgot8ysThZBL6qeoRAhJ9h0F4Kz');
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBAIj1eRo4LztVZC6FrOWywXRxOr6AA4dhyo8gIcS9uNMML9gOBUToJePJZAO64zLZAU41O2cRnm3Nu0Gc7JPJZAFzNPlP5gdZBWc5TYk19X1pZAXGJ4UjUquoDHhj7wpZCRxzYeneKFkuP3ZBt7aY6PI66jLZBp6IEz5FIT0JTioec');
 
         $endpoint = 'me/messages?access_token=' . $page_token;
 
@@ -295,19 +301,31 @@ if (!function_exists('sendMessageFacebook')) {
         ];
 
         if ($quick_reply) {
-            $params = [
-                "recipient" => [
-                    "id"    => $request['externalId']
-                ],
-                "message"   => [
-                    "text"  => $request['text'],
-                    "quick_replies" => [
-                        [
-                            "content_type" => "user_email"
+            if ($type == 'email') {
+                $params = [
+                    "recipient" => [
+                        "id"    => $request['externalId']
+                    ],
+                    "message"   => [
+                        "text"  => $request['text'],
+                        "quick_replies" => [
+                            [
+                                "content_type" => "user_email"
+                            ]
                         ]
                     ]
-                ]
-            ];
+                ];
+            } else if ($type == "text") {
+                $params = [
+                    "recipient" => [
+                        "id"    => $request['externalId']
+                    ],
+                    "message"   => [
+                        "text"  => $request['text'],
+                        "quick_replies" => $reply_options
+                    ]
+                ];
+            }
         } else {
             $params = [
                 "recipient" => [
@@ -547,7 +565,7 @@ if (!function_exists('getMessengerInfo')) {
 
         $baseUrl = 'https://graph.facebook.com/';
 
-        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAMNolX1ZCDUBAFSThAJwEjMVqYZBEZAu0ui0KmZCP6NfaAIXIXCQ3oF0k2hOxQILRNmdZAcYCZCMDv4cH9gGdzBHPeu144MoNI9q1rEcPO0oPPLkX5NwahsKs4dQ3yU3ib51t5YaRZBWxiOE9i3mVtpDyxpXHgot8ysThZBL6qeoRAhJ9h0F4Kz');
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBAIj1eRo4LztVZC6FrOWywXRxOr6AA4dhyo8gIcS9uNMML9gOBUToJePJZAO64zLZAU41O2cRnm3Nu0Gc7JPJZAFzNPlP5gdZBWc5TYk19X1pZAXGJ4UjUquoDHhj7wpZCRxzYeneKFkuP3ZBt7aY6PI66jLZBp6IEz5FIT0JTioec');
 
         $endpoint = '?fields=name,gender,profile_pic&access_token=' . $page_token;
 

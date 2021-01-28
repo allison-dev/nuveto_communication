@@ -33,8 +33,8 @@ return [
     'facebook' => [
         'client_id' => '2791728311114924',
         'client_secret' => '361254ec90288a3675227b640b0874ce',
-        'redirect' => 'https://sigmademo.nuvetoapps.com.br/auth/facebook/callback',
-        'page-token' => env('FACEBOOK_PAGE_TOKEN', 'EAAMNolX1ZCDUBAFSThAJwEjMVqYZBEZAu0ui0KmZCP6NfaAIXIXCQ3oF0k2hOxQILRNmdZAcYCZCMDv4cH9gGdzBHPeu144MoNI9q1rEcPO0oPPLkX5NwahsKs4dQ3yU3ib51t5YaRZBWxiOE9i3mVtpDyxpXHgot8ysThZBL6qeoRAhJ9h0F4Kz'),
+        'redirect' => 'http://nuveto-chat.herokuapp.com/auth/facebook/callback',
+        'page-token' => env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBAIj1eRo4LztVZC6FrOWywXRxOr6AA4dhyo8gIcS9uNMML9gOBUToJePJZAO64zLZAU41O2cRnm3Nu0Gc7JPJZAFzNPlP5gdZBWc5TYk19X1pZAXGJ4UjUquoDHhj7wpZCRxzYeneKFkuP3ZBt7aY6PI66jLZBp6IEz5FIT0JTioec'),
         'app-secret' => env('FACEBOOK_APP_SECRET', '361254ec90288a3675227b640b0874ce'),
     ],
 
