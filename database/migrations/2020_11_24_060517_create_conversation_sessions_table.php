@@ -21,6 +21,7 @@ class CreateConversationSessionsTable extends Migration
             $table->string('tenantId')->nullable();
             $table->string('farmId')->nullable();
             $table->tinyInteger('terminate')->nullable()->default(0);
+            $table->string('channel')->nullable();
             $table->timestamps();
         });
     }
