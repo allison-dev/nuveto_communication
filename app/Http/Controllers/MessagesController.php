@@ -98,6 +98,7 @@ class MessagesController extends Controller
                         'userId'            => Auth::user()->id,
                         'conversationId'    => $create_conversation['body']['id'],
                         'tenantId'          => $create_session['orgId'],
+                        'channel'           => 'chat',
                         'farmId'            => $create_session['context']['farmId']
                     ];
 
