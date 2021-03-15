@@ -216,7 +216,7 @@ class ChatifyMessengerController extends Controller
         Message::Where('from_id', $user_id)
             ->where('to_id', Auth::user()->id)
             ->where('seen', 0)
-            ->update(['seen' => 1]);
+            ->update(['seen' => 1,"updated_at" => Carbon::now()]);
         return 1;
     }
 

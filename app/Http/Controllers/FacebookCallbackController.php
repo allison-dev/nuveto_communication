@@ -21,10 +21,11 @@ class FacebookCallbackController extends Controller
         sendMessageFacebook($request);
 
         $insert_params_messages = [
-            'id'        => $request->correlationId,
-            'type'      => 'facebook',
-            'from_id'   => $request->correlationId,
-            'to_id'     => $request->externalId,
+            'id'            => $request->correlationId,
+            'type'          => 'facebook',
+            'from_id'       => $request->correlationId,
+            'to_id'         => $request->externalId,
+            "created_at"    =>  Carbon::now()
         ];
 
         DB::table('messages')->insert($insert_params_messages);
@@ -45,9 +46,9 @@ class FacebookCallbackController extends Controller
 
     public function facebookTerminate(Request $request)
     {
-        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1']);
+        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1',"updated_at" => Carbon::now()]);
 
-        DB::table('bot_interations')->where('sender_id', '=', $request['externalId'])->update(['terminate' => '1', 'send_five9' => '0']);
+        DB::table('bot_interations')->where('sender_id', '=', $request['externalId'])->update(['terminate' => '1', 'send_five9' => '0', "updated_at" => Carbon::now()]);
 
         return response()->json([], 204);
     }
@@ -105,7 +106,7 @@ class FacebookCallbackController extends Controller
                         if (!$bot_session) {
                             DB::table('bot_interations')->insert(['sender_id' => $sender_id]);
                         } else {
-                            DB::table('bot_interations')->where('terminate', '=', 0)->update(['sender_id' => $sender_id]);
+                            DB::table('bot_interations')->where('terminate', '=', 0)->update(['sender_id' => $sender_id, "updated_at" => Carbon::now()]);
                         }
 
                         if (isset($bot_session->bot_order) && $bot_session->bot_order) {
@@ -130,13 +131,13 @@ class FacebookCallbackController extends Controller
                                 $send_five9 = true;
                                 $verify_facebook_email = true;
 
-                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['send_five9' => 1]);
+                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['send_five9' => 1, "updated_at" => Carbon::now()]);
                             } else if (filter_var($payload, FILTER_VALIDATE_EMAIL)) {
 
                                 $verify_facebook_email = true;
                                 $sender_email = $events['messaging'][0]['message']['quick_reply']['payload'];
 
-                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['sender_email' => $sender_email]);
+                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['sender_email' => $sender_email,"updated_at" => Carbon::now()]);
                             } else {
 
                                 $choice = explode(':', $payload);
@@ -146,7 +147,7 @@ class FacebookCallbackController extends Controller
                                     'choice'    => $choice[1]
                                 ];
 
-                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_variable' => $choice[0], 'bot_choice' => $choice[1], 'response' => json_encode($bot_response)]);
+                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_variable' => $choice[0], 'bot_choice' => $choice[1], 'response' => json_encode($bot_response),"updated_at" => Carbon::now()]);
 
                                 $bot_order++;
 
@@ -191,7 +192,7 @@ class FacebookCallbackController extends Controller
                                                 sendMessageFacebook($facebook_req, true, 'text', $text_options);
                                             }
 
-                                            DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order]);
+                                            DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order, "updated_at" => Carbon::now()]);
                                         } else {
 
                                             $text_options[] = [
@@ -317,7 +318,8 @@ class FacebookCallbackController extends Controller
                                     'text'              => $text,
                                     'conversationId'    => $facebook_session->conversationId,
                                     'farmId'            => $verify_session->farmId,
-                                    'payload'           => $request
+                                    'payload'           => $request,
+                                    "created_at"        =>  Carbon::now()
                                 ];
 
                                 DB::table('facebook_conversations')->insert($insert_params_facebook);
@@ -349,7 +351,7 @@ class FacebookCallbackController extends Controller
                                             sendMessageFacebook($facebook_req, true, 'text', $text_options);
                                         }
 
-                                        DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order]);
+                                        DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order,"updated_at" => Carbon::now()]);
                                     } else {
 
                                         $text_options[] = [
