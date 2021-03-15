@@ -94,9 +94,9 @@ class FacebookCallbackController extends Controller
 
                     $count_sessions = DB::table('conversation_sessions')->where('terminate', '=', 0)->where('channel', '=', 'facebook')->count();
 
-                    if ($count_sessions >= $billing_sessions->sessions) {
+                    if (!is_null($billing_sessions->sessions) && $count_sessions >= $billing_sessions->sessions) {
                         $facebook_req = (object) [
-                            "text" => 'No momentos, todos os nossos agentes estão ocupados, por favor retorne o seu contato mais tarde.',
+                            "text" => 'No momento, todos os nossos agentes estão ocupados, por favor retorne o seu contato mais tarde.',
                             "externalId" => $sender_id
                         ];
 
@@ -281,6 +281,7 @@ class FacebookCallbackController extends Controller
                                                     'conversationId'    => $create_conversation['body']['id'],
                                                     'tenantId'          => $create_session['orgId'],
                                                     'farmId'            => $create_session['context']['farmId'],
+                                                    'channel'           => 'facebook',
                                                     "created_at"        =>  Carbon::now()
                                                 ];
 
@@ -439,6 +440,7 @@ class FacebookCallbackController extends Controller
                                                 'conversationId'    => $create_conversation['body']['id'],
                                                 'tenantId'          => $create_session['orgId'],
                                                 'farmId'            => $create_session['context']['farmId'],
+                                                'channel'           => 'facebook',
                                                 "created_at"        =>  Carbon::now()
                                             ];
 
