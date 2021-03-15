@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'Centro Médico',
+    'title' => 'Sigma',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -45,8 +45,8 @@ return [
     |
     */
 
-    'logo' => '<b>Centro Médico</b>',
-    'logo_img' => 'vendor/adminlte/dist/img/medical_center_logo.png',
+    'logo' => '<b>Sigma</b>',
+    'logo_img' => 'vendor/adminlte/dist/img/logo-nuveto-header-v2.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
@@ -102,7 +102,7 @@ return [
     */
 
     'classes_auth_card' => '',
-    'classes_auth_header' => 'bg-gradient-info',
+    'classes_auth_header' => '',
     'classes_auth_body' => '',
     'classes_auth_footer' => 'text-center',
     'classes_auth_icon' => 'fa-lg text-info',
@@ -241,9 +241,14 @@ return [
             'icon'  => 'fas fa-tools',
             'submenu' => [
                 [
-                    'text' => 'Agendamentos',
-                    'url'  => 'admin/agendamentos',
-                    'icon' => 'far fa-calendar-plus',
+                    'text' => 'Faturamento',
+                    'url'  => 'admin/faturamento',
+                    'icon' => 'fas fa-book',
+                ],
+                [
+                    'text' => 'Faturas',
+                    'url'  => 'admin/faturas',
+                    'icon' => 'fas fa-file-invoice-dollar',
                 ]
             ]
         ],
@@ -252,15 +257,10 @@ return [
             'icon'  => 'fas fa-user-plus',
             'submenu' => [
                 [
-                    'text' => 'Medicos',
-                    'url'  => 'admin/medicos',
-                    'icon' => 'fas fa-user-md',
-                ],
-                [
-                    'text' => 'Pacientes',
-                    'url'  => 'admin/pacientes',
-                    'icon' => 'fas fa-user-injured',
-                ],
+                    'text' => 'Empresa',
+                    'url'  => 'admin/empresa',
+                    'icon' => 'far fa-building',
+                ]
             ]
         ],
         [

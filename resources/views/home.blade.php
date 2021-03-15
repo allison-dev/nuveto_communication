@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Centro Medico')
+@section('title', 'Sigma')
 
 @section('content_header')
     <h1 class="m-0 text-dark">Bem Vindo <b>{{ Auth::user()->name }}</b></h1>

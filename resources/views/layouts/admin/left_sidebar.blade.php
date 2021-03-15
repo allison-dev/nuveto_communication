@@ -36,13 +36,13 @@
 			<li class="{{ menuActive(['pacientes']) }}">
 				<a href="{{ route('admin.patients.index') }}">
 					<em class="zmdi zmdi-account"></em>
-					<span>@lang('system.patients')</span>
+					<span>@lang('system.billing')</span>
 				</a>
 			</li>
 			<li class="{{ menuActive(['medicos']) }}">
 				<a href="{{ route('admin.doctors.index') }}">
 					<em class="zmdi zmdi-male-alt"></em>
-					<span>@lang('system.doctors')</span>
+					<span>@lang('system.companies')</span>
 				</a>
 			</li>
 			<li class="{{ menuActive(['usuarios']) }}">

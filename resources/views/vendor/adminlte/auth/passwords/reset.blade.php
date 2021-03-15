@@ -75,3 +75,5 @@
 
     </form>
 @stop
+
+@include('vendor.adminlte.auth.css.custom')

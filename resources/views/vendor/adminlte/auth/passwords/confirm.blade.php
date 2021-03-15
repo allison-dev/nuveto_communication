@@ -85,3 +85,5 @@
     @stack('js')
     @yield('js')
 @stop
+
+@include('vendor.adminlte.auth.css.custom')

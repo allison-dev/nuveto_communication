@@ -22,8 +22,8 @@ class Address extends Model
 		return $this->hasMany(Patient::class);
 	}
 
-	public function doctors()
+	public function company()
 	{
-		return $this->hasMany(Doctor::class);
+		return $this->hasMany(Company::class);
 	}
 }

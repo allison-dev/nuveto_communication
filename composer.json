@@ -21,7 +21,6 @@
         "laravel/passport": "^10.0",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^3.0",
-        "laravellegends/pt-br-validator": "^7.0",
         "lucascudo/laravel-pt-br-localization": "^1.1",
         "snapappointments/bootstrap-select": "^1.13",
         "your-app-rocks/eloquent-uuid": "^2.4",
@@ -38,7 +37,8 @@
         "pusher/pusher-php-server": "^4.1",
         "spatie/laravel-webhook-client": "^2.7",
         "thujohn/twitter": "^2.3",
-        "tinify/tinify": "^1.5"
+        "tinify/tinify": "^1.5",
+        "laravellegends/pt-br-validator": "^8.0",
     },
     "require-dev": {
         "facade/ignition": "^2.3.6",

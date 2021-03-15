@@ -61,13 +61,13 @@
             <div class="col-7">
                 <div class="icheck-primary">
                     <input type="checkbox" name="remember" id="remember">
-                    <label for="remember">{{ __('adminlte::adminlte.remember_me') }}</label>
+                    <label for="remember" class="remember">Manter conectado</label>
                 </div>
             </div>
             <div class="col-5">
-                <button type=submit class="btn btn-block {{ config('adminlte.classes_auth_btn', 'btn-flat btn-primary') }}">
-                    <span class="fas fa-sign-in-alt"></span>
+                <button type=submit class="btn btn-block login_btn {{ config('adminlte.classes_auth_btn', 'btn-flat btn-primary') }}">
                     {{ __('adminlte::adminlte.sign_in') }}
+                    <span class="fas fa-sign-in-alt"></span>
                 </button>
             </div>
         </div>
@@ -76,20 +76,19 @@
 @stop
 
 @section('auth_footer')
+    {{-- Register link --}}
+    @if($register_url)
+        <p class="my-0">
+            Não possui conta? <a href="{{ $register_url }}">
+                {{ __('adminlte::adminlte.register_a_new_membership') }}
+            </a>
+        </p>
+    @endif
     {{-- Password reset link --}}
     @if($password_reset_url)
         <p class="my-0">
             <a href="{{ $password_reset_url }}">
                 {{ __('adminlte::adminlte.i_forgot_my_password') }}
-            </a>
-        </p>
-    @endif
-
-    {{-- Register link --}}
-    @if($register_url)
-        <p class="my-0">
-            <a href="{{ $register_url }}">
-                {{ __('adminlte::adminlte.register_a_new_membership') }}
             </a>
         </p>
     @endif
