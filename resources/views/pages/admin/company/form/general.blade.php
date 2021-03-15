@@ -18,7 +18,7 @@
 		<label for="cpf_cnpj">@lang('system.cpf')</label>
 		<div class="form-group">
 			<input class="form-control {{ $errors->has('cpf_cnpj') ? 'is-invalid' : '' }}"
-				   type="text" id="cpf_cnpj" placeholder="@lang('system.inform_the_m', ['value' => trans('system.cpf')])" value="{{ !is_null($company) ? $company->cpf : old('cpf_cnpj') }}" name="cpf_cnpj" />
+				   type="text" id="cpf_cnpj" placeholder="@lang('system.inform_the_m', ['value' => trans('system.cpf')])" value="{{ !is_null($company) ? $company->cpf_cnpj : old('cpf_cnpj') }}" name="cpf_cnpj" />
 			@if ($errors->has('cpf_cnpj'))
 				<label id="cpf_cnpj-error" class="error" for="cpf_cnpj"><strong>{{ $errors->first('cpf_cnpj') }}</strong></label>
 			@endif

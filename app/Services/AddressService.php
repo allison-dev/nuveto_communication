@@ -24,7 +24,7 @@ class AddressService implements AddressServiceInterface
 
 	public function showPostcode()
 	{
-		$address = apiCall($this->header, $this->baseUrl . request('postcode'));
+		$address = postomonAPI($this->header, $this->baseUrl . request('postcode'));
 
 		if (isset($address['success']) && !$address['success']) {
 			return false;

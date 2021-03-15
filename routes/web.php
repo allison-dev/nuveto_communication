@@ -139,6 +139,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::post('addresses/showByPostcode', 'Admin\AddressController@showByPostcode')->name('address.showByPostcode');
 
+        Route::resource('usuarios', 'Admin\UserController', ['as' => 'users'])->names([
+            'index'   => 'users.index',
+            'create'  => 'users.create',
+            'store'   => 'users.store',
+            'edit'    => 'users.edit',
+            'update'  => 'users.update',
+            'destroy' => 'users.destroy',
+        ]);
+
         Route::resource('faturamento', 'Admin\BillingController', ['as' => 'billings'])->names([
             'index'   => 'billings.index',
             'create'  => 'billings.create',
