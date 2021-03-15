@@ -86,1924 +86,6 @@
 /************************************************************************/
 /******/ ({
 
-/***/ "./node_modules/alpinejs/dist/alpine.js":
-/*!**********************************************!*\
-  !*** ./node_modules/alpinejs/dist/alpine.js ***!
-  \**********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-(function (global, factory) {
-   true ? module.exports = factory() :
-  undefined;
-}(this, (function () { 'use strict';
-
-  function _defineProperty(obj, key, value) {
-    if (key in obj) {
-      Object.defineProperty(obj, key, {
-        value: value,
-        enumerable: true,
-        configurable: true,
-        writable: true
-      });
-    } else {
-      obj[key] = value;
-    }
-
-    return obj;
-  }
-
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-      if (enumerableOnly) symbols = symbols.filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-      });
-      keys.push.apply(keys, symbols);
-    }
-
-    return keys;
-  }
-
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i] != null ? arguments[i] : {};
-
-      if (i % 2) {
-        ownKeys(Object(source), true).forEach(function (key) {
-          _defineProperty(target, key, source[key]);
-        });
-      } else if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-      } else {
-        ownKeys(Object(source)).forEach(function (key) {
-          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-      }
-    }
-
-    return target;
-  }
-
-  // Thanks @stimulus:
-  // https://github.com/stimulusjs/stimulus/blob/master/packages/%40stimulus/core/src/application.ts
-  function domReady() {
-    return new Promise(resolve => {
-      if (document.readyState == "loading") {
-        document.addEventListener("DOMContentLoaded", resolve);
-      } else {
-        resolve();
-      }
-    });
-  }
-  function arrayUnique(array) {
-    return Array.from(new Set(array));
-  }
-  function isTesting() {
-    return navigator.userAgent.includes("Node.js") || navigator.userAgent.includes("jsdom");
-  }
-  function checkedAttrLooseCompare(valueA, valueB) {
-    return valueA == valueB;
-  }
-  function warnIfMalformedTemplate(el, directive) {
-    if (el.tagName.toLowerCase() !== 'template') {
-      console.warn(`Alpine: [${directive}] directive should only be added to <template> tags. See https://github.com/alpinejs/alpine#${directive}`);
-    } else if (el.content.childElementCount !== 1) {
-      console.warn(`Alpine: <template> tag with [${directive}] encountered with multiple element roots. Make sure <template> only has a single child element.`);
-    }
-  }
-  function kebabCase(subject) {
-    return subject.replace(/([a-z])([A-Z])/g, '$1-$2').replace(/[_\s]/, '-').toLowerCase();
-  }
-  function camelCase(subject) {
-    return subject.toLowerCase().replace(/-(\w)/g, (match, char) => char.toUpperCase());
-  }
-  function walk(el, callback) {
-    if (callback(el) === false) return;
-    let node = el.firstElementChild;
-
-    while (node) {
-      walk(node, callback);
-      node = node.nextElementSibling;
-    }
-  }
-  function debounce(func, wait) {
-    var timeout;
-    return function () {
-      var context = this,
-          args = arguments;
-
-      var later = function later() {
-        timeout = null;
-        func.apply(context, args);
-      };
-
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-  function saferEval(expression, dataContext, additionalHelperVariables = {}) {
-    if (typeof expression === 'function') {
-      return expression.call(dataContext);
-    }
-
-    return new Function(['$data', ...Object.keys(additionalHelperVariables)], `var __alpine_result; with($data) { __alpine_result = ${expression} }; return __alpine_result`)(dataContext, ...Object.values(additionalHelperVariables));
-  }
-  function saferEvalNoReturn(expression, dataContext, additionalHelperVariables = {}) {
-    if (typeof expression === 'function') {
-      return Promise.resolve(expression.call(dataContext, additionalHelperVariables['$event']));
-    }
-
-    let AsyncFunction = Function;
-    /* MODERN-ONLY:START */
-
-    AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
-    /* MODERN-ONLY:END */
-    // For the cases when users pass only a function reference to the caller: `x-on:click="foo"`
-    // Where "foo" is a function. Also, we'll pass the function the event instance when we call it.
-
-    if (Object.keys(dataContext).includes(expression)) {
-      let methodReference = new Function(['dataContext', ...Object.keys(additionalHelperVariables)], `with(dataContext) { return ${expression} }`)(dataContext, ...Object.values(additionalHelperVariables));
-
-      if (typeof methodReference === 'function') {
-        return Promise.resolve(methodReference.call(dataContext, additionalHelperVariables['$event']));
-      } else {
-        return Promise.resolve();
-      }
-    }
-
-    return Promise.resolve(new AsyncFunction(['dataContext', ...Object.keys(additionalHelperVariables)], `with(dataContext) { ${expression} }`)(dataContext, ...Object.values(additionalHelperVariables)));
-  }
-  const xAttrRE = /^x-(on|bind|data|text|html|model|if|for|show|cloak|transition|ref|spread)\b/;
-  function isXAttr(attr) {
-    const name = replaceAtAndColonWithStandardSyntax(attr.name);
-    return xAttrRE.test(name);
-  }
-  function getXAttrs(el, component, type) {
-    let directives = Array.from(el.attributes).filter(isXAttr).map(parseHtmlAttribute); // Get an object of directives from x-spread.
-
-    let spreadDirective = directives.filter(directive => directive.type === 'spread')[0];
-
-    if (spreadDirective) {
-      let spreadObject = saferEval(spreadDirective.expression, component.$data); // Add x-spread directives to the pile of existing directives.
-
-      directives = directives.concat(Object.entries(spreadObject).map(([name, value]) => parseHtmlAttribute({
-        name,
-        value
-      })));
-    }
-
-    if (type) return directives.filter(i => i.type === type);
-    return sortDirectives(directives);
-  }
-
-  function sortDirectives(directives) {
-    let directiveOrder = ['bind', 'model', 'show', 'catch-all'];
-    return directives.sort((a, b) => {
-      let typeA = directiveOrder.indexOf(a.type) === -1 ? 'catch-all' : a.type;
-      let typeB = directiveOrder.indexOf(b.type) === -1 ? 'catch-all' : b.type;
-      return directiveOrder.indexOf(typeA) - directiveOrder.indexOf(typeB);
-    });
-  }
-
-  function parseHtmlAttribute({
-    name,
-    value
-  }) {
-    const normalizedName = replaceAtAndColonWithStandardSyntax(name);
-    const typeMatch = normalizedName.match(xAttrRE);
-    const valueMatch = normalizedName.match(/:([a-zA-Z0-9\-:]+)/);
-    const modifiers = normalizedName.match(/\.[^.\]]+(?=[^\]]*$)/g) || [];
-    return {
-      type: typeMatch ? typeMatch[1] : null,
-      value: valueMatch ? valueMatch[1] : null,
-      modifiers: modifiers.map(i => i.replace('.', '')),
-      expression: value
-    };
-  }
-  function isBooleanAttr(attrName) {
-    // As per HTML spec table https://html.spec.whatwg.org/multipage/indices.html#attributes-3:boolean-attribute
-    // Array roughly ordered by estimated usage
-    const booleanAttributes = ['disabled', 'checked', 'required', 'readonly', 'hidden', 'open', 'selected', 'autofocus', 'itemscope', 'multiple', 'novalidate', 'allowfullscreen', 'allowpaymentrequest', 'formnovalidate', 'autoplay', 'controls', 'loop', 'muted', 'playsinline', 'default', 'ismap', 'reversed', 'async', 'defer', 'nomodule'];
-    return booleanAttributes.includes(attrName);
-  }
-  function replaceAtAndColonWithStandardSyntax(name) {
-    if (name.startsWith('@')) {
-      return name.replace('@', 'x-on:');
-    } else if (name.startsWith(':')) {
-      return name.replace(':', 'x-bind:');
-    }
-
-    return name;
-  }
-  function convertClassStringToArray(classList, filterFn = Boolean) {
-    return classList.split(' ').filter(filterFn);
-  }
-  const TRANSITION_TYPE_IN = 'in';
-  const TRANSITION_TYPE_OUT = 'out';
-  const TRANSITION_CANCELLED = 'cancelled';
-  function transitionIn(el, show, reject, component, forceSkip = false) {
-    // We don't want to transition on the initial page load.
-    if (forceSkip) return show();
-
-    if (el.__x_transition && el.__x_transition.type === TRANSITION_TYPE_IN) {
-      // there is already a similar transition going on, this was probably triggered by
-      // a change in a different property, let's just leave the previous one doing its job
-      return;
-    }
-
-    const attrs = getXAttrs(el, component, 'transition');
-    const showAttr = getXAttrs(el, component, 'show')[0]; // If this is triggered by a x-show.transition.
-
-    if (showAttr && showAttr.modifiers.includes('transition')) {
-      let modifiers = showAttr.modifiers; // If x-show.transition.out, we'll skip the "in" transition.
-
-      if (modifiers.includes('out') && !modifiers.includes('in')) return show();
-      const settingBothSidesOfTransition = modifiers.includes('in') && modifiers.includes('out'); // If x-show.transition.in...out... only use "in" related modifiers for this transition.
-
-      modifiers = settingBothSidesOfTransition ? modifiers.filter((i, index) => index < modifiers.indexOf('out')) : modifiers;
-      transitionHelperIn(el, modifiers, show, reject); // Otherwise, we can assume x-transition:enter.
-    } else if (attrs.some(attr => ['enter', 'enter-start', 'enter-end'].includes(attr.value))) {
-      transitionClassesIn(el, component, attrs, show, reject);
-    } else {
-      // If neither, just show that damn thing.
-      show();
-    }
-  }
-  function transitionOut(el, hide, reject, component, forceSkip = false) {
-    // We don't want to transition on the initial page load.
-    if (forceSkip) return hide();
-
-    if (el.__x_transition && el.__x_transition.type === TRANSITION_TYPE_OUT) {
-      // there is already a similar transition going on, this was probably triggered by
-      // a change in a different property, let's just leave the previous one doing its job
-      return;
-    }
-
-    const attrs = getXAttrs(el, component, 'transition');
-    const showAttr = getXAttrs(el, component, 'show')[0];
-
-    if (showAttr && showAttr.modifiers.includes('transition')) {
-      let modifiers = showAttr.modifiers;
-      if (modifiers.includes('in') && !modifiers.includes('out')) return hide();
-      const settingBothSidesOfTransition = modifiers.includes('in') && modifiers.includes('out');
-      modifiers = settingBothSidesOfTransition ? modifiers.filter((i, index) => index > modifiers.indexOf('out')) : modifiers;
-      transitionHelperOut(el, modifiers, settingBothSidesOfTransition, hide, reject);
-    } else if (attrs.some(attr => ['leave', 'leave-start', 'leave-end'].includes(attr.value))) {
-      transitionClassesOut(el, component, attrs, hide, reject);
-    } else {
-      hide();
-    }
-  }
-  function transitionHelperIn(el, modifiers, showCallback, reject) {
-    // Default values inspired by: https://material.io/design/motion/speed.html#duration
-    const styleValues = {
-      duration: modifierValue(modifiers, 'duration', 150),
-      origin: modifierValue(modifiers, 'origin', 'center'),
-      first: {
-        opacity: 0,
-        scale: modifierValue(modifiers, 'scale', 95)
-      },
-      second: {
-        opacity: 1,
-        scale: 100
-      }
-    };
-    transitionHelper(el, modifiers, showCallback, () => {}, reject, styleValues, TRANSITION_TYPE_IN);
-  }
-  function transitionHelperOut(el, modifiers, settingBothSidesOfTransition, hideCallback, reject) {
-    // Make the "out" transition .5x slower than the "in". (Visually better)
-    // HOWEVER, if they explicitly set a duration for the "out" transition,
-    // use that.
-    const duration = settingBothSidesOfTransition ? modifierValue(modifiers, 'duration', 150) : modifierValue(modifiers, 'duration', 150) / 2;
-    const styleValues = {
-      duration: duration,
-      origin: modifierValue(modifiers, 'origin', 'center'),
-      first: {
-        opacity: 1,
-        scale: 100
-      },
-      second: {
-        opacity: 0,
-        scale: modifierValue(modifiers, 'scale', 95)
-      }
-    };
-    transitionHelper(el, modifiers, () => {}, hideCallback, reject, styleValues, TRANSITION_TYPE_OUT);
-  }
-
-  function modifierValue(modifiers, key, fallback) {
-    // If the modifier isn't present, use the default.
-    if (modifiers.indexOf(key) === -1) return fallback; // If it IS present, grab the value after it: x-show.transition.duration.500ms
-
-    const rawValue = modifiers[modifiers.indexOf(key) + 1];
-    if (!rawValue) return fallback;
-
-    if (key === 'scale') {
-      // Check if the very next value is NOT a number and return the fallback.
-      // If x-show.transition.scale, we'll use the default scale value.
-      // That is how a user opts out of the opacity transition.
-      if (!isNumeric(rawValue)) return fallback;
-    }
-
-    if (key === 'duration') {
-      // Support x-show.transition.duration.500ms && duration.500
-      let match = rawValue.match(/([0-9]+)ms/);
-      if (match) return match[1];
-    }
-
-    if (key === 'origin') {
-      // Support chaining origin directions: x-show.transition.top.right
-      if (['top', 'right', 'left', 'center', 'bottom'].includes(modifiers[modifiers.indexOf(key) + 2])) {
-        return [rawValue, modifiers[modifiers.indexOf(key) + 2]].join(' ');
-      }
-    }
-
-    return rawValue;
-  }
-
-  function transitionHelper(el, modifiers, hook1, hook2, reject, styleValues, type) {
-    // clear the previous transition if exists to avoid caching the wrong styles
-    if (el.__x_transition) {
-      el.__x_transition.cancel && el.__x_transition.cancel();
-    } // If the user set these style values, we'll put them back when we're done with them.
-
-
-    const opacityCache = el.style.opacity;
-    const transformCache = el.style.transform;
-    const transformOriginCache = el.style.transformOrigin; // If no modifiers are present: x-show.transition, we'll default to both opacity and scale.
-
-    const noModifiers = !modifiers.includes('opacity') && !modifiers.includes('scale');
-    const transitionOpacity = noModifiers || modifiers.includes('opacity');
-    const transitionScale = noModifiers || modifiers.includes('scale'); // These are the explicit stages of a transition (same stages for in and for out).
-    // This way you can get a birds eye view of the hooks, and the differences
-    // between them.
-
-    const stages = {
-      start() {
-        if (transitionOpacity) el.style.opacity = styleValues.first.opacity;
-        if (transitionScale) el.style.transform = `scale(${styleValues.first.scale / 100})`;
-      },
-
-      during() {
-        if (transitionScale) el.style.transformOrigin = styleValues.origin;
-        el.style.transitionProperty = [transitionOpacity ? `opacity` : ``, transitionScale ? `transform` : ``].join(' ').trim();
-        el.style.transitionDuration = `${styleValues.duration / 1000}s`;
-        el.style.transitionTimingFunction = `cubic-bezier(0.4, 0.0, 0.2, 1)`;
-      },
-
-      show() {
-        hook1();
-      },
-
-      end() {
-        if (transitionOpacity) el.style.opacity = styleValues.second.opacity;
-        if (transitionScale) el.style.transform = `scale(${styleValues.second.scale / 100})`;
-      },
-
-      hide() {
-        hook2();
-      },
-
-      cleanup() {
-        if (transitionOpacity) el.style.opacity = opacityCache;
-        if (transitionScale) el.style.transform = transformCache;
-        if (transitionScale) el.style.transformOrigin = transformOriginCache;
-        el.style.transitionProperty = null;
-        el.style.transitionDuration = null;
-        el.style.transitionTimingFunction = null;
-      }
-
-    };
-    transition(el, stages, type, reject);
-  }
-
-  const ensureStringExpression = (expression, el, component) => {
-    return typeof expression === 'function' ? component.evaluateReturnExpression(el, expression) : expression;
-  };
-
-  function transitionClassesIn(el, component, directives, showCallback, reject) {
-    const enter = convertClassStringToArray(ensureStringExpression((directives.find(i => i.value === 'enter') || {
-      expression: ''
-    }).expression, el, component));
-    const enterStart = convertClassStringToArray(ensureStringExpression((directives.find(i => i.value === 'enter-start') || {
-      expression: ''
-    }).expression, el, component));
-    const enterEnd = convertClassStringToArray(ensureStringExpression((directives.find(i => i.value === 'enter-end') || {
-      expression: ''
-    }).expression, el, component));
-    transitionClasses(el, enter, enterStart, enterEnd, showCallback, () => {}, TRANSITION_TYPE_IN, reject);
-  }
-  function transitionClassesOut(el, component, directives, hideCallback, reject) {
-    const leave = convertClassStringToArray(ensureStringExpression((directives.find(i => i.value === 'leave') || {
-      expression: ''
-    }).expression, el, component));
-    const leaveStart = convertClassStringToArray(ensureStringExpression((directives.find(i => i.value === 'leave-start') || {
-      expression: ''
-    }).expression, el, component));
-    const leaveEnd = convertClassStringToArray(ensureStringExpression((directives.find(i => i.value === 'leave-end') || {
-      expression: ''
-    }).expression, el, component));
-    transitionClasses(el, leave, leaveStart, leaveEnd, () => {}, hideCallback, TRANSITION_TYPE_OUT, reject);
-  }
-  function transitionClasses(el, classesDuring, classesStart, classesEnd, hook1, hook2, type, reject) {
-    // clear the previous transition if exists to avoid caching the wrong classes
-    if (el.__x_transition) {
-      el.__x_transition.cancel && el.__x_transition.cancel();
-    }
-
-    const originalClasses = el.__x_original_classes || [];
-    const stages = {
-      start() {
-        el.classList.add(...classesStart);
-      },
-
-      during() {
-        el.classList.add(...classesDuring);
-      },
-
-      show() {
-        hook1();
-      },
-
-      end() {
-        // Don't remove classes that were in the original class attribute.
-        el.classList.remove(...classesStart.filter(i => !originalClasses.includes(i)));
-        el.classList.add(...classesEnd);
-      },
-
-      hide() {
-        hook2();
-      },
-
-      cleanup() {
-        el.classList.remove(...classesDuring.filter(i => !originalClasses.includes(i)));
-        el.classList.remove(...classesEnd.filter(i => !originalClasses.includes(i)));
-      }
-
-    };
-    transition(el, stages, type, reject);
-  }
-  function transition(el, stages, type, reject) {
-    const finish = once(() => {
-      stages.hide(); // Adding an "isConnected" check, in case the callback
-      // removed the element from the DOM.
-
-      if (el.isConnected) {
-        stages.cleanup();
-      }
-
-      delete el.__x_transition;
-    });
-    el.__x_transition = {
-      // Set transition type so we can avoid clearing transition if the direction is the same
-      type: type,
-      // create a callback for the last stages of the transition so we can call it
-      // from different point and early terminate it. Once will ensure that function
-      // is only called one time.
-      cancel: once(() => {
-        reject(TRANSITION_CANCELLED);
-        finish();
-      }),
-      finish,
-      // This store the next animation frame so we can cancel it
-      nextFrame: null
-    };
-    stages.start();
-    stages.during();
-    el.__x_transition.nextFrame = requestAnimationFrame(() => {
-      // Note: Safari's transitionDuration property will list out comma separated transition durations
-      // for every single transition property. Let's grab the first one and call it a day.
-      let duration = Number(getComputedStyle(el).transitionDuration.replace(/,.*/, '').replace('s', '')) * 1000;
-
-      if (duration === 0) {
-        duration = Number(getComputedStyle(el).animationDuration.replace('s', '')) * 1000;
-      }
-
-      stages.show();
-      el.__x_transition.nextFrame = requestAnimationFrame(() => {
-        stages.end();
-        setTimeout(el.__x_transition.finish, duration);
-      });
-    });
-  }
-  function isNumeric(subject) {
-    return !Array.isArray(subject) && !isNaN(subject);
-  } // Thanks @vuejs
-  // https://github.com/vuejs/vue/blob/4de4649d9637262a9b007720b59f80ac72a5620c/src/shared/util.js
-
-  function once(callback) {
-    let called = false;
-    return function () {
-      if (!called) {
-        called = true;
-        callback.apply(this, arguments);
-      }
-    };
-  }
-
-  function handleForDirective(component, templateEl, expression, initialUpdate, extraVars) {
-    warnIfMalformedTemplate(templateEl, 'x-for');
-    let iteratorNames = typeof expression === 'function' ? parseForExpression(component.evaluateReturnExpression(templateEl, expression)) : parseForExpression(expression);
-    let items = evaluateItemsAndReturnEmptyIfXIfIsPresentAndFalseOnElement(component, templateEl, iteratorNames, extraVars); // As we walk the array, we'll also walk the DOM (updating/creating as we go).
-
-    let currentEl = templateEl;
-    items.forEach((item, index) => {
-      let iterationScopeVariables = getIterationScopeVariables(iteratorNames, item, index, items, extraVars());
-      let currentKey = generateKeyForIteration(component, templateEl, index, iterationScopeVariables);
-      let nextEl = lookAheadForMatchingKeyedElementAndMoveItIfFound(currentEl.nextElementSibling, currentKey); // If we haven't found a matching key, insert the element at the current position.
-
-      if (!nextEl) {
-        nextEl = addElementInLoopAfterCurrentEl(templateEl, currentEl); // And transition it in if it's not the first page load.
-
-        transitionIn(nextEl, () => {}, () => {}, component, initialUpdate);
-        nextEl.__x_for = iterationScopeVariables;
-        component.initializeElements(nextEl, () => nextEl.__x_for); // Otherwise update the element we found.
-      } else {
-        // Temporarily remove the key indicator to allow the normal "updateElements" to work.
-        delete nextEl.__x_for_key;
-        nextEl.__x_for = iterationScopeVariables;
-        component.updateElements(nextEl, () => nextEl.__x_for);
-      }
-
-      currentEl = nextEl;
-      currentEl.__x_for_key = currentKey;
-    });
-    removeAnyLeftOverElementsFromPreviousUpdate(currentEl, component);
-  } // This was taken from VueJS 2.* core. Thanks Vue!
-
-  function parseForExpression(expression) {
-    let forIteratorRE = /,([^,\}\]]*)(?:,([^,\}\]]*))?$/;
-    let stripParensRE = /^\(|\)$/g;
-    let forAliasRE = /([\s\S]*?)\s+(?:in|of)\s+([\s\S]*)/;
-    let inMatch = expression.match(forAliasRE);
-    if (!inMatch) return;
-    let res = {};
-    res.items = inMatch[2].trim();
-    let item = inMatch[1].trim().replace(stripParensRE, '');
-    let iteratorMatch = item.match(forIteratorRE);
-
-    if (iteratorMatch) {
-      res.item = item.replace(forIteratorRE, '').trim();
-      res.index = iteratorMatch[1].trim();
-
-      if (iteratorMatch[2]) {
-        res.collection = iteratorMatch[2].trim();
-      }
-    } else {
-      res.item = item;
-    }
-
-    return res;
-  }
-
-  function getIterationScopeVariables(iteratorNames, item, index, items, extraVars) {
-    // We must create a new object, so each iteration has a new scope
-    let scopeVariables = extraVars ? _objectSpread2({}, extraVars) : {};
-    scopeVariables[iteratorNames.item] = item;
-    if (iteratorNames.index) scopeVariables[iteratorNames.index] = index;
-    if (iteratorNames.collection) scopeVariables[iteratorNames.collection] = items;
-    return scopeVariables;
-  }
-
-  function generateKeyForIteration(component, el, index, iterationScopeVariables) {
-    let bindKeyAttribute = getXAttrs(el, component, 'bind').filter(attr => attr.value === 'key')[0]; // If the dev hasn't specified a key, just return the index of the iteration.
-
-    if (!bindKeyAttribute) return index;
-    return component.evaluateReturnExpression(el, bindKeyAttribute.expression, () => iterationScopeVariables);
-  }
-
-  function evaluateItemsAndReturnEmptyIfXIfIsPresentAndFalseOnElement(component, el, iteratorNames, extraVars) {
-    let ifAttribute = getXAttrs(el, component, 'if')[0];
-
-    if (ifAttribute && !component.evaluateReturnExpression(el, ifAttribute.expression)) {
-      return [];
-    }
-
-    let items = component.evaluateReturnExpression(el, iteratorNames.items, extraVars); // This adds support for the `i in n` syntax.
-
-    if (isNumeric(items) && items > 0) {
-      items = Array.from(Array(items).keys(), i => i + 1);
-    }
-
-    return items;
-  }
-
-  function addElementInLoopAfterCurrentEl(templateEl, currentEl) {
-    let clone = document.importNode(templateEl.content, true);
-    currentEl.parentElement.insertBefore(clone, currentEl.nextElementSibling);
-    return currentEl.nextElementSibling;
-  }
-
-  function lookAheadForMatchingKeyedElementAndMoveItIfFound(nextEl, currentKey) {
-    if (!nextEl) return; // If the the key's DO match, no need to look ahead.
-
-    if (nextEl.__x_for_key === currentKey) return nextEl; // If they don't, we'll look ahead for a match.
-    // If we find it, we'll move it to the current position in the loop.
-
-    let tmpNextEl = nextEl;
-
-    while (tmpNextEl) {
-      if (tmpNextEl.__x_for_key === currentKey) {
-        return tmpNextEl.parentElement.insertBefore(tmpNextEl, nextEl);
-      }
-
-      tmpNextEl = tmpNextEl.nextElementSibling && tmpNextEl.nextElementSibling.__x_for_key !== undefined ? tmpNextEl.nextElementSibling : false;
-    }
-  }
-
-  function removeAnyLeftOverElementsFromPreviousUpdate(currentEl, component) {
-    var nextElementFromOldLoop = currentEl.nextElementSibling && currentEl.nextElementSibling.__x_for_key !== undefined ? currentEl.nextElementSibling : false;
-
-    while (nextElementFromOldLoop) {
-      let nextElementFromOldLoopImmutable = nextElementFromOldLoop;
-      let nextSibling = nextElementFromOldLoop.nextElementSibling;
-      transitionOut(nextElementFromOldLoop, () => {
-        nextElementFromOldLoopImmutable.remove();
-      }, () => {}, component);
-      nextElementFromOldLoop = nextSibling && nextSibling.__x_for_key !== undefined ? nextSibling : false;
-    }
-  }
-
-  function handleAttributeBindingDirective(component, el, attrName, expression, extraVars, attrType, modifiers) {
-    var value = component.evaluateReturnExpression(el, expression, extraVars);
-
-    if (attrName === 'value') {
-      if (Alpine.ignoreFocusedForValueBinding && document.activeElement.isSameNode(el)) return; // If nested model key is undefined, set the default value to empty string.
-
-      if (value === undefined && expression.match(/\./)) {
-        value = '';
-      }
-
-      if (el.type === 'radio') {
-        // Set radio value from x-bind:value, if no "value" attribute exists.
-        // If there are any initial state values, radio will have a correct
-        // "checked" value since x-bind:value is processed before x-model.
-        if (el.attributes.value === undefined && attrType === 'bind') {
-          el.value = value;
-        } else if (attrType !== 'bind') {
-          el.checked = checkedAttrLooseCompare(el.value, value);
-        }
-      } else if (el.type === 'checkbox') {
-        // If we are explicitly binding a string to the :value, set the string,
-        // If the value is a boolean, leave it alone, it will be set to "on"
-        // automatically.
-        if (typeof value !== 'boolean' && ![null, undefined].includes(value) && attrType === 'bind') {
-          el.value = String(value);
-        } else if (attrType !== 'bind') {
-          if (Array.isArray(value)) {
-            // I'm purposely not using Array.includes here because it's
-            // strict, and because of Numeric/String mis-casting, I
-            // want the "includes" to be "fuzzy".
-            el.checked = value.some(val => checkedAttrLooseCompare(val, el.value));
-          } else {
-            el.checked = !!value;
-          }
-        }
-      } else if (el.tagName === 'SELECT') {
-        updateSelect(el, value);
-      } else {
-        if (el.value === value) return;
-        el.value = value;
-      }
-    } else if (attrName === 'class') {
-      if (Array.isArray(value)) {
-        const originalClasses = el.__x_original_classes || [];
-        el.setAttribute('class', arrayUnique(originalClasses.concat(value)).join(' '));
-      } else if (typeof value === 'object') {
-        // Sorting the keys / class names by their boolean value will ensure that
-        // anything that evaluates to `false` and needs to remove classes is run first.
-        const keysSortedByBooleanValue = Object.keys(value).sort((a, b) => value[a] - value[b]);
-        keysSortedByBooleanValue.forEach(classNames => {
-          if (value[classNames]) {
-            convertClassStringToArray(classNames).forEach(className => el.classList.add(className));
-          } else {
-            convertClassStringToArray(classNames).forEach(className => el.classList.remove(className));
-          }
-        });
-      } else {
-        const originalClasses = el.__x_original_classes || [];
-        const newClasses = convertClassStringToArray(value);
-        el.setAttribute('class', arrayUnique(originalClasses.concat(newClasses)).join(' '));
-      }
-    } else {
-      attrName = modifiers.includes('camel') ? camelCase(attrName) : attrName; // If an attribute's bound value is null, undefined or false, remove the attribute
-
-      if ([null, undefined, false].includes(value)) {
-        el.removeAttribute(attrName);
-      } else {
-        isBooleanAttr(attrName) ? setIfChanged(el, attrName, attrName) : setIfChanged(el, attrName, value);
-      }
-    }
-  }
-
-  function setIfChanged(el, attrName, value) {
-    if (el.getAttribute(attrName) != value) {
-      el.setAttribute(attrName, value);
-    }
-  }
-
-  function updateSelect(el, value) {
-    const arrayWrappedValue = [].concat(value).map(value => {
-      return value + '';
-    });
-    Array.from(el.options).forEach(option => {
-      option.selected = arrayWrappedValue.includes(option.value || option.text);
-    });
-  }
-
-  function handleTextDirective(el, output, expression) {
-    // If nested model key is undefined, set the default value to empty string.
-    if (output === undefined && expression.match(/\./)) {
-      output = '';
-    }
-
-    el.textContent = output;
-  }
-
-  function handleHtmlDirective(component, el, expression, extraVars) {
-    el.innerHTML = component.evaluateReturnExpression(el, expression, extraVars);
-  }
-
-  function handleShowDirective(component, el, value, modifiers, initialUpdate = false) {
-    const hide = () => {
-      el.style.display = 'none';
-      el.__x_is_shown = false;
-    };
-
-    const show = () => {
-      if (el.style.length === 1 && el.style.display === 'none') {
-        el.removeAttribute('style');
-      } else {
-        el.style.removeProperty('display');
-      }
-
-      el.__x_is_shown = true;
-    };
-
-    if (initialUpdate === true) {
-      if (value) {
-        show();
-      } else {
-        hide();
-      }
-
-      return;
-    }
-
-    const handle = (resolve, reject) => {
-      if (value) {
-        if (el.style.display === 'none' || el.__x_transition) {
-          transitionIn(el, () => {
-            show();
-          }, reject, component);
-        }
-
-        resolve(() => {});
-      } else {
-        if (el.style.display !== 'none') {
-          transitionOut(el, () => {
-            resolve(() => {
-              hide();
-            });
-          }, reject, component);
-        } else {
-          resolve(() => {});
-        }
-      }
-    }; // The working of x-show is a bit complex because we need to
-    // wait for any child transitions to finish before hiding
-    // some element. Also, this has to be done recursively.
-    // If x-show.immediate, foregoe the waiting.
-
-
-    if (modifiers.includes('immediate')) {
-      handle(finish => finish(), () => {});
-      return;
-    } // x-show is encountered during a DOM tree walk. If an element
-    // we encounter is NOT a child of another x-show element we
-    // can execute the previous x-show stack (if one exists).
-
-
-    if (component.showDirectiveLastElement && !component.showDirectiveLastElement.contains(el)) {
-      component.executeAndClearRemainingShowDirectiveStack();
-    }
-
-    component.showDirectiveStack.push(handle);
-    component.showDirectiveLastElement = el;
-  }
-
-  function handleIfDirective(component, el, expressionResult, initialUpdate, extraVars) {
-    warnIfMalformedTemplate(el, 'x-if');
-    const elementHasAlreadyBeenAdded = el.nextElementSibling && el.nextElementSibling.__x_inserted_me === true;
-
-    if (expressionResult && (!elementHasAlreadyBeenAdded || el.__x_transition)) {
-      const clone = document.importNode(el.content, true);
-      el.parentElement.insertBefore(clone, el.nextElementSibling);
-      transitionIn(el.nextElementSibling, () => {}, () => {}, component, initialUpdate);
-      component.initializeElements(el.nextElementSibling, extraVars);
-      el.nextElementSibling.__x_inserted_me = true;
-    } else if (!expressionResult && elementHasAlreadyBeenAdded) {
-      transitionOut(el.nextElementSibling, () => {
-        el.nextElementSibling.remove();
-      }, () => {}, component, initialUpdate);
-    }
-  }
-
-  function registerListener(component, el, event, modifiers, expression, extraVars = {}) {
-    const options = {
-      passive: modifiers.includes('passive')
-    };
-
-    if (modifiers.includes('camel')) {
-      event = camelCase(event);
-    }
-
-    if (modifiers.includes('away')) {
-      let handler = e => {
-        // Don't do anything if the click came from the element or within it.
-        if (el.contains(e.target)) return; // Don't do anything if this element isn't currently visible.
-
-        if (el.offsetWidth < 1 && el.offsetHeight < 1) return; // Now that we are sure the element is visible, AND the click
-        // is from outside it, let's run the expression.
-
-        runListenerHandler(component, expression, e, extraVars);
-
-        if (modifiers.includes('once')) {
-          document.removeEventListener(event, handler, options);
-        }
-      }; // Listen for this event at the root level.
-
-
-      document.addEventListener(event, handler, options);
-    } else {
-      let listenerTarget = modifiers.includes('window') ? window : modifiers.includes('document') ? document : el;
-
-      let handler = e => {
-        // Remove this global event handler if the element that declared it
-        // has been removed. It's now stale.
-        if (listenerTarget === window || listenerTarget === document) {
-          if (!document.body.contains(el)) {
-            listenerTarget.removeEventListener(event, handler, options);
-            return;
-          }
-        }
-
-        if (isKeyEvent(event)) {
-          if (isListeningForASpecificKeyThatHasntBeenPressed(e, modifiers)) {
-            return;
-          }
-        }
-
-        if (modifiers.includes('prevent')) e.preventDefault();
-        if (modifiers.includes('stop')) e.stopPropagation(); // If the .self modifier isn't present, or if it is present and
-        // the target element matches the element we are registering the
-        // event on, run the handler
-
-        if (!modifiers.includes('self') || e.target === el) {
-          const returnValue = runListenerHandler(component, expression, e, extraVars);
-          returnValue.then(value => {
-            if (value === false) {
-              e.preventDefault();
-            } else {
-              if (modifiers.includes('once')) {
-                listenerTarget.removeEventListener(event, handler, options);
-              }
-            }
-          });
-        }
-      };
-
-      if (modifiers.includes('debounce')) {
-        let nextModifier = modifiers[modifiers.indexOf('debounce') + 1] || 'invalid-wait';
-        let wait = isNumeric(nextModifier.split('ms')[0]) ? Number(nextModifier.split('ms')[0]) : 250;
-        handler = debounce(handler, wait);
-      }
-
-      listenerTarget.addEventListener(event, handler, options);
-    }
-  }
-
-  function runListenerHandler(component, expression, e, extraVars) {
-    return component.evaluateCommandExpression(e.target, expression, () => {
-      return _objectSpread2(_objectSpread2({}, extraVars()), {}, {
-        '$event': e
-      });
-    });
-  }
-
-  function isKeyEvent(event) {
-    return ['keydown', 'keyup'].includes(event);
-  }
-
-  function isListeningForASpecificKeyThatHasntBeenPressed(e, modifiers) {
-    let keyModifiers = modifiers.filter(i => {
-      return !['window', 'document', 'prevent', 'stop'].includes(i);
-    });
-
-    if (keyModifiers.includes('debounce')) {
-      let debounceIndex = keyModifiers.indexOf('debounce');
-      keyModifiers.splice(debounceIndex, isNumeric((keyModifiers[debounceIndex + 1] || 'invalid-wait').split('ms')[0]) ? 2 : 1);
-    } // If no modifier is specified, we'll call it a press.
-
-
-    if (keyModifiers.length === 0) return false; // If one is passed, AND it matches the key pressed, we'll call it a press.
-
-    if (keyModifiers.length === 1 && keyModifiers[0] === keyToModifier(e.key)) return false; // The user is listening for key combinations.
-
-    const systemKeyModifiers = ['ctrl', 'shift', 'alt', 'meta', 'cmd', 'super'];
-    const selectedSystemKeyModifiers = systemKeyModifiers.filter(modifier => keyModifiers.includes(modifier));
-    keyModifiers = keyModifiers.filter(i => !selectedSystemKeyModifiers.includes(i));
-
-    if (selectedSystemKeyModifiers.length > 0) {
-      const activelyPressedKeyModifiers = selectedSystemKeyModifiers.filter(modifier => {
-        // Alias "cmd" and "super" to "meta"
-        if (modifier === 'cmd' || modifier === 'super') modifier = 'meta';
-        return e[`${modifier}Key`];
-      }); // If all the modifiers selected are pressed, ...
-
-      if (activelyPressedKeyModifiers.length === selectedSystemKeyModifiers.length) {
-        // AND the remaining key is pressed as well. It's a press.
-        if (keyModifiers[0] === keyToModifier(e.key)) return false;
-      }
-    } // We'll call it NOT a valid keypress.
-
-
-    return true;
-  }
-
-  function keyToModifier(key) {
-    switch (key) {
-      case '/':
-        return 'slash';
-
-      case ' ':
-      case 'Spacebar':
-        return 'space';
-
-      default:
-        return key && kebabCase(key);
-    }
-  }
-
-  function registerModelListener(component, el, modifiers, expression, extraVars) {
-    // If the element we are binding to is a select, a radio, or checkbox
-    // we'll listen for the change event instead of the "input" event.
-    var event = el.tagName.toLowerCase() === 'select' || ['checkbox', 'radio'].includes(el.type) || modifiers.includes('lazy') ? 'change' : 'input';
-    const listenerExpression = `${expression} = rightSideOfExpression($event, ${expression})`;
-    registerListener(component, el, event, modifiers, listenerExpression, () => {
-      return _objectSpread2(_objectSpread2({}, extraVars()), {}, {
-        rightSideOfExpression: generateModelAssignmentFunction(el, modifiers, expression)
-      });
-    });
-  }
-
-  function generateModelAssignmentFunction(el, modifiers, expression) {
-    if (el.type === 'radio') {
-      // Radio buttons only work properly when they share a name attribute.
-      // People might assume we take care of that for them, because
-      // they already set a shared "x-model" attribute.
-      if (!el.hasAttribute('name')) el.setAttribute('name', expression);
-    }
-
-    return (event, currentValue) => {
-      // Check for event.detail due to an issue where IE11 handles other events as a CustomEvent.
-      if (event instanceof CustomEvent && event.detail) {
-        return event.detail;
-      } else if (el.type === 'checkbox') {
-        // If the data we are binding to is an array, toggle its value inside the array.
-        if (Array.isArray(currentValue)) {
-          const newValue = modifiers.includes('number') ? safeParseNumber(event.target.value) : event.target.value;
-          return event.target.checked ? currentValue.concat([newValue]) : currentValue.filter(el => !checkedAttrLooseCompare(el, newValue));
-        } else {
-          return event.target.checked;
-        }
-      } else if (el.tagName.toLowerCase() === 'select' && el.multiple) {
-        return modifiers.includes('number') ? Array.from(event.target.selectedOptions).map(option => {
-          const rawValue = option.value || option.text;
-          return safeParseNumber(rawValue);
-        }) : Array.from(event.target.selectedOptions).map(option => {
-          return option.value || option.text;
-        });
-      } else {
-        const rawValue = event.target.value;
-        return modifiers.includes('number') ? safeParseNumber(rawValue) : modifiers.includes('trim') ? rawValue.trim() : rawValue;
-      }
-    };
-  }
-
-  function safeParseNumber(rawValue) {
-    const number = rawValue ? parseFloat(rawValue) : null;
-    return isNumeric(number) ? number : rawValue;
-  }
-
-  /**
-   * Copyright (C) 2017 salesforce.com, inc.
-   */
-  const { isArray } = Array;
-  const { getPrototypeOf, create: ObjectCreate, defineProperty: ObjectDefineProperty, defineProperties: ObjectDefineProperties, isExtensible, getOwnPropertyDescriptor, getOwnPropertyNames, getOwnPropertySymbols, preventExtensions, hasOwnProperty, } = Object;
-  const { push: ArrayPush, concat: ArrayConcat, map: ArrayMap, } = Array.prototype;
-  function isUndefined(obj) {
-      return obj === undefined;
-  }
-  function isFunction(obj) {
-      return typeof obj === 'function';
-  }
-  function isObject(obj) {
-      return typeof obj === 'object';
-  }
-  const proxyToValueMap = new WeakMap();
-  function registerProxy(proxy, value) {
-      proxyToValueMap.set(proxy, value);
-  }
-  const unwrap = (replicaOrAny) => proxyToValueMap.get(replicaOrAny) || replicaOrAny;
-
-  function wrapValue(membrane, value) {
-      return membrane.valueIsObservable(value) ? membrane.getProxy(value) : value;
-  }
-  /**
-   * Unwrap property descriptors will set value on original descriptor
-   * We only need to unwrap if value is specified
-   * @param descriptor external descrpitor provided to define new property on original value
-   */
-  function unwrapDescriptor(descriptor) {
-      if (hasOwnProperty.call(descriptor, 'value')) {
-          descriptor.value = unwrap(descriptor.value);
-      }
-      return descriptor;
-  }
-  function lockShadowTarget(membrane, shadowTarget, originalTarget) {
-      const targetKeys = ArrayConcat.call(getOwnPropertyNames(originalTarget), getOwnPropertySymbols(originalTarget));
-      targetKeys.forEach((key) => {
-          let descriptor = getOwnPropertyDescriptor(originalTarget, key);
-          // We do not need to wrap the descriptor if configurable
-          // Because we can deal with wrapping it when user goes through
-          // Get own property descriptor. There is also a chance that this descriptor
-          // could change sometime in the future, so we can defer wrapping
-          // until we need to
-          if (!descriptor.configurable) {
-              descriptor = wrapDescriptor(membrane, descriptor, wrapValue);
-          }
-          ObjectDefineProperty(shadowTarget, key, descriptor);
-      });
-      preventExtensions(shadowTarget);
-  }
-  class ReactiveProxyHandler {
-      constructor(membrane, value) {
-          this.originalTarget = value;
-          this.membrane = membrane;
-      }
-      get(shadowTarget, key) {
-          const { originalTarget, membrane } = this;
-          const value = originalTarget[key];
-          const { valueObserved } = membrane;
-          valueObserved(originalTarget, key);
-          return membrane.getProxy(value);
-      }
-      set(shadowTarget, key, value) {
-          const { originalTarget, membrane: { valueMutated } } = this;
-          const oldValue = originalTarget[key];
-          if (oldValue !== value) {
-              originalTarget[key] = value;
-              valueMutated(originalTarget, key);
-          }
-          else if (key === 'length' && isArray(originalTarget)) {
-              // fix for issue #236: push will add the new index, and by the time length
-              // is updated, the internal length is already equal to the new length value
-              // therefore, the oldValue is equal to the value. This is the forking logic
-              // to support this use case.
-              valueMutated(originalTarget, key);
-          }
-          return true;
-      }
-      deleteProperty(shadowTarget, key) {
-          const { originalTarget, membrane: { valueMutated } } = this;
-          delete originalTarget[key];
-          valueMutated(originalTarget, key);
-          return true;
-      }
-      apply(shadowTarget, thisArg, argArray) {
-          /* No op */
-      }
-      construct(target, argArray, newTarget) {
-          /* No op */
-      }
-      has(shadowTarget, key) {
-          const { originalTarget, membrane: { valueObserved } } = this;
-          valueObserved(originalTarget, key);
-          return key in originalTarget;
-      }
-      ownKeys(shadowTarget) {
-          const { originalTarget } = this;
-          return ArrayConcat.call(getOwnPropertyNames(originalTarget), getOwnPropertySymbols(originalTarget));
-      }
-      isExtensible(shadowTarget) {
-          const shadowIsExtensible = isExtensible(shadowTarget);
-          if (!shadowIsExtensible) {
-              return shadowIsExtensible;
-          }
-          const { originalTarget, membrane } = this;
-          const targetIsExtensible = isExtensible(originalTarget);
-          if (!targetIsExtensible) {
-              lockShadowTarget(membrane, shadowTarget, originalTarget);
-          }
-          return targetIsExtensible;
-      }
-      setPrototypeOf(shadowTarget, prototype) {
-      }
-      getPrototypeOf(shadowTarget) {
-          const { originalTarget } = this;
-          return getPrototypeOf(originalTarget);
-      }
-      getOwnPropertyDescriptor(shadowTarget, key) {
-          const { originalTarget, membrane } = this;
-          const { valueObserved } = this.membrane;
-          // keys looked up via hasOwnProperty need to be reactive
-          valueObserved(originalTarget, key);
-          let desc = getOwnPropertyDescriptor(originalTarget, key);
-          if (isUndefined(desc)) {
-              return desc;
-          }
-          const shadowDescriptor = getOwnPropertyDescriptor(shadowTarget, key);
-          if (!isUndefined(shadowDescriptor)) {
-              return shadowDescriptor;
-          }
-          // Note: by accessing the descriptor, the key is marked as observed
-          // but access to the value, setter or getter (if available) cannot observe
-          // mutations, just like regular methods, in which case we just do nothing.
-          desc = wrapDescriptor(membrane, desc, wrapValue);
-          if (!desc.configurable) {
-              // If descriptor from original target is not configurable,
-              // We must copy the wrapped descriptor over to the shadow target.
-              // Otherwise, proxy will throw an invariant error.
-              // This is our last chance to lock the value.
-              // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/handler/getOwnPropertyDescriptor#Invariants
-              ObjectDefineProperty(shadowTarget, key, desc);
-          }
-          return desc;
-      }
-      preventExtensions(shadowTarget) {
-          const { originalTarget, membrane } = this;
-          lockShadowTarget(membrane, shadowTarget, originalTarget);
-          preventExtensions(originalTarget);
-          return true;
-      }
-      defineProperty(shadowTarget, key, descriptor) {
-          const { originalTarget, membrane } = this;
-          const { valueMutated } = membrane;
-          const { configurable } = descriptor;
-          // We have to check for value in descriptor
-          // because Object.freeze(proxy) calls this method
-          // with only { configurable: false, writeable: false }
-          // Additionally, method will only be called with writeable:false
-          // if the descriptor has a value, as opposed to getter/setter
-          // So we can just check if writable is present and then see if
-          // value is present. This eliminates getter and setter descriptors
-          if (hasOwnProperty.call(descriptor, 'writable') && !hasOwnProperty.call(descriptor, 'value')) {
-              const originalDescriptor = getOwnPropertyDescriptor(originalTarget, key);
-              descriptor.value = originalDescriptor.value;
-          }
-          ObjectDefineProperty(originalTarget, key, unwrapDescriptor(descriptor));
-          if (configurable === false) {
-              ObjectDefineProperty(shadowTarget, key, wrapDescriptor(membrane, descriptor, wrapValue));
-          }
-          valueMutated(originalTarget, key);
-          return true;
-      }
-  }
-
-  function wrapReadOnlyValue(membrane, value) {
-      return membrane.valueIsObservable(value) ? membrane.getReadOnlyProxy(value) : value;
-  }
-  class ReadOnlyHandler {
-      constructor(membrane, value) {
-          this.originalTarget = value;
-          this.membrane = membrane;
-      }
-      get(shadowTarget, key) {
-          const { membrane, originalTarget } = this;
-          const value = originalTarget[key];
-          const { valueObserved } = membrane;
-          valueObserved(originalTarget, key);
-          return membrane.getReadOnlyProxy(value);
-      }
-      set(shadowTarget, key, value) {
-          return false;
-      }
-      deleteProperty(shadowTarget, key) {
-          return false;
-      }
-      apply(shadowTarget, thisArg, argArray) {
-          /* No op */
-      }
-      construct(target, argArray, newTarget) {
-          /* No op */
-      }
-      has(shadowTarget, key) {
-          const { originalTarget, membrane: { valueObserved } } = this;
-          valueObserved(originalTarget, key);
-          return key in originalTarget;
-      }
-      ownKeys(shadowTarget) {
-          const { originalTarget } = this;
-          return ArrayConcat.call(getOwnPropertyNames(originalTarget), getOwnPropertySymbols(originalTarget));
-      }
-      setPrototypeOf(shadowTarget, prototype) {
-      }
-      getOwnPropertyDescriptor(shadowTarget, key) {
-          const { originalTarget, membrane } = this;
-          const { valueObserved } = membrane;
-          // keys looked up via hasOwnProperty need to be reactive
-          valueObserved(originalTarget, key);
-          let desc = getOwnPropertyDescriptor(originalTarget, key);
-          if (isUndefined(desc)) {
-              return desc;
-          }
-          const shadowDescriptor = getOwnPropertyDescriptor(shadowTarget, key);
-          if (!isUndefined(shadowDescriptor)) {
-              return shadowDescriptor;
-          }
-          // Note: by accessing the descriptor, the key is marked as observed
-          // but access to the value or getter (if available) cannot be observed,
-          // just like regular methods, in which case we just do nothing.
-          desc = wrapDescriptor(membrane, desc, wrapReadOnlyValue);
-          if (hasOwnProperty.call(desc, 'set')) {
-              desc.set = undefined; // readOnly membrane does not allow setters
-          }
-          if (!desc.configurable) {
-              // If descriptor from original target is not configurable,
-              // We must copy the wrapped descriptor over to the shadow target.
-              // Otherwise, proxy will throw an invariant error.
-              // This is our last chance to lock the value.
-              // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/handler/getOwnPropertyDescriptor#Invariants
-              ObjectDefineProperty(shadowTarget, key, desc);
-          }
-          return desc;
-      }
-      preventExtensions(shadowTarget) {
-          return false;
-      }
-      defineProperty(shadowTarget, key, descriptor) {
-          return false;
-      }
-  }
-  function createShadowTarget(value) {
-      let shadowTarget = undefined;
-      if (isArray(value)) {
-          shadowTarget = [];
-      }
-      else if (isObject(value)) {
-          shadowTarget = {};
-      }
-      return shadowTarget;
-  }
-  const ObjectDotPrototype = Object.prototype;
-  function defaultValueIsObservable(value) {
-      // intentionally checking for null
-      if (value === null) {
-          return false;
-      }
-      // treat all non-object types, including undefined, as non-observable values
-      if (typeof value !== 'object') {
-          return false;
-      }
-      if (isArray(value)) {
-          return true;
-      }
-      const proto = getPrototypeOf(value);
-      return (proto === ObjectDotPrototype || proto === null || getPrototypeOf(proto) === null);
-  }
-  const defaultValueObserved = (obj, key) => {
-      /* do nothing */
-  };
-  const defaultValueMutated = (obj, key) => {
-      /* do nothing */
-  };
-  const defaultValueDistortion = (value) => value;
-  function wrapDescriptor(membrane, descriptor, getValue) {
-      const { set, get } = descriptor;
-      if (hasOwnProperty.call(descriptor, 'value')) {
-          descriptor.value = getValue(membrane, descriptor.value);
-      }
-      else {
-          if (!isUndefined(get)) {
-              descriptor.get = function () {
-                  // invoking the original getter with the original target
-                  return getValue(membrane, get.call(unwrap(this)));
-              };
-          }
-          if (!isUndefined(set)) {
-              descriptor.set = function (value) {
-                  // At this point we don't have a clear indication of whether
-                  // or not a valid mutation will occur, we don't have the key,
-                  // and we are not sure why and how they are invoking this setter.
-                  // Nevertheless we preserve the original semantics by invoking the
-                  // original setter with the original target and the unwrapped value
-                  set.call(unwrap(this), membrane.unwrapProxy(value));
-              };
-          }
-      }
-      return descriptor;
-  }
-  class ReactiveMembrane {
-      constructor(options) {
-          this.valueDistortion = defaultValueDistortion;
-          this.valueMutated = defaultValueMutated;
-          this.valueObserved = defaultValueObserved;
-          this.valueIsObservable = defaultValueIsObservable;
-          this.objectGraph = new WeakMap();
-          if (!isUndefined(options)) {
-              const { valueDistortion, valueMutated, valueObserved, valueIsObservable } = options;
-              this.valueDistortion = isFunction(valueDistortion) ? valueDistortion : defaultValueDistortion;
-              this.valueMutated = isFunction(valueMutated) ? valueMutated : defaultValueMutated;
-              this.valueObserved = isFunction(valueObserved) ? valueObserved : defaultValueObserved;
-              this.valueIsObservable = isFunction(valueIsObservable) ? valueIsObservable : defaultValueIsObservable;
-          }
-      }
-      getProxy(value) {
-          const unwrappedValue = unwrap(value);
-          const distorted = this.valueDistortion(unwrappedValue);
-          if (this.valueIsObservable(distorted)) {
-              const o = this.getReactiveState(unwrappedValue, distorted);
-              // when trying to extract the writable version of a readonly
-              // we return the readonly.
-              return o.readOnly === value ? value : o.reactive;
-          }
-          return distorted;
-      }
-      getReadOnlyProxy(value) {
-          value = unwrap(value);
-          const distorted = this.valueDistortion(value);
-          if (this.valueIsObservable(distorted)) {
-              return this.getReactiveState(value, distorted).readOnly;
-          }
-          return distorted;
-      }
-      unwrapProxy(p) {
-          return unwrap(p);
-      }
-      getReactiveState(value, distortedValue) {
-          const { objectGraph, } = this;
-          let reactiveState = objectGraph.get(distortedValue);
-          if (reactiveState) {
-              return reactiveState;
-          }
-          const membrane = this;
-          reactiveState = {
-              get reactive() {
-                  const reactiveHandler = new ReactiveProxyHandler(membrane, distortedValue);
-                  // caching the reactive proxy after the first time it is accessed
-                  const proxy = new Proxy(createShadowTarget(distortedValue), reactiveHandler);
-                  registerProxy(proxy, value);
-                  ObjectDefineProperty(this, 'reactive', { value: proxy });
-                  return proxy;
-              },
-              get readOnly() {
-                  const readOnlyHandler = new ReadOnlyHandler(membrane, distortedValue);
-                  // caching the readOnly proxy after the first time it is accessed
-                  const proxy = new Proxy(createShadowTarget(distortedValue), readOnlyHandler);
-                  registerProxy(proxy, value);
-                  ObjectDefineProperty(this, 'readOnly', { value: proxy });
-                  return proxy;
-              }
-          };
-          objectGraph.set(distortedValue, reactiveState);
-          return reactiveState;
-      }
-  }
-  /** version: 0.26.0 */
-
-  function wrap(data, mutationCallback) {
-
-    let membrane = new ReactiveMembrane({
-      valueMutated(target, key) {
-        mutationCallback(target, key);
-      }
-
-    });
-    return {
-      data: membrane.getProxy(data),
-      membrane: membrane
-    };
-  }
-  function unwrap$1(membrane, observable) {
-    let unwrappedData = membrane.unwrapProxy(observable);
-    let copy = {};
-    Object.keys(unwrappedData).forEach(key => {
-      if (['$el', '$refs', '$nextTick', '$watch'].includes(key)) return;
-      copy[key] = unwrappedData[key];
-    });
-    return copy;
-  }
-
-  class Component {
-    constructor(el, componentForClone = null) {
-      this.$el = el;
-      const dataAttr = this.$el.getAttribute('x-data');
-      const dataExpression = dataAttr === '' ? '{}' : dataAttr;
-      const initExpression = this.$el.getAttribute('x-init');
-      let dataExtras = {
-        $el: this.$el
-      };
-      let canonicalComponentElementReference = componentForClone ? componentForClone.$el : this.$el;
-      Object.entries(Alpine.magicProperties).forEach(([name, callback]) => {
-        Object.defineProperty(dataExtras, `$${name}`, {
-          get: function get() {
-            return callback(canonicalComponentElementReference);
-          }
-        });
-      });
-      this.unobservedData = componentForClone ? componentForClone.getUnobservedData() : saferEval(dataExpression, dataExtras);
-      // Construct a Proxy-based observable. This will be used to handle reactivity.
-
-      let {
-        membrane,
-        data
-      } = this.wrapDataInObservable(this.unobservedData);
-      this.$data = data;
-      this.membrane = membrane; // After making user-supplied data methods reactive, we can now add
-      // our magic properties to the original data for access.
-
-      this.unobservedData.$el = this.$el;
-      this.unobservedData.$refs = this.getRefsProxy();
-      this.nextTickStack = [];
-
-      this.unobservedData.$nextTick = callback => {
-        this.nextTickStack.push(callback);
-      };
-
-      this.watchers = {};
-
-      this.unobservedData.$watch = (property, callback) => {
-        if (!this.watchers[property]) this.watchers[property] = [];
-        this.watchers[property].push(callback);
-      };
-      /* MODERN-ONLY:START */
-      // We remove this piece of code from the legacy build.
-      // In IE11, we have already defined our helpers at this point.
-      // Register custom magic properties.
-
-
-      Object.entries(Alpine.magicProperties).forEach(([name, callback]) => {
-        Object.defineProperty(this.unobservedData, `$${name}`, {
-          get: function get() {
-            return callback(canonicalComponentElementReference);
-          }
-        });
-      });
-      /* MODERN-ONLY:END */
-
-      this.showDirectiveStack = [];
-      this.showDirectiveLastElement;
-      componentForClone || Alpine.onBeforeComponentInitializeds.forEach(callback => callback(this));
-      var initReturnedCallback; // If x-init is present AND we aren't cloning (skip x-init on clone)
-
-      if (initExpression && !componentForClone) {
-        // We want to allow data manipulation, but not trigger DOM updates just yet.
-        // We haven't even initialized the elements with their Alpine bindings. I mean c'mon.
-        this.pauseReactivity = true;
-        initReturnedCallback = this.evaluateReturnExpression(this.$el, initExpression);
-        this.pauseReactivity = false;
-      } // Register all our listeners and set all our attribute bindings.
-
-
-      this.initializeElements(this.$el); // Use mutation observer to detect new elements being added within this component at run-time.
-      // Alpine's just so darn flexible amirite?
-
-      this.listenForNewElementsToInitialize();
-
-      if (typeof initReturnedCallback === 'function') {
-        // Run the callback returned from the "x-init" hook to allow the user to do stuff after
-        // Alpine's got it's grubby little paws all over everything.
-        initReturnedCallback.call(this.$data);
-      }
-
-      componentForClone || setTimeout(() => {
-        Alpine.onComponentInitializeds.forEach(callback => callback(this));
-      }, 0);
-    }
-
-    getUnobservedData() {
-      return unwrap$1(this.membrane, this.$data);
-    }
-
-    wrapDataInObservable(data) {
-      var self = this;
-      let updateDom = debounce(function () {
-        self.updateElements(self.$el);
-      }, 0);
-      return wrap(data, (target, key) => {
-        if (self.watchers[key]) {
-          // If there's a watcher for this specific key, run it.
-          self.watchers[key].forEach(callback => callback(target[key]));
-        } else if (Array.isArray(target)) {
-          // Arrays are special cases, if any of the items change, we consider the array as mutated.
-          Object.keys(self.watchers).forEach(fullDotNotationKey => {
-            let dotNotationParts = fullDotNotationKey.split('.'); // Ignore length mutations since they would result in duplicate calls.
-            // For example, when calling push, we would get a mutation for the item's key
-            // and a second mutation for the length property.
-
-            if (key === 'length') return;
-            dotNotationParts.reduce((comparisonData, part) => {
-              if (Object.is(target, comparisonData[part])) {
-                self.watchers[fullDotNotationKey].forEach(callback => callback(target));
-              }
-
-              return comparisonData[part];
-            }, self.unobservedData);
-          });
-        } else {
-          // Let's walk through the watchers with "dot-notation" (foo.bar) and see
-          // if this mutation fits any of them.
-          Object.keys(self.watchers).filter(i => i.includes('.')).forEach(fullDotNotationKey => {
-            let dotNotationParts = fullDotNotationKey.split('.'); // If this dot-notation watcher's last "part" doesn't match the current
-            // key, then skip it early for performance reasons.
-
-            if (key !== dotNotationParts[dotNotationParts.length - 1]) return; // Now, walk through the dot-notation "parts" recursively to find
-            // a match, and call the watcher if one's found.
-
-            dotNotationParts.reduce((comparisonData, part) => {
-              if (Object.is(target, comparisonData)) {
-                // Run the watchers.
-                self.watchers[fullDotNotationKey].forEach(callback => callback(target[key]));
-              }
-
-              return comparisonData[part];
-            }, self.unobservedData);
-          });
-        } // Don't react to data changes for cases like the `x-created` hook.
-
-
-        if (self.pauseReactivity) return;
-        updateDom();
-      });
-    }
-
-    walkAndSkipNestedComponents(el, callback, initializeComponentCallback = () => {}) {
-      walk(el, el => {
-        // We've hit a component.
-        if (el.hasAttribute('x-data')) {
-          // If it's not the current one.
-          if (!el.isSameNode(this.$el)) {
-            // Initialize it if it's not.
-            if (!el.__x) initializeComponentCallback(el); // Now we'll let that sub-component deal with itself.
-
-            return false;
-          }
-        }
-
-        return callback(el);
-      });
-    }
-
-    initializeElements(rootEl, extraVars = () => {}) {
-      this.walkAndSkipNestedComponents(rootEl, el => {
-        // Don't touch spawns from for loop
-        if (el.__x_for_key !== undefined) return false; // Don't touch spawns from if directives
-
-        if (el.__x_inserted_me !== undefined) return false;
-        this.initializeElement(el, extraVars);
-      }, el => {
-        el.__x = new Component(el);
-      });
-      this.executeAndClearRemainingShowDirectiveStack();
-      this.executeAndClearNextTickStack(rootEl);
-    }
-
-    initializeElement(el, extraVars) {
-      // To support class attribute merging, we have to know what the element's
-      // original class attribute looked like for reference.
-      if (el.hasAttribute('class') && getXAttrs(el, this).length > 0) {
-        el.__x_original_classes = convertClassStringToArray(el.getAttribute('class'));
-      }
-
-      this.registerListeners(el, extraVars);
-      this.resolveBoundAttributes(el, true, extraVars);
-    }
-
-    updateElements(rootEl, extraVars = () => {}) {
-      this.walkAndSkipNestedComponents(rootEl, el => {
-        // Don't touch spawns from for loop (and check if the root is actually a for loop in a parent, don't skip it.)
-        if (el.__x_for_key !== undefined && !el.isSameNode(this.$el)) return false;
-        this.updateElement(el, extraVars);
-      }, el => {
-        el.__x = new Component(el);
-      });
-      this.executeAndClearRemainingShowDirectiveStack();
-      this.executeAndClearNextTickStack(rootEl);
-    }
-
-    executeAndClearNextTickStack(el) {
-      // Skip spawns from alpine directives
-      if (el === this.$el && this.nextTickStack.length > 0) {
-        // We run the tick stack after the next frame to allow any
-        // running transitions to pass the initial show stage.
-        requestAnimationFrame(() => {
-          while (this.nextTickStack.length > 0) {
-            this.nextTickStack.shift()();
-          }
-        });
-      }
-    }
-
-    executeAndClearRemainingShowDirectiveStack() {
-      // The goal here is to start all the x-show transitions
-      // and build a nested promise chain so that elements
-      // only hide when the children are finished hiding.
-      this.showDirectiveStack.reverse().map(handler => {
-        return new Promise((resolve, reject) => {
-          handler(resolve, reject);
-        });
-      }).reduce((promiseChain, promise) => {
-        return promiseChain.then(() => {
-          return promise.then(finishElement => {
-            finishElement();
-          });
-        });
-      }, Promise.resolve(() => {})).catch(e => {
-        if (e !== TRANSITION_CANCELLED) throw e;
-      }); // We've processed the handler stack. let's clear it.
-
-      this.showDirectiveStack = [];
-      this.showDirectiveLastElement = undefined;
-    }
-
-    updateElement(el, extraVars) {
-      this.resolveBoundAttributes(el, false, extraVars);
-    }
-
-    registerListeners(el, extraVars) {
-      getXAttrs(el, this).forEach(({
-        type,
-        value,
-        modifiers,
-        expression
-      }) => {
-        switch (type) {
-          case 'on':
-            registerListener(this, el, value, modifiers, expression, extraVars);
-            break;
-
-          case 'model':
-            registerModelListener(this, el, modifiers, expression, extraVars);
-            break;
-        }
-      });
-    }
-
-    resolveBoundAttributes(el, initialUpdate = false, extraVars) {
-      let attrs = getXAttrs(el, this);
-      attrs.forEach(({
-        type,
-        value,
-        modifiers,
-        expression
-      }) => {
-        switch (type) {
-          case 'model':
-            handleAttributeBindingDirective(this, el, 'value', expression, extraVars, type, modifiers);
-            break;
-
-          case 'bind':
-            // The :key binding on an x-for is special, ignore it.
-            if (el.tagName.toLowerCase() === 'template' && value === 'key') return;
-            handleAttributeBindingDirective(this, el, value, expression, extraVars, type, modifiers);
-            break;
-
-          case 'text':
-            var output = this.evaluateReturnExpression(el, expression, extraVars);
-            handleTextDirective(el, output, expression);
-            break;
-
-          case 'html':
-            handleHtmlDirective(this, el, expression, extraVars);
-            break;
-
-          case 'show':
-            var output = this.evaluateReturnExpression(el, expression, extraVars);
-            handleShowDirective(this, el, output, modifiers, initialUpdate);
-            break;
-
-          case 'if':
-            // If this element also has x-for on it, don't process x-if.
-            // We will let the "x-for" directive handle the "if"ing.
-            if (attrs.some(i => i.type === 'for')) return;
-            var output = this.evaluateReturnExpression(el, expression, extraVars);
-            handleIfDirective(this, el, output, initialUpdate, extraVars);
-            break;
-
-          case 'for':
-            handleForDirective(this, el, expression, initialUpdate, extraVars);
-            break;
-
-          case 'cloak':
-            el.removeAttribute('x-cloak');
-            break;
-        }
-      });
-    }
-
-    evaluateReturnExpression(el, expression, extraVars = () => {}) {
-      return saferEval(expression, this.$data, _objectSpread2(_objectSpread2({}, extraVars()), {}, {
-        $dispatch: this.getDispatchFunction(el)
-      }));
-    }
-
-    evaluateCommandExpression(el, expression, extraVars = () => {}) {
-      return saferEvalNoReturn(expression, this.$data, _objectSpread2(_objectSpread2({}, extraVars()), {}, {
-        $dispatch: this.getDispatchFunction(el)
-      }));
-    }
-
-    getDispatchFunction(el) {
-      return (event, detail = {}) => {
-        el.dispatchEvent(new CustomEvent(event, {
-          detail,
-          bubbles: true
-        }));
-      };
-    }
-
-    listenForNewElementsToInitialize() {
-      const targetNode = this.$el;
-      const observerOptions = {
-        childList: true,
-        attributes: true,
-        subtree: true
-      };
-      const observer = new MutationObserver(mutations => {
-        for (let i = 0; i < mutations.length; i++) {
-          // Filter out mutations triggered from child components.
-          const closestParentComponent = mutations[i].target.closest('[x-data]');
-          if (!(closestParentComponent && closestParentComponent.isSameNode(this.$el))) continue;
-
-          if (mutations[i].type === 'attributes' && mutations[i].attributeName === 'x-data') {
-            const rawData = saferEval(mutations[i].target.getAttribute('x-data') || '{}', {
-              $el: this.$el
-            });
-            Object.keys(rawData).forEach(key => {
-              if (this.$data[key] !== rawData[key]) {
-                this.$data[key] = rawData[key];
-              }
-            });
-          }
-
-          if (mutations[i].addedNodes.length > 0) {
-            mutations[i].addedNodes.forEach(node => {
-              if (node.nodeType !== 1 || node.__x_inserted_me) return;
-
-              if (node.matches('[x-data]') && !node.__x) {
-                node.__x = new Component(node);
-                return;
-              }
-
-              this.initializeElements(node);
-            });
-          }
-        }
-      });
-      observer.observe(targetNode, observerOptions);
-    }
-
-    getRefsProxy() {
-      var self = this;
-      var refObj = {};
-      // One of the goals of this is to not hold elements in memory, but rather re-evaluate
-      // the DOM when the system needs something from it. This way, the framework is flexible and
-      // friendly to outside DOM changes from libraries like Vue/Livewire.
-      // For this reason, I'm using an "on-demand" proxy to fake a "$refs" object.
-
-      return new Proxy(refObj, {
-        get(object, property) {
-          if (property === '$isAlpineProxy') return true;
-          var ref; // We can't just query the DOM because it's hard to filter out refs in
-          // nested components.
-
-          self.walkAndSkipNestedComponents(self.$el, el => {
-            if (el.hasAttribute('x-ref') && el.getAttribute('x-ref') === property) {
-              ref = el;
-            }
-          });
-          return ref;
-        }
-
-      });
-    }
-
-  }
-
-  const Alpine = {
-    version: "2.7.3",
-    pauseMutationObserver: false,
-    magicProperties: {},
-    onComponentInitializeds: [],
-    onBeforeComponentInitializeds: [],
-    ignoreFocusedForValueBinding: false,
-    start: async function start() {
-      if (!isTesting()) {
-        await domReady();
-      }
-
-      this.discoverComponents(el => {
-        this.initializeComponent(el);
-      }); // It's easier and more performant to just support Turbolinks than listen
-      // to MutationObserver mutations at the document level.
-
-      document.addEventListener("turbolinks:load", () => {
-        this.discoverUninitializedComponents(el => {
-          this.initializeComponent(el);
-        });
-      });
-      this.listenForNewUninitializedComponentsAtRunTime();
-    },
-    discoverComponents: function discoverComponents(callback) {
-      const rootEls = document.querySelectorAll('[x-data]');
-      rootEls.forEach(rootEl => {
-        callback(rootEl);
-      });
-    },
-    discoverUninitializedComponents: function discoverUninitializedComponents(callback, el = null) {
-      const rootEls = (el || document).querySelectorAll('[x-data]');
-      Array.from(rootEls).filter(el => el.__x === undefined).forEach(rootEl => {
-        callback(rootEl);
-      });
-    },
-    listenForNewUninitializedComponentsAtRunTime: function listenForNewUninitializedComponentsAtRunTime() {
-      const targetNode = document.querySelector('body');
-      const observerOptions = {
-        childList: true,
-        attributes: true,
-        subtree: true
-      };
-      const observer = new MutationObserver(mutations => {
-        if (this.pauseMutationObserver) return;
-
-        for (let i = 0; i < mutations.length; i++) {
-          if (mutations[i].addedNodes.length > 0) {
-            mutations[i].addedNodes.forEach(node => {
-              // Discard non-element nodes (like line-breaks)
-              if (node.nodeType !== 1) return; // Discard any changes happening within an existing component.
-              // They will take care of themselves.
-
-              if (node.parentElement && node.parentElement.closest('[x-data]')) return;
-              this.discoverUninitializedComponents(el => {
-                this.initializeComponent(el);
-              }, node.parentElement);
-            });
-          }
-        }
-      });
-      observer.observe(targetNode, observerOptions);
-    },
-    initializeComponent: function initializeComponent(el) {
-      if (!el.__x) {
-        // Wrap in a try/catch so that we don't prevent other components
-        // from initializing when one component contains an error.
-        try {
-          el.__x = new Component(el);
-        } catch (error) {
-          setTimeout(() => {
-            throw error;
-          }, 0);
-        }
-      }
-    },
-    clone: function clone(component, newEl) {
-      if (!newEl.__x) {
-        newEl.__x = new Component(newEl, component);
-      }
-    },
-    addMagicProperty: function addMagicProperty(name, callback) {
-      this.magicProperties[name] = callback;
-    },
-    onComponentInitialized: function onComponentInitialized(callback) {
-      this.onComponentInitializeds.push(callback);
-    },
-    onBeforeComponentInitialized: function onBeforeComponentInitialized(callback) {
-      this.onBeforeComponentInitializeds.push(callback);
-    }
-  };
-
-  if (!isTesting()) {
-    window.Alpine = Alpine;
-
-    if (window.deferLoadingAlpine) {
-      window.deferLoadingAlpine(function () {
-        window.Alpine.start();
-      });
-    } else {
-      window.Alpine.start();
-    }
-  }
-
-  return Alpine;
-
-})));
-
-
-/***/ }),
-
 /***/ "./node_modules/axios/index.js":
 /*!*************************************!*\
   !*** ./node_modules/axios/index.js ***!
@@ -3825,7 +1907,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /*!
-  * Bootstrap v4.5.3 (https://getbootstrap.com/)
+  * Bootstrap v4.5.2 (https://getbootstrap.com/)
   * Copyright 2011-2020 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
   */
@@ -3834,10 +1916,8 @@ module.exports = {
   undefined;
 }(this, (function (exports, $, Popper) { 'use strict';
 
-  function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-  var $__default = /*#__PURE__*/_interopDefaultLegacy($);
-  var Popper__default = /*#__PURE__*/_interopDefaultLegacy(Popper);
+  $ = $ && Object.prototype.hasOwnProperty.call($, 'default') ? $['default'] : $;
+  Popper = Popper && Object.prototype.hasOwnProperty.call(Popper, 'default') ? Popper['default'] : Popper;
 
   function _defineProperties(target, props) {
     for (var i = 0; i < props.length; i++) {
@@ -3881,7 +1961,7 @@ module.exports = {
 
   /**
    * --------------------------------------------------------------------------
-   * Bootstrap (v4.5.3): util.js
+   * Bootstrap (v4.5.2): util.js
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
@@ -3908,7 +1988,7 @@ module.exports = {
       bindType: TRANSITION_END,
       delegateType: TRANSITION_END,
       handle: function handle(event) {
-        if ($__default['default'](event.target).is(this)) {
+        if ($(event.target).is(this)) {
           return event.handleObj.handler.apply(this, arguments); // eslint-disable-line prefer-rest-params
         }
 
@@ -3921,7 +2001,7 @@ module.exports = {
     var _this = this;
 
     var called = false;
-    $__default['default'](this).one(Util.TRANSITION_END, function () {
+    $(this).one(Util.TRANSITION_END, function () {
       called = true;
     });
     setTimeout(function () {
@@ -3933,8 +2013,8 @@ module.exports = {
   }
 
   function setTransitionEndSupport() {
-    $__default['default'].fn.emulateTransitionEnd = transitionEndEmulator;
-    $__default['default'].event.special[Util.TRANSITION_END] = getSpecialTransitionEndEvent();
+    $.fn.emulateTransitionEnd = transitionEndEmulator;
+    $.event.special[Util.TRANSITION_END] = getSpecialTransitionEndEvent();
   }
   /**
    * --------------------------------------------------------------------------
@@ -3947,6 +2027,7 @@ module.exports = {
     TRANSITION_END: 'bsTransitionEnd',
     getUID: function getUID(prefix) {
       do {
+        // eslint-disable-next-line no-bitwise
         prefix += ~~(Math.random() * MAX_UID); // "~~" acts like a faster Math.floor() here
       } while (document.getElementById(prefix));
 
@@ -3962,7 +2043,7 @@ module.exports = {
 
       try {
         return document.querySelector(selector) ? selector : null;
-      } catch (_) {
+      } catch (err) {
         return null;
       }
     },
@@ -3972,8 +2053,8 @@ module.exports = {
       } // Get transition-duration of the element
 
 
-      var transitionDuration = $__default['default'](element).css('transition-duration');
-      var transitionDelay = $__default['default'](element).css('transition-delay');
+      var transitionDuration = $(element).css('transition-duration');
+      var transitionDelay = $(element).css('transition-delay');
       var floatTransitionDuration = parseFloat(transitionDuration);
       var floatTransitionDelay = parseFloat(transitionDelay); // Return 0 if element or transition duration is not found
 
@@ -3990,8 +2071,9 @@ module.exports = {
       return element.offsetHeight;
     },
     triggerTransitionEnd: function triggerTransitionEnd(element) {
-      $__default['default'](element).trigger(TRANSITION_END);
+      $(element).trigger(TRANSITION_END);
     },
+    // TODO: Remove in v5
     supportsTransitionEnd: function supportsTransitionEnd() {
       return Boolean(TRANSITION_END);
     },
@@ -4034,11 +2116,11 @@ module.exports = {
       return Util.findShadowRoot(element.parentNode);
     },
     jQueryDetection: function jQueryDetection() {
-      if (typeof $__default['default'] === 'undefined') {
+      if (typeof $ === 'undefined') {
         throw new TypeError('Bootstrap\'s JavaScript requires jQuery. jQuery must be included before Bootstrap\'s JavaScript.');
       }
 
-      var version = $__default['default'].fn.jquery.split(' ')[0].split('.');
+      var version = $.fn.jquery.split(' ')[0].split('.');
       var minMajor = 1;
       var ltMajor = 2;
       var minMinor = 9;
@@ -4060,11 +2142,11 @@ module.exports = {
    */
 
   var NAME = 'alert';
-  var VERSION = '4.5.3';
+  var VERSION = '4.5.2';
   var DATA_KEY = 'bs.alert';
   var EVENT_KEY = "." + DATA_KEY;
   var DATA_API_KEY = '.data-api';
-  var JQUERY_NO_CONFLICT = $__default['default'].fn[NAME];
+  var JQUERY_NO_CONFLICT = $.fn[NAME];
   var SELECTOR_DISMISS = '[data-dismiss="alert"]';
   var EVENT_CLOSE = "close" + EVENT_KEY;
   var EVENT_CLOSED = "closed" + EVENT_KEY;
@@ -4104,7 +2186,7 @@ module.exports = {
     };
 
     _proto.dispose = function dispose() {
-      $__default['default'].removeData(this._element, DATA_KEY);
+      $.removeData(this._element, DATA_KEY);
       this._element = null;
     } // Private
     ;
@@ -4118,43 +2200,43 @@ module.exports = {
       }
 
       if (!parent) {
-        parent = $__default['default'](element).closest("." + CLASS_NAME_ALERT)[0];
+        parent = $(element).closest("." + CLASS_NAME_ALERT)[0];
       }
 
       return parent;
     };
 
     _proto._triggerCloseEvent = function _triggerCloseEvent(element) {
-      var closeEvent = $__default['default'].Event(EVENT_CLOSE);
-      $__default['default'](element).trigger(closeEvent);
+      var closeEvent = $.Event(EVENT_CLOSE);
+      $(element).trigger(closeEvent);
       return closeEvent;
     };
 
     _proto._removeElement = function _removeElement(element) {
       var _this = this;
 
-      $__default['default'](element).removeClass(CLASS_NAME_SHOW);
+      $(element).removeClass(CLASS_NAME_SHOW);
 
-      if (!$__default['default'](element).hasClass(CLASS_NAME_FADE)) {
+      if (!$(element).hasClass(CLASS_NAME_FADE)) {
         this._destroyElement(element);
 
         return;
       }
 
       var transitionDuration = Util.getTransitionDurationFromElement(element);
-      $__default['default'](element).one(Util.TRANSITION_END, function (event) {
+      $(element).one(Util.TRANSITION_END, function (event) {
         return _this._destroyElement(element, event);
       }).emulateTransitionEnd(transitionDuration);
     };
 
     _proto._destroyElement = function _destroyElement(element) {
-      $__default['default'](element).detach().trigger(EVENT_CLOSED).remove();
+      $(element).detach().trigger(EVENT_CLOSED).remove();
     } // Static
     ;
 
     Alert._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var $element = $__default['default'](this);
+        var $element = $(this);
         var data = $element.data(DATA_KEY);
 
         if (!data) {
@@ -4194,18 +2276,18 @@ module.exports = {
    */
 
 
-  $__default['default'](document).on(EVENT_CLICK_DATA_API, SELECTOR_DISMISS, Alert._handleDismiss(new Alert()));
+  $(document).on(EVENT_CLICK_DATA_API, SELECTOR_DISMISS, Alert._handleDismiss(new Alert()));
   /**
    * ------------------------------------------------------------------------
    * jQuery
    * ------------------------------------------------------------------------
    */
 
-  $__default['default'].fn[NAME] = Alert._jQueryInterface;
-  $__default['default'].fn[NAME].Constructor = Alert;
+  $.fn[NAME] = Alert._jQueryInterface;
+  $.fn[NAME].Constructor = Alert;
 
-  $__default['default'].fn[NAME].noConflict = function () {
-    $__default['default'].fn[NAME] = JQUERY_NO_CONFLICT;
+  $.fn[NAME].noConflict = function () {
+    $.fn[NAME] = JQUERY_NO_CONFLICT;
     return Alert._jQueryInterface;
   };
 
@@ -4216,11 +2298,11 @@ module.exports = {
    */
 
   var NAME$1 = 'button';
-  var VERSION$1 = '4.5.3';
+  var VERSION$1 = '4.5.2';
   var DATA_KEY$1 = 'bs.button';
   var EVENT_KEY$1 = "." + DATA_KEY$1;
   var DATA_API_KEY$1 = '.data-api';
-  var JQUERY_NO_CONFLICT$1 = $__default['default'].fn[NAME$1];
+  var JQUERY_NO_CONFLICT$1 = $.fn[NAME$1];
   var CLASS_NAME_ACTIVE = 'active';
   var CLASS_NAME_BUTTON = 'btn';
   var CLASS_NAME_FOCUS = 'focus';
@@ -4243,7 +2325,6 @@ module.exports = {
   var Button = /*#__PURE__*/function () {
     function Button(element) {
       this._element = element;
-      this.shouldAvoidTriggerChange = false;
     } // Getters
 
 
@@ -4253,7 +2334,7 @@ module.exports = {
     _proto.toggle = function toggle() {
       var triggerChangeEvent = true;
       var addAriaPressed = true;
-      var rootElement = $__default['default'](this._element).closest(SELECTOR_DATA_TOGGLES)[0];
+      var rootElement = $(this._element).closest(SELECTOR_DATA_TOGGLES)[0];
 
       if (rootElement) {
         var input = this._element.querySelector(SELECTOR_INPUT);
@@ -4266,7 +2347,7 @@ module.exports = {
               var activeElement = rootElement.querySelector(SELECTOR_ACTIVE);
 
               if (activeElement) {
-                $__default['default'](activeElement).removeClass(CLASS_NAME_ACTIVE);
+                $(activeElement).removeClass(CLASS_NAME_ACTIVE);
               }
             }
           }
@@ -4277,9 +2358,7 @@ module.exports = {
               input.checked = !this._element.classList.contains(CLASS_NAME_ACTIVE);
             }
 
-            if (!this.shouldAvoidTriggerChange) {
-              $__default['default'](input).trigger('change');
-            }
+            $(input).trigger('change');
           }
 
           input.focus();
@@ -4293,28 +2372,25 @@ module.exports = {
         }
 
         if (triggerChangeEvent) {
-          $__default['default'](this._element).toggleClass(CLASS_NAME_ACTIVE);
+          $(this._element).toggleClass(CLASS_NAME_ACTIVE);
         }
       }
     };
 
     _proto.dispose = function dispose() {
-      $__default['default'].removeData(this._element, DATA_KEY$1);
+      $.removeData(this._element, DATA_KEY$1);
       this._element = null;
     } // Static
     ;
 
-    Button._jQueryInterface = function _jQueryInterface(config, avoidTriggerChange) {
+    Button._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var $element = $__default['default'](this);
-        var data = $element.data(DATA_KEY$1);
+        var data = $(this).data(DATA_KEY$1);
 
         if (!data) {
           data = new Button(this);
-          $element.data(DATA_KEY$1, data);
+          $(this).data(DATA_KEY$1, data);
         }
-
-        data.shouldAvoidTriggerChange = avoidTriggerChange;
 
         if (config === 'toggle') {
           data[config]();
@@ -4338,12 +2414,12 @@ module.exports = {
    */
 
 
-  $__default['default'](document).on(EVENT_CLICK_DATA_API$1, SELECTOR_DATA_TOGGLE_CARROT, function (event) {
+  $(document).on(EVENT_CLICK_DATA_API$1, SELECTOR_DATA_TOGGLE_CARROT, function (event) {
     var button = event.target;
     var initialButton = button;
 
-    if (!$__default['default'](button).hasClass(CLASS_NAME_BUTTON)) {
-      button = $__default['default'](button).closest(SELECTOR_BUTTON)[0];
+    if (!$(button).hasClass(CLASS_NAME_BUTTON)) {
+      button = $(button).closest(SELECTOR_BUTTON)[0];
     }
 
     if (!button || button.hasAttribute('disabled') || button.classList.contains('disabled')) {
@@ -4357,15 +2433,15 @@ module.exports = {
         return;
       }
 
-      if (initialButton.tagName === 'INPUT' || button.tagName !== 'LABEL') {
-        Button._jQueryInterface.call($__default['default'](button), 'toggle', initialButton.tagName === 'INPUT');
+      if (initialButton.tagName !== 'LABEL' || inputBtn && inputBtn.type !== 'checkbox') {
+        Button._jQueryInterface.call($(button), 'toggle');
       }
     }
   }).on(EVENT_FOCUS_BLUR_DATA_API, SELECTOR_DATA_TOGGLE_CARROT, function (event) {
-    var button = $__default['default'](event.target).closest(SELECTOR_BUTTON)[0];
-    $__default['default'](button).toggleClass(CLASS_NAME_FOCUS, /^focus(in)?$/.test(event.type));
+    var button = $(event.target).closest(SELECTOR_BUTTON)[0];
+    $(button).toggleClass(CLASS_NAME_FOCUS, /^focus(in)?$/.test(event.type));
   });
-  $__default['default'](window).on(EVENT_LOAD_DATA_API, function () {
+  $(window).on(EVENT_LOAD_DATA_API, function () {
     // ensure correct active class is set to match the controls' actual values/states
     // find all checkboxes/readio buttons inside data-toggle groups
     var buttons = [].slice.call(document.querySelectorAll(SELECTOR_DATA_TOGGLES_BUTTONS));
@@ -4400,11 +2476,11 @@ module.exports = {
    * ------------------------------------------------------------------------
    */
 
-  $__default['default'].fn[NAME$1] = Button._jQueryInterface;
-  $__default['default'].fn[NAME$1].Constructor = Button;
+  $.fn[NAME$1] = Button._jQueryInterface;
+  $.fn[NAME$1].Constructor = Button;
 
-  $__default['default'].fn[NAME$1].noConflict = function () {
-    $__default['default'].fn[NAME$1] = JQUERY_NO_CONFLICT$1;
+  $.fn[NAME$1].noConflict = function () {
+    $.fn[NAME$1] = JQUERY_NO_CONFLICT$1;
     return Button._jQueryInterface;
   };
 
@@ -4415,11 +2491,11 @@ module.exports = {
    */
 
   var NAME$2 = 'carousel';
-  var VERSION$2 = '4.5.3';
+  var VERSION$2 = '4.5.2';
   var DATA_KEY$2 = 'bs.carousel';
   var EVENT_KEY$2 = "." + DATA_KEY$2;
   var DATA_API_KEY$2 = '.data-api';
-  var JQUERY_NO_CONFLICT$2 = $__default['default'].fn[NAME$2];
+  var JQUERY_NO_CONFLICT$2 = $.fn[NAME$2];
   var ARROW_LEFT_KEYCODE = 37; // KeyboardEvent.which value for left arrow key
 
   var ARROW_RIGHT_KEYCODE = 39; // KeyboardEvent.which value for right arrow key
@@ -4516,10 +2592,9 @@ module.exports = {
     };
 
     _proto.nextWhenVisible = function nextWhenVisible() {
-      var $element = $__default['default'](this._element); // Don't call next when the page isn't visible
+      // Don't call next when the page isn't visible
       // or the carousel or its parent isn't visible
-
-      if (!document.hidden && $element.is(':visible') && $element.css('visibility') !== 'hidden') {
+      if (!document.hidden && $(this._element).is(':visible') && $(this._element).css('visibility') !== 'hidden') {
         this.next();
       }
     };
@@ -4571,7 +2646,7 @@ module.exports = {
       }
 
       if (this._isSliding) {
-        $__default['default'](this._element).one(EVENT_SLID, function () {
+        $(this._element).one(EVENT_SLID, function () {
           return _this.to(index);
         });
         return;
@@ -4589,8 +2664,8 @@ module.exports = {
     };
 
     _proto.dispose = function dispose() {
-      $__default['default'](this._element).off(EVENT_KEY$2);
-      $__default['default'].removeData(this._element, DATA_KEY$2);
+      $(this._element).off(EVENT_KEY$2);
+      $.removeData(this._element, DATA_KEY$2);
       this._items = null;
       this._config = null;
       this._element = null;
@@ -4632,13 +2707,13 @@ module.exports = {
       var _this2 = this;
 
       if (this._config.keyboard) {
-        $__default['default'](this._element).on(EVENT_KEYDOWN, function (event) {
+        $(this._element).on(EVENT_KEYDOWN, function (event) {
           return _this2._keydown(event);
         });
       }
 
       if (this._config.pause === 'hover') {
-        $__default['default'](this._element).on(EVENT_MOUSEENTER, function (event) {
+        $(this._element).on(EVENT_MOUSEENTER, function (event) {
           return _this2.pause(event);
         }).on(EVENT_MOUSELEAVE, function (event) {
           return _this2.cycle(event);
@@ -4701,27 +2776,27 @@ module.exports = {
         }
       };
 
-      $__default['default'](this._element.querySelectorAll(SELECTOR_ITEM_IMG)).on(EVENT_DRAG_START, function (e) {
+      $(this._element.querySelectorAll(SELECTOR_ITEM_IMG)).on(EVENT_DRAG_START, function (e) {
         return e.preventDefault();
       });
 
       if (this._pointerEvent) {
-        $__default['default'](this._element).on(EVENT_POINTERDOWN, function (event) {
+        $(this._element).on(EVENT_POINTERDOWN, function (event) {
           return start(event);
         });
-        $__default['default'](this._element).on(EVENT_POINTERUP, function (event) {
+        $(this._element).on(EVENT_POINTERUP, function (event) {
           return end(event);
         });
 
         this._element.classList.add(CLASS_NAME_POINTER_EVENT);
       } else {
-        $__default['default'](this._element).on(EVENT_TOUCHSTART, function (event) {
+        $(this._element).on(EVENT_TOUCHSTART, function (event) {
           return start(event);
         });
-        $__default['default'](this._element).on(EVENT_TOUCHMOVE, function (event) {
+        $(this._element).on(EVENT_TOUCHMOVE, function (event) {
           return move(event);
         });
-        $__default['default'](this._element).on(EVENT_TOUCHEND, function (event) {
+        $(this._element).on(EVENT_TOUCHEND, function (event) {
           return end(event);
         });
       }
@@ -4773,25 +2848,25 @@ module.exports = {
 
       var fromIndex = this._getItemIndex(this._element.querySelector(SELECTOR_ACTIVE_ITEM));
 
-      var slideEvent = $__default['default'].Event(EVENT_SLIDE, {
+      var slideEvent = $.Event(EVENT_SLIDE, {
         relatedTarget: relatedTarget,
         direction: eventDirectionName,
         from: fromIndex,
         to: targetIndex
       });
-      $__default['default'](this._element).trigger(slideEvent);
+      $(this._element).trigger(slideEvent);
       return slideEvent;
     };
 
     _proto._setActiveIndicatorElement = function _setActiveIndicatorElement(element) {
       if (this._indicatorsElement) {
         var indicators = [].slice.call(this._indicatorsElement.querySelectorAll(SELECTOR_ACTIVE$1));
-        $__default['default'](indicators).removeClass(CLASS_NAME_ACTIVE$1);
+        $(indicators).removeClass(CLASS_NAME_ACTIVE$1);
 
         var nextIndicator = this._indicatorsElement.children[this._getItemIndex(element)];
 
         if (nextIndicator) {
-          $__default['default'](nextIndicator).addClass(CLASS_NAME_ACTIVE$1);
+          $(nextIndicator).addClass(CLASS_NAME_ACTIVE$1);
         }
       }
     };
@@ -4822,7 +2897,7 @@ module.exports = {
         eventDirectionName = DIRECTION_RIGHT;
       }
 
-      if (nextElement && $__default['default'](nextElement).hasClass(CLASS_NAME_ACTIVE$1)) {
+      if (nextElement && $(nextElement).hasClass(CLASS_NAME_ACTIVE$1)) {
         this._isSliding = false;
         return;
       }
@@ -4846,18 +2921,18 @@ module.exports = {
 
       this._setActiveIndicatorElement(nextElement);
 
-      var slidEvent = $__default['default'].Event(EVENT_SLID, {
+      var slidEvent = $.Event(EVENT_SLID, {
         relatedTarget: nextElement,
         direction: eventDirectionName,
         from: activeElementIndex,
         to: nextElementIndex
       });
 
-      if ($__default['default'](this._element).hasClass(CLASS_NAME_SLIDE)) {
-        $__default['default'](nextElement).addClass(orderClassName);
+      if ($(this._element).hasClass(CLASS_NAME_SLIDE)) {
+        $(nextElement).addClass(orderClassName);
         Util.reflow(nextElement);
-        $__default['default'](activeElement).addClass(directionalClassName);
-        $__default['default'](nextElement).addClass(directionalClassName);
+        $(activeElement).addClass(directionalClassName);
+        $(nextElement).addClass(directionalClassName);
         var nextElementInterval = parseInt(nextElement.getAttribute('data-interval'), 10);
 
         if (nextElementInterval) {
@@ -4868,19 +2943,19 @@ module.exports = {
         }
 
         var transitionDuration = Util.getTransitionDurationFromElement(activeElement);
-        $__default['default'](activeElement).one(Util.TRANSITION_END, function () {
-          $__default['default'](nextElement).removeClass(directionalClassName + " " + orderClassName).addClass(CLASS_NAME_ACTIVE$1);
-          $__default['default'](activeElement).removeClass(CLASS_NAME_ACTIVE$1 + " " + orderClassName + " " + directionalClassName);
+        $(activeElement).one(Util.TRANSITION_END, function () {
+          $(nextElement).removeClass(directionalClassName + " " + orderClassName).addClass(CLASS_NAME_ACTIVE$1);
+          $(activeElement).removeClass(CLASS_NAME_ACTIVE$1 + " " + orderClassName + " " + directionalClassName);
           _this4._isSliding = false;
           setTimeout(function () {
-            return $__default['default'](_this4._element).trigger(slidEvent);
+            return $(_this4._element).trigger(slidEvent);
           }, 0);
         }).emulateTransitionEnd(transitionDuration);
       } else {
-        $__default['default'](activeElement).removeClass(CLASS_NAME_ACTIVE$1);
-        $__default['default'](nextElement).addClass(CLASS_NAME_ACTIVE$1);
+        $(activeElement).removeClass(CLASS_NAME_ACTIVE$1);
+        $(nextElement).addClass(CLASS_NAME_ACTIVE$1);
         this._isSliding = false;
-        $__default['default'](this._element).trigger(slidEvent);
+        $(this._element).trigger(slidEvent);
       }
 
       if (isCycling) {
@@ -4891,9 +2966,9 @@ module.exports = {
 
     Carousel._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var data = $__default['default'](this).data(DATA_KEY$2);
+        var data = $(this).data(DATA_KEY$2);
 
-        var _config = _extends({}, Default, $__default['default'](this).data());
+        var _config = _extends({}, Default, $(this).data());
 
         if (typeof config === 'object') {
           _config = _extends({}, _config, config);
@@ -4903,7 +2978,7 @@ module.exports = {
 
         if (!data) {
           data = new Carousel(this, _config);
-          $__default['default'](this).data(DATA_KEY$2, data);
+          $(this).data(DATA_KEY$2, data);
         }
 
         if (typeof config === 'number') {
@@ -4928,13 +3003,13 @@ module.exports = {
         return;
       }
 
-      var target = $__default['default'](selector)[0];
+      var target = $(selector)[0];
 
-      if (!target || !$__default['default'](target).hasClass(CLASS_NAME_CAROUSEL)) {
+      if (!target || !$(target).hasClass(CLASS_NAME_CAROUSEL)) {
         return;
       }
 
-      var config = _extends({}, $__default['default'](target).data(), $__default['default'](this).data());
+      var config = _extends({}, $(target).data(), $(this).data());
 
       var slideIndex = this.getAttribute('data-slide-to');
 
@@ -4942,10 +3017,10 @@ module.exports = {
         config.interval = false;
       }
 
-      Carousel._jQueryInterface.call($__default['default'](target), config);
+      Carousel._jQueryInterface.call($(target), config);
 
       if (slideIndex) {
-        $__default['default'](target).data(DATA_KEY$2).to(slideIndex);
+        $(target).data(DATA_KEY$2).to(slideIndex);
       }
 
       event.preventDefault();
@@ -4972,12 +3047,12 @@ module.exports = {
    */
 
 
-  $__default['default'](document).on(EVENT_CLICK_DATA_API$2, SELECTOR_DATA_SLIDE, Carousel._dataApiClickHandler);
-  $__default['default'](window).on(EVENT_LOAD_DATA_API$1, function () {
+  $(document).on(EVENT_CLICK_DATA_API$2, SELECTOR_DATA_SLIDE, Carousel._dataApiClickHandler);
+  $(window).on(EVENT_LOAD_DATA_API$1, function () {
     var carousels = [].slice.call(document.querySelectorAll(SELECTOR_DATA_RIDE));
 
     for (var i = 0, len = carousels.length; i < len; i++) {
-      var $carousel = $__default['default'](carousels[i]);
+      var $carousel = $(carousels[i]);
 
       Carousel._jQueryInterface.call($carousel, $carousel.data());
     }
@@ -4988,11 +3063,11 @@ module.exports = {
    * ------------------------------------------------------------------------
    */
 
-  $__default['default'].fn[NAME$2] = Carousel._jQueryInterface;
-  $__default['default'].fn[NAME$2].Constructor = Carousel;
+  $.fn[NAME$2] = Carousel._jQueryInterface;
+  $.fn[NAME$2].Constructor = Carousel;
 
-  $__default['default'].fn[NAME$2].noConflict = function () {
-    $__default['default'].fn[NAME$2] = JQUERY_NO_CONFLICT$2;
+  $.fn[NAME$2].noConflict = function () {
+    $.fn[NAME$2] = JQUERY_NO_CONFLICT$2;
     return Carousel._jQueryInterface;
   };
 
@@ -5003,11 +3078,11 @@ module.exports = {
    */
 
   var NAME$3 = 'collapse';
-  var VERSION$3 = '4.5.3';
+  var VERSION$3 = '4.5.2';
   var DATA_KEY$3 = 'bs.collapse';
   var EVENT_KEY$3 = "." + DATA_KEY$3;
   var DATA_API_KEY$3 = '.data-api';
-  var JQUERY_NO_CONFLICT$3 = $__default['default'].fn[NAME$3];
+  var JQUERY_NO_CONFLICT$3 = $.fn[NAME$3];
   var Default$1 = {
     toggle: true,
     parent: ''
@@ -5073,7 +3148,7 @@ module.exports = {
 
     // Public
     _proto.toggle = function toggle() {
-      if ($__default['default'](this._element).hasClass(CLASS_NAME_SHOW$1)) {
+      if ($(this._element).hasClass(CLASS_NAME_SHOW$1)) {
         this.hide();
       } else {
         this.show();
@@ -5083,7 +3158,7 @@ module.exports = {
     _proto.show = function show() {
       var _this = this;
 
-      if (this._isTransitioning || $__default['default'](this._element).hasClass(CLASS_NAME_SHOW$1)) {
+      if (this._isTransitioning || $(this._element).hasClass(CLASS_NAME_SHOW$1)) {
         return;
       }
 
@@ -5105,64 +3180,64 @@ module.exports = {
       }
 
       if (actives) {
-        activesData = $__default['default'](actives).not(this._selector).data(DATA_KEY$3);
+        activesData = $(actives).not(this._selector).data(DATA_KEY$3);
 
         if (activesData && activesData._isTransitioning) {
           return;
         }
       }
 
-      var startEvent = $__default['default'].Event(EVENT_SHOW);
-      $__default['default'](this._element).trigger(startEvent);
+      var startEvent = $.Event(EVENT_SHOW);
+      $(this._element).trigger(startEvent);
 
       if (startEvent.isDefaultPrevented()) {
         return;
       }
 
       if (actives) {
-        Collapse._jQueryInterface.call($__default['default'](actives).not(this._selector), 'hide');
+        Collapse._jQueryInterface.call($(actives).not(this._selector), 'hide');
 
         if (!activesData) {
-          $__default['default'](actives).data(DATA_KEY$3, null);
+          $(actives).data(DATA_KEY$3, null);
         }
       }
 
       var dimension = this._getDimension();
 
-      $__default['default'](this._element).removeClass(CLASS_NAME_COLLAPSE).addClass(CLASS_NAME_COLLAPSING);
+      $(this._element).removeClass(CLASS_NAME_COLLAPSE).addClass(CLASS_NAME_COLLAPSING);
       this._element.style[dimension] = 0;
 
       if (this._triggerArray.length) {
-        $__default['default'](this._triggerArray).removeClass(CLASS_NAME_COLLAPSED).attr('aria-expanded', true);
+        $(this._triggerArray).removeClass(CLASS_NAME_COLLAPSED).attr('aria-expanded', true);
       }
 
       this.setTransitioning(true);
 
       var complete = function complete() {
-        $__default['default'](_this._element).removeClass(CLASS_NAME_COLLAPSING).addClass(CLASS_NAME_COLLAPSE + " " + CLASS_NAME_SHOW$1);
+        $(_this._element).removeClass(CLASS_NAME_COLLAPSING).addClass(CLASS_NAME_COLLAPSE + " " + CLASS_NAME_SHOW$1);
         _this._element.style[dimension] = '';
 
         _this.setTransitioning(false);
 
-        $__default['default'](_this._element).trigger(EVENT_SHOWN);
+        $(_this._element).trigger(EVENT_SHOWN);
       };
 
       var capitalizedDimension = dimension[0].toUpperCase() + dimension.slice(1);
       var scrollSize = "scroll" + capitalizedDimension;
       var transitionDuration = Util.getTransitionDurationFromElement(this._element);
-      $__default['default'](this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
+      $(this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
       this._element.style[dimension] = this._element[scrollSize] + "px";
     };
 
     _proto.hide = function hide() {
       var _this2 = this;
 
-      if (this._isTransitioning || !$__default['default'](this._element).hasClass(CLASS_NAME_SHOW$1)) {
+      if (this._isTransitioning || !$(this._element).hasClass(CLASS_NAME_SHOW$1)) {
         return;
       }
 
-      var startEvent = $__default['default'].Event(EVENT_HIDE);
-      $__default['default'](this._element).trigger(startEvent);
+      var startEvent = $.Event(EVENT_HIDE);
+      $(this._element).trigger(startEvent);
 
       if (startEvent.isDefaultPrevented()) {
         return;
@@ -5172,7 +3247,7 @@ module.exports = {
 
       this._element.style[dimension] = this._element.getBoundingClientRect()[dimension] + "px";
       Util.reflow(this._element);
-      $__default['default'](this._element).addClass(CLASS_NAME_COLLAPSING).removeClass(CLASS_NAME_COLLAPSE + " " + CLASS_NAME_SHOW$1);
+      $(this._element).addClass(CLASS_NAME_COLLAPSING).removeClass(CLASS_NAME_COLLAPSE + " " + CLASS_NAME_SHOW$1);
       var triggerArrayLength = this._triggerArray.length;
 
       if (triggerArrayLength > 0) {
@@ -5181,10 +3256,10 @@ module.exports = {
           var selector = Util.getSelectorFromElement(trigger);
 
           if (selector !== null) {
-            var $elem = $__default['default']([].slice.call(document.querySelectorAll(selector)));
+            var $elem = $([].slice.call(document.querySelectorAll(selector)));
 
             if (!$elem.hasClass(CLASS_NAME_SHOW$1)) {
-              $__default['default'](trigger).addClass(CLASS_NAME_COLLAPSED).attr('aria-expanded', false);
+              $(trigger).addClass(CLASS_NAME_COLLAPSED).attr('aria-expanded', false);
             }
           }
         }
@@ -5195,12 +3270,12 @@ module.exports = {
       var complete = function complete() {
         _this2.setTransitioning(false);
 
-        $__default['default'](_this2._element).removeClass(CLASS_NAME_COLLAPSING).addClass(CLASS_NAME_COLLAPSE).trigger(EVENT_HIDDEN);
+        $(_this2._element).removeClass(CLASS_NAME_COLLAPSING).addClass(CLASS_NAME_COLLAPSE).trigger(EVENT_HIDDEN);
       };
 
       this._element.style[dimension] = '';
       var transitionDuration = Util.getTransitionDurationFromElement(this._element);
-      $__default['default'](this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
+      $(this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
     };
 
     _proto.setTransitioning = function setTransitioning(isTransitioning) {
@@ -5208,7 +3283,7 @@ module.exports = {
     };
 
     _proto.dispose = function dispose() {
-      $__default['default'].removeData(this._element, DATA_KEY$3);
+      $.removeData(this._element, DATA_KEY$3);
       this._config = null;
       this._parent = null;
       this._element = null;
@@ -5226,7 +3301,7 @@ module.exports = {
     };
 
     _proto._getDimension = function _getDimension() {
-      var hasWidth = $__default['default'](this._element).hasClass(DIMENSION_WIDTH);
+      var hasWidth = $(this._element).hasClass(DIMENSION_WIDTH);
       return hasWidth ? DIMENSION_WIDTH : DIMENSION_HEIGHT;
     };
 
@@ -5247,17 +3322,17 @@ module.exports = {
 
       var selector = "[data-toggle=\"collapse\"][data-parent=\"" + this._config.parent + "\"]";
       var children = [].slice.call(parent.querySelectorAll(selector));
-      $__default['default'](children).each(function (i, element) {
+      $(children).each(function (i, element) {
         _this3._addAriaAndCollapsedClass(Collapse._getTargetFromElement(element), [element]);
       });
       return parent;
     };
 
     _proto._addAriaAndCollapsedClass = function _addAriaAndCollapsedClass(element, triggerArray) {
-      var isOpen = $__default['default'](element).hasClass(CLASS_NAME_SHOW$1);
+      var isOpen = $(element).hasClass(CLASS_NAME_SHOW$1);
 
       if (triggerArray.length) {
-        $__default['default'](triggerArray).toggleClass(CLASS_NAME_COLLAPSED, !isOpen).attr('aria-expanded', isOpen);
+        $(triggerArray).toggleClass(CLASS_NAME_COLLAPSED, !isOpen).attr('aria-expanded', isOpen);
       }
     } // Static
     ;
@@ -5269,10 +3344,10 @@ module.exports = {
 
     Collapse._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var $element = $__default['default'](this);
-        var data = $element.data(DATA_KEY$3);
+        var $this = $(this);
+        var data = $this.data(DATA_KEY$3);
 
-        var _config = _extends({}, Default$1, $element.data(), typeof config === 'object' && config ? config : {});
+        var _config = _extends({}, Default$1, $this.data(), typeof config === 'object' && config ? config : {});
 
         if (!data && _config.toggle && typeof config === 'string' && /show|hide/.test(config)) {
           _config.toggle = false;
@@ -5280,7 +3355,7 @@ module.exports = {
 
         if (!data) {
           data = new Collapse(this, _config);
-          $element.data(DATA_KEY$3, data);
+          $this.data(DATA_KEY$3, data);
         }
 
         if (typeof config === 'string') {
@@ -5314,17 +3389,17 @@ module.exports = {
    */
 
 
-  $__default['default'](document).on(EVENT_CLICK_DATA_API$3, SELECTOR_DATA_TOGGLE$1, function (event) {
+  $(document).on(EVENT_CLICK_DATA_API$3, SELECTOR_DATA_TOGGLE$1, function (event) {
     // preventDefault only for <a> elements (which change the URL) not inside the collapsible element
     if (event.currentTarget.tagName === 'A') {
       event.preventDefault();
     }
 
-    var $trigger = $__default['default'](this);
+    var $trigger = $(this);
     var selector = Util.getSelectorFromElement(this);
     var selectors = [].slice.call(document.querySelectorAll(selector));
-    $__default['default'](selectors).each(function () {
-      var $target = $__default['default'](this);
+    $(selectors).each(function () {
+      var $target = $(this);
       var data = $target.data(DATA_KEY$3);
       var config = data ? 'toggle' : $trigger.data();
 
@@ -5337,11 +3412,11 @@ module.exports = {
    * ------------------------------------------------------------------------
    */
 
-  $__default['default'].fn[NAME$3] = Collapse._jQueryInterface;
-  $__default['default'].fn[NAME$3].Constructor = Collapse;
+  $.fn[NAME$3] = Collapse._jQueryInterface;
+  $.fn[NAME$3].Constructor = Collapse;
 
-  $__default['default'].fn[NAME$3].noConflict = function () {
-    $__default['default'].fn[NAME$3] = JQUERY_NO_CONFLICT$3;
+  $.fn[NAME$3].noConflict = function () {
+    $.fn[NAME$3] = JQUERY_NO_CONFLICT$3;
     return Collapse._jQueryInterface;
   };
 
@@ -5352,11 +3427,11 @@ module.exports = {
    */
 
   var NAME$4 = 'dropdown';
-  var VERSION$4 = '4.5.3';
+  var VERSION$4 = '4.5.2';
   var DATA_KEY$4 = 'bs.dropdown';
   var EVENT_KEY$4 = "." + DATA_KEY$4;
   var DATA_API_KEY$4 = '.data-api';
-  var JQUERY_NO_CONFLICT$4 = $__default['default'].fn[NAME$4];
+  var JQUERY_NO_CONFLICT$4 = $.fn[NAME$4];
   var ESCAPE_KEYCODE = 27; // KeyboardEvent.which value for Escape (Esc) key
 
   var SPACE_KEYCODE = 32; // KeyboardEvent.which value for space key
@@ -5434,11 +3509,11 @@ module.exports = {
 
     // Public
     _proto.toggle = function toggle() {
-      if (this._element.disabled || $__default['default'](this._element).hasClass(CLASS_NAME_DISABLED)) {
+      if (this._element.disabled || $(this._element).hasClass(CLASS_NAME_DISABLED)) {
         return;
       }
 
-      var isActive = $__default['default'](this._menu).hasClass(CLASS_NAME_SHOW$2);
+      var isActive = $(this._menu).hasClass(CLASS_NAME_SHOW$2);
 
       Dropdown._clearMenus();
 
@@ -5454,18 +3529,18 @@ module.exports = {
         usePopper = false;
       }
 
-      if (this._element.disabled || $__default['default'](this._element).hasClass(CLASS_NAME_DISABLED) || $__default['default'](this._menu).hasClass(CLASS_NAME_SHOW$2)) {
+      if (this._element.disabled || $(this._element).hasClass(CLASS_NAME_DISABLED) || $(this._menu).hasClass(CLASS_NAME_SHOW$2)) {
         return;
       }
 
       var relatedTarget = {
         relatedTarget: this._element
       };
-      var showEvent = $__default['default'].Event(EVENT_SHOW$1, relatedTarget);
+      var showEvent = $.Event(EVENT_SHOW$1, relatedTarget);
 
       var parent = Dropdown._getParentFromElement(this._element);
 
-      $__default['default'](parent).trigger(showEvent);
+      $(parent).trigger(showEvent);
 
       if (showEvent.isDefaultPrevented()) {
         return;
@@ -5477,7 +3552,7 @@ module.exports = {
          * Check for Popper dependency
          * Popper - https://popper.js.org
          */
-        if (typeof Popper__default['default'] === 'undefined') {
+        if (typeof Popper === 'undefined') {
           throw new TypeError('Bootstrap\'s dropdowns require Popper.js (https://popper.js.org/)');
         }
 
@@ -5497,41 +3572,41 @@ module.exports = {
 
 
         if (this._config.boundary !== 'scrollParent') {
-          $__default['default'](parent).addClass(CLASS_NAME_POSITION_STATIC);
+          $(parent).addClass(CLASS_NAME_POSITION_STATIC);
         }
 
-        this._popper = new Popper__default['default'](referenceElement, this._menu, this._getPopperConfig());
+        this._popper = new Popper(referenceElement, this._menu, this._getPopperConfig());
       } // If this is a touch-enabled device we add extra
       // empty mouseover listeners to the body's immediate children;
       // only needed because of broken event delegation on iOS
       // https://www.quirksmode.org/blog/archives/2014/02/mouse_event_bub.html
 
 
-      if ('ontouchstart' in document.documentElement && $__default['default'](parent).closest(SELECTOR_NAVBAR_NAV).length === 0) {
-        $__default['default'](document.body).children().on('mouseover', null, $__default['default'].noop);
+      if ('ontouchstart' in document.documentElement && $(parent).closest(SELECTOR_NAVBAR_NAV).length === 0) {
+        $(document.body).children().on('mouseover', null, $.noop);
       }
 
       this._element.focus();
 
       this._element.setAttribute('aria-expanded', true);
 
-      $__default['default'](this._menu).toggleClass(CLASS_NAME_SHOW$2);
-      $__default['default'](parent).toggleClass(CLASS_NAME_SHOW$2).trigger($__default['default'].Event(EVENT_SHOWN$1, relatedTarget));
+      $(this._menu).toggleClass(CLASS_NAME_SHOW$2);
+      $(parent).toggleClass(CLASS_NAME_SHOW$2).trigger($.Event(EVENT_SHOWN$1, relatedTarget));
     };
 
     _proto.hide = function hide() {
-      if (this._element.disabled || $__default['default'](this._element).hasClass(CLASS_NAME_DISABLED) || !$__default['default'](this._menu).hasClass(CLASS_NAME_SHOW$2)) {
+      if (this._element.disabled || $(this._element).hasClass(CLASS_NAME_DISABLED) || !$(this._menu).hasClass(CLASS_NAME_SHOW$2)) {
         return;
       }
 
       var relatedTarget = {
         relatedTarget: this._element
       };
-      var hideEvent = $__default['default'].Event(EVENT_HIDE$1, relatedTarget);
+      var hideEvent = $.Event(EVENT_HIDE$1, relatedTarget);
 
       var parent = Dropdown._getParentFromElement(this._element);
 
-      $__default['default'](parent).trigger(hideEvent);
+      $(parent).trigger(hideEvent);
 
       if (hideEvent.isDefaultPrevented()) {
         return;
@@ -5541,13 +3616,13 @@ module.exports = {
         this._popper.destroy();
       }
 
-      $__default['default'](this._menu).toggleClass(CLASS_NAME_SHOW$2);
-      $__default['default'](parent).toggleClass(CLASS_NAME_SHOW$2).trigger($__default['default'].Event(EVENT_HIDDEN$1, relatedTarget));
+      $(this._menu).toggleClass(CLASS_NAME_SHOW$2);
+      $(parent).toggleClass(CLASS_NAME_SHOW$2).trigger($.Event(EVENT_HIDDEN$1, relatedTarget));
     };
 
     _proto.dispose = function dispose() {
-      $__default['default'].removeData(this._element, DATA_KEY$4);
-      $__default['default'](this._element).off(EVENT_KEY$4);
+      $.removeData(this._element, DATA_KEY$4);
+      $(this._element).off(EVENT_KEY$4);
       this._element = null;
       this._menu = null;
 
@@ -5570,7 +3645,7 @@ module.exports = {
     _proto._addEventListeners = function _addEventListeners() {
       var _this = this;
 
-      $__default['default'](this._element).on(EVENT_CLICK, function (event) {
+      $(this._element).on(EVENT_CLICK, function (event) {
         event.preventDefault();
         event.stopPropagation();
 
@@ -5579,7 +3654,7 @@ module.exports = {
     };
 
     _proto._getConfig = function _getConfig(config) {
-      config = _extends({}, this.constructor.Default, $__default['default'](this._element).data(), config);
+      config = _extends({}, this.constructor.Default, $(this._element).data(), config);
       Util.typeCheckConfig(NAME$4, config, this.constructor.DefaultType);
       return config;
     };
@@ -5597,16 +3672,16 @@ module.exports = {
     };
 
     _proto._getPlacement = function _getPlacement() {
-      var $parentDropdown = $__default['default'](this._element.parentNode);
+      var $parentDropdown = $(this._element.parentNode);
       var placement = PLACEMENT_BOTTOM; // Handle dropup
 
       if ($parentDropdown.hasClass(CLASS_NAME_DROPUP)) {
-        placement = $__default['default'](this._menu).hasClass(CLASS_NAME_MENURIGHT) ? PLACEMENT_TOPEND : PLACEMENT_TOP;
+        placement = $(this._menu).hasClass(CLASS_NAME_MENURIGHT) ? PLACEMENT_TOPEND : PLACEMENT_TOP;
       } else if ($parentDropdown.hasClass(CLASS_NAME_DROPRIGHT)) {
         placement = PLACEMENT_RIGHT;
       } else if ($parentDropdown.hasClass(CLASS_NAME_DROPLEFT)) {
         placement = PLACEMENT_LEFT;
-      } else if ($__default['default'](this._menu).hasClass(CLASS_NAME_MENURIGHT)) {
+      } else if ($(this._menu).hasClass(CLASS_NAME_MENURIGHT)) {
         placement = PLACEMENT_BOTTOMEND;
       }
 
@@ -5614,7 +3689,7 @@ module.exports = {
     };
 
     _proto._detectNavbar = function _detectNavbar() {
-      return $__default['default'](this._element).closest('.navbar').length > 0;
+      return $(this._element).closest('.navbar').length > 0;
     };
 
     _proto._getOffset = function _getOffset() {
@@ -5660,13 +3735,13 @@ module.exports = {
 
     Dropdown._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var data = $__default['default'](this).data(DATA_KEY$4);
+        var data = $(this).data(DATA_KEY$4);
 
         var _config = typeof config === 'object' ? config : null;
 
         if (!data) {
           data = new Dropdown(this, _config);
-          $__default['default'](this).data(DATA_KEY$4, data);
+          $(this).data(DATA_KEY$4, data);
         }
 
         if (typeof config === 'string') {
@@ -5689,7 +3764,7 @@ module.exports = {
       for (var i = 0, len = toggles.length; i < len; i++) {
         var parent = Dropdown._getParentFromElement(toggles[i]);
 
-        var context = $__default['default'](toggles[i]).data(DATA_KEY$4);
+        var context = $(toggles[i]).data(DATA_KEY$4);
         var relatedTarget = {
           relatedTarget: toggles[i]
         };
@@ -5704,16 +3779,16 @@ module.exports = {
 
         var dropdownMenu = context._menu;
 
-        if (!$__default['default'](parent).hasClass(CLASS_NAME_SHOW$2)) {
+        if (!$(parent).hasClass(CLASS_NAME_SHOW$2)) {
           continue;
         }
 
-        if (event && (event.type === 'click' && /input|textarea/i.test(event.target.tagName) || event.type === 'keyup' && event.which === TAB_KEYCODE) && $__default['default'].contains(parent, event.target)) {
+        if (event && (event.type === 'click' && /input|textarea/i.test(event.target.tagName) || event.type === 'keyup' && event.which === TAB_KEYCODE) && $.contains(parent, event.target)) {
           continue;
         }
 
-        var hideEvent = $__default['default'].Event(EVENT_HIDE$1, relatedTarget);
-        $__default['default'](parent).trigger(hideEvent);
+        var hideEvent = $.Event(EVENT_HIDE$1, relatedTarget);
+        $(parent).trigger(hideEvent);
 
         if (hideEvent.isDefaultPrevented()) {
           continue;
@@ -5722,7 +3797,7 @@ module.exports = {
 
 
         if ('ontouchstart' in document.documentElement) {
-          $__default['default'](document.body).children().off('mouseover', null, $__default['default'].noop);
+          $(document.body).children().off('mouseover', null, $.noop);
         }
 
         toggles[i].setAttribute('aria-expanded', 'false');
@@ -5731,8 +3806,8 @@ module.exports = {
           context._popper.destroy();
         }
 
-        $__default['default'](dropdownMenu).removeClass(CLASS_NAME_SHOW$2);
-        $__default['default'](parent).removeClass(CLASS_NAME_SHOW$2).trigger($__default['default'].Event(EVENT_HIDDEN$1, relatedTarget));
+        $(dropdownMenu).removeClass(CLASS_NAME_SHOW$2);
+        $(parent).removeClass(CLASS_NAME_SHOW$2).trigger($.Event(EVENT_HIDDEN$1, relatedTarget));
       }
     };
 
@@ -5756,17 +3831,17 @@ module.exports = {
       //  - If key is other than escape
       //    - If key is not up or down => not a dropdown command
       //    - If trigger inside the menu => not a dropdown command
-      if (/input|textarea/i.test(event.target.tagName) ? event.which === SPACE_KEYCODE || event.which !== ESCAPE_KEYCODE && (event.which !== ARROW_DOWN_KEYCODE && event.which !== ARROW_UP_KEYCODE || $__default['default'](event.target).closest(SELECTOR_MENU).length) : !REGEXP_KEYDOWN.test(event.which)) {
+      if (/input|textarea/i.test(event.target.tagName) ? event.which === SPACE_KEYCODE || event.which !== ESCAPE_KEYCODE && (event.which !== ARROW_DOWN_KEYCODE && event.which !== ARROW_UP_KEYCODE || $(event.target).closest(SELECTOR_MENU).length) : !REGEXP_KEYDOWN.test(event.which)) {
         return;
       }
 
-      if (this.disabled || $__default['default'](this).hasClass(CLASS_NAME_DISABLED)) {
+      if (this.disabled || $(this).hasClass(CLASS_NAME_DISABLED)) {
         return;
       }
 
       var parent = Dropdown._getParentFromElement(this);
 
-      var isActive = $__default['default'](parent).hasClass(CLASS_NAME_SHOW$2);
+      var isActive = $(parent).hasClass(CLASS_NAME_SHOW$2);
 
       if (!isActive && event.which === ESCAPE_KEYCODE) {
         return;
@@ -5775,17 +3850,17 @@ module.exports = {
       event.preventDefault();
       event.stopPropagation();
 
-      if (!isActive || event.which === ESCAPE_KEYCODE || event.which === SPACE_KEYCODE) {
+      if (!isActive || isActive && (event.which === ESCAPE_KEYCODE || event.which === SPACE_KEYCODE)) {
         if (event.which === ESCAPE_KEYCODE) {
-          $__default['default'](parent.querySelector(SELECTOR_DATA_TOGGLE$2)).trigger('focus');
+          $(parent.querySelector(SELECTOR_DATA_TOGGLE$2)).trigger('focus');
         }
 
-        $__default['default'](this).trigger('click');
+        $(this).trigger('click');
         return;
       }
 
       var items = [].slice.call(parent.querySelectorAll(SELECTOR_VISIBLE_ITEMS)).filter(function (item) {
-        return $__default['default'](item).is(':visible');
+        return $(item).is(':visible');
       });
 
       if (items.length === 0) {
@@ -5837,11 +3912,11 @@ module.exports = {
    */
 
 
-  $__default['default'](document).on(EVENT_KEYDOWN_DATA_API, SELECTOR_DATA_TOGGLE$2, Dropdown._dataApiKeydownHandler).on(EVENT_KEYDOWN_DATA_API, SELECTOR_MENU, Dropdown._dataApiKeydownHandler).on(EVENT_CLICK_DATA_API$4 + " " + EVENT_KEYUP_DATA_API, Dropdown._clearMenus).on(EVENT_CLICK_DATA_API$4, SELECTOR_DATA_TOGGLE$2, function (event) {
+  $(document).on(EVENT_KEYDOWN_DATA_API, SELECTOR_DATA_TOGGLE$2, Dropdown._dataApiKeydownHandler).on(EVENT_KEYDOWN_DATA_API, SELECTOR_MENU, Dropdown._dataApiKeydownHandler).on(EVENT_CLICK_DATA_API$4 + " " + EVENT_KEYUP_DATA_API, Dropdown._clearMenus).on(EVENT_CLICK_DATA_API$4, SELECTOR_DATA_TOGGLE$2, function (event) {
     event.preventDefault();
     event.stopPropagation();
 
-    Dropdown._jQueryInterface.call($__default['default'](this), 'toggle');
+    Dropdown._jQueryInterface.call($(this), 'toggle');
   }).on(EVENT_CLICK_DATA_API$4, SELECTOR_FORM_CHILD, function (e) {
     e.stopPropagation();
   });
@@ -5851,11 +3926,11 @@ module.exports = {
    * ------------------------------------------------------------------------
    */
 
-  $__default['default'].fn[NAME$4] = Dropdown._jQueryInterface;
-  $__default['default'].fn[NAME$4].Constructor = Dropdown;
+  $.fn[NAME$4] = Dropdown._jQueryInterface;
+  $.fn[NAME$4].Constructor = Dropdown;
 
-  $__default['default'].fn[NAME$4].noConflict = function () {
-    $__default['default'].fn[NAME$4] = JQUERY_NO_CONFLICT$4;
+  $.fn[NAME$4].noConflict = function () {
+    $.fn[NAME$4] = JQUERY_NO_CONFLICT$4;
     return Dropdown._jQueryInterface;
   };
 
@@ -5866,11 +3941,11 @@ module.exports = {
    */
 
   var NAME$5 = 'modal';
-  var VERSION$5 = '4.5.3';
+  var VERSION$5 = '4.5.2';
   var DATA_KEY$5 = 'bs.modal';
   var EVENT_KEY$5 = "." + DATA_KEY$5;
   var DATA_API_KEY$5 = '.data-api';
-  var JQUERY_NO_CONFLICT$5 = $__default['default'].fn[NAME$5];
+  var JQUERY_NO_CONFLICT$5 = $.fn[NAME$5];
   var ESCAPE_KEYCODE$1 = 27; // KeyboardEvent.which value for Escape (Esc) key
 
   var Default$3 = {
@@ -5944,14 +4019,14 @@ module.exports = {
         return;
       }
 
-      if ($__default['default'](this._element).hasClass(CLASS_NAME_FADE$1)) {
+      if ($(this._element).hasClass(CLASS_NAME_FADE$1)) {
         this._isTransitioning = true;
       }
 
-      var showEvent = $__default['default'].Event(EVENT_SHOW$2, {
+      var showEvent = $.Event(EVENT_SHOW$2, {
         relatedTarget: relatedTarget
       });
-      $__default['default'](this._element).trigger(showEvent);
+      $(this._element).trigger(showEvent);
 
       if (this._isShown || showEvent.isDefaultPrevented()) {
         return;
@@ -5969,12 +4044,12 @@ module.exports = {
 
       this._setResizeEvent();
 
-      $__default['default'](this._element).on(EVENT_CLICK_DISMISS, SELECTOR_DATA_DISMISS, function (event) {
+      $(this._element).on(EVENT_CLICK_DISMISS, SELECTOR_DATA_DISMISS, function (event) {
         return _this.hide(event);
       });
-      $__default['default'](this._dialog).on(EVENT_MOUSEDOWN_DISMISS, function () {
-        $__default['default'](_this._element).one(EVENT_MOUSEUP_DISMISS, function (event) {
-          if ($__default['default'](event.target).is(_this._element)) {
+      $(this._dialog).on(EVENT_MOUSEDOWN_DISMISS, function () {
+        $(_this._element).one(EVENT_MOUSEUP_DISMISS, function (event) {
+          if ($(event.target).is(_this._element)) {
             _this._ignoreBackdropClick = true;
           }
         });
@@ -5996,15 +4071,15 @@ module.exports = {
         return;
       }
 
-      var hideEvent = $__default['default'].Event(EVENT_HIDE$2);
-      $__default['default'](this._element).trigger(hideEvent);
+      var hideEvent = $.Event(EVENT_HIDE$2);
+      $(this._element).trigger(hideEvent);
 
       if (!this._isShown || hideEvent.isDefaultPrevented()) {
         return;
       }
 
       this._isShown = false;
-      var transition = $__default['default'](this._element).hasClass(CLASS_NAME_FADE$1);
+      var transition = $(this._element).hasClass(CLASS_NAME_FADE$1);
 
       if (transition) {
         this._isTransitioning = true;
@@ -6014,14 +4089,14 @@ module.exports = {
 
       this._setResizeEvent();
 
-      $__default['default'](document).off(EVENT_FOCUSIN);
-      $__default['default'](this._element).removeClass(CLASS_NAME_SHOW$3);
-      $__default['default'](this._element).off(EVENT_CLICK_DISMISS);
-      $__default['default'](this._dialog).off(EVENT_MOUSEDOWN_DISMISS);
+      $(document).off(EVENT_FOCUSIN);
+      $(this._element).removeClass(CLASS_NAME_SHOW$3);
+      $(this._element).off(EVENT_CLICK_DISMISS);
+      $(this._dialog).off(EVENT_MOUSEDOWN_DISMISS);
 
       if (transition) {
         var transitionDuration = Util.getTransitionDurationFromElement(this._element);
-        $__default['default'](this._element).one(Util.TRANSITION_END, function (event) {
+        $(this._element).one(Util.TRANSITION_END, function (event) {
           return _this2._hideModal(event);
         }).emulateTransitionEnd(transitionDuration);
       } else {
@@ -6031,7 +4106,7 @@ module.exports = {
 
     _proto.dispose = function dispose() {
       [window, this._element, this._dialog].forEach(function (htmlElement) {
-        return $__default['default'](htmlElement).off(EVENT_KEY$5);
+        return $(htmlElement).off(EVENT_KEY$5);
       });
       /**
        * `document` has 2 events `EVENT_FOCUSIN` and `EVENT_CLICK_DATA_API`
@@ -6039,8 +4114,8 @@ module.exports = {
        * It will remove `EVENT_CLICK_DATA_API` event that should remain
        */
 
-      $__default['default'](document).off(EVENT_FOCUSIN);
-      $__default['default'].removeData(this._element, DATA_KEY$5);
+      $(document).off(EVENT_FOCUSIN);
+      $.removeData(this._element, DATA_KEY$5);
       this._config = null;
       this._element = null;
       this._dialog = null;
@@ -6067,10 +4142,10 @@ module.exports = {
       var _this3 = this;
 
       if (this._config.backdrop === 'static') {
-        var hideEventPrevented = $__default['default'].Event(EVENT_HIDE_PREVENTED);
-        $__default['default'](this._element).trigger(hideEventPrevented);
+        var hideEventPrevented = $.Event(EVENT_HIDE_PREVENTED);
+        $(this._element).trigger(hideEventPrevented);
 
-        if (hideEventPrevented.isDefaultPrevented()) {
+        if (hideEventPrevented.defaultPrevented) {
           return;
         }
 
@@ -6083,12 +4158,12 @@ module.exports = {
         this._element.classList.add(CLASS_NAME_STATIC);
 
         var modalTransitionDuration = Util.getTransitionDurationFromElement(this._dialog);
-        $__default['default'](this._element).off(Util.TRANSITION_END);
-        $__default['default'](this._element).one(Util.TRANSITION_END, function () {
+        $(this._element).off(Util.TRANSITION_END);
+        $(this._element).one(Util.TRANSITION_END, function () {
           _this3._element.classList.remove(CLASS_NAME_STATIC);
 
           if (!isModalOverflowing) {
-            $__default['default'](_this3._element).one(Util.TRANSITION_END, function () {
+            $(_this3._element).one(Util.TRANSITION_END, function () {
               _this3._element.style.overflowY = '';
             }).emulateTransitionEnd(_this3._element, modalTransitionDuration);
           }
@@ -6103,7 +4178,7 @@ module.exports = {
     _proto._showElement = function _showElement(relatedTarget) {
       var _this4 = this;
 
-      var transition = $__default['default'](this._element).hasClass(CLASS_NAME_FADE$1);
+      var transition = $(this._element).hasClass(CLASS_NAME_FADE$1);
       var modalBody = this._dialog ? this._dialog.querySelector(SELECTOR_MODAL_BODY) : null;
 
       if (!this._element.parentNode || this._element.parentNode.nodeType !== Node.ELEMENT_NODE) {
@@ -6119,7 +4194,7 @@ module.exports = {
 
       this._element.setAttribute('role', 'dialog');
 
-      if ($__default['default'](this._dialog).hasClass(CLASS_NAME_SCROLLABLE) && modalBody) {
+      if ($(this._dialog).hasClass(CLASS_NAME_SCROLLABLE) && modalBody) {
         modalBody.scrollTop = 0;
       } else {
         this._element.scrollTop = 0;
@@ -6129,13 +4204,13 @@ module.exports = {
         Util.reflow(this._element);
       }
 
-      $__default['default'](this._element).addClass(CLASS_NAME_SHOW$3);
+      $(this._element).addClass(CLASS_NAME_SHOW$3);
 
       if (this._config.focus) {
         this._enforceFocus();
       }
 
-      var shownEvent = $__default['default'].Event(EVENT_SHOWN$2, {
+      var shownEvent = $.Event(EVENT_SHOWN$2, {
         relatedTarget: relatedTarget
       });
 
@@ -6145,12 +4220,12 @@ module.exports = {
         }
 
         _this4._isTransitioning = false;
-        $__default['default'](_this4._element).trigger(shownEvent);
+        $(_this4._element).trigger(shownEvent);
       };
 
       if (transition) {
         var transitionDuration = Util.getTransitionDurationFromElement(this._dialog);
-        $__default['default'](this._dialog).one(Util.TRANSITION_END, transitionComplete).emulateTransitionEnd(transitionDuration);
+        $(this._dialog).one(Util.TRANSITION_END, transitionComplete).emulateTransitionEnd(transitionDuration);
       } else {
         transitionComplete();
       }
@@ -6159,9 +4234,9 @@ module.exports = {
     _proto._enforceFocus = function _enforceFocus() {
       var _this5 = this;
 
-      $__default['default'](document).off(EVENT_FOCUSIN) // Guard against infinite focus loop
+      $(document).off(EVENT_FOCUSIN) // Guard against infinite focus loop
       .on(EVENT_FOCUSIN, function (event) {
-        if (document !== event.target && _this5._element !== event.target && $__default['default'](_this5._element).has(event.target).length === 0) {
+        if (document !== event.target && _this5._element !== event.target && $(_this5._element).has(event.target).length === 0) {
           _this5._element.focus();
         }
       });
@@ -6171,7 +4246,7 @@ module.exports = {
       var _this6 = this;
 
       if (this._isShown) {
-        $__default['default'](this._element).on(EVENT_KEYDOWN_DISMISS, function (event) {
+        $(this._element).on(EVENT_KEYDOWN_DISMISS, function (event) {
           if (_this6._config.keyboard && event.which === ESCAPE_KEYCODE$1) {
             event.preventDefault();
 
@@ -6181,7 +4256,7 @@ module.exports = {
           }
         });
       } else if (!this._isShown) {
-        $__default['default'](this._element).off(EVENT_KEYDOWN_DISMISS);
+        $(this._element).off(EVENT_KEYDOWN_DISMISS);
       }
     };
 
@@ -6189,11 +4264,11 @@ module.exports = {
       var _this7 = this;
 
       if (this._isShown) {
-        $__default['default'](window).on(EVENT_RESIZE, function (event) {
+        $(window).on(EVENT_RESIZE, function (event) {
           return _this7.handleUpdate(event);
         });
       } else {
-        $__default['default'](window).off(EVENT_RESIZE);
+        $(window).off(EVENT_RESIZE);
       }
     };
 
@@ -6211,19 +4286,19 @@ module.exports = {
       this._isTransitioning = false;
 
       this._showBackdrop(function () {
-        $__default['default'](document.body).removeClass(CLASS_NAME_OPEN);
+        $(document.body).removeClass(CLASS_NAME_OPEN);
 
         _this8._resetAdjustments();
 
         _this8._resetScrollbar();
 
-        $__default['default'](_this8._element).trigger(EVENT_HIDDEN$2);
+        $(_this8._element).trigger(EVENT_HIDDEN$2);
       });
     };
 
     _proto._removeBackdrop = function _removeBackdrop() {
       if (this._backdrop) {
-        $__default['default'](this._backdrop).remove();
+        $(this._backdrop).remove();
         this._backdrop = null;
       }
     };
@@ -6231,7 +4306,7 @@ module.exports = {
     _proto._showBackdrop = function _showBackdrop(callback) {
       var _this9 = this;
 
-      var animate = $__default['default'](this._element).hasClass(CLASS_NAME_FADE$1) ? CLASS_NAME_FADE$1 : '';
+      var animate = $(this._element).hasClass(CLASS_NAME_FADE$1) ? CLASS_NAME_FADE$1 : '';
 
       if (this._isShown && this._config.backdrop) {
         this._backdrop = document.createElement('div');
@@ -6241,8 +4316,8 @@ module.exports = {
           this._backdrop.classList.add(animate);
         }
 
-        $__default['default'](this._backdrop).appendTo(document.body);
-        $__default['default'](this._element).on(EVENT_CLICK_DISMISS, function (event) {
+        $(this._backdrop).appendTo(document.body);
+        $(this._element).on(EVENT_CLICK_DISMISS, function (event) {
           if (_this9._ignoreBackdropClick) {
             _this9._ignoreBackdropClick = false;
             return;
@@ -6259,7 +4334,7 @@ module.exports = {
           Util.reflow(this._backdrop);
         }
 
-        $__default['default'](this._backdrop).addClass(CLASS_NAME_SHOW$3);
+        $(this._backdrop).addClass(CLASS_NAME_SHOW$3);
 
         if (!callback) {
           return;
@@ -6271,9 +4346,9 @@ module.exports = {
         }
 
         var backdropTransitionDuration = Util.getTransitionDurationFromElement(this._backdrop);
-        $__default['default'](this._backdrop).one(Util.TRANSITION_END, callback).emulateTransitionEnd(backdropTransitionDuration);
+        $(this._backdrop).one(Util.TRANSITION_END, callback).emulateTransitionEnd(backdropTransitionDuration);
       } else if (!this._isShown && this._backdrop) {
-        $__default['default'](this._backdrop).removeClass(CLASS_NAME_SHOW$3);
+        $(this._backdrop).removeClass(CLASS_NAME_SHOW$3);
 
         var callbackRemove = function callbackRemove() {
           _this9._removeBackdrop();
@@ -6283,10 +4358,10 @@ module.exports = {
           }
         };
 
-        if ($__default['default'](this._element).hasClass(CLASS_NAME_FADE$1)) {
+        if ($(this._element).hasClass(CLASS_NAME_FADE$1)) {
           var _backdropTransitionDuration = Util.getTransitionDurationFromElement(this._backdrop);
 
-          $__default['default'](this._backdrop).one(Util.TRANSITION_END, callbackRemove).emulateTransitionEnd(_backdropTransitionDuration);
+          $(this._backdrop).one(Util.TRANSITION_END, callbackRemove).emulateTransitionEnd(_backdropTransitionDuration);
         } else {
           callbackRemove();
         }
@@ -6331,46 +4406,46 @@ module.exports = {
         var fixedContent = [].slice.call(document.querySelectorAll(SELECTOR_FIXED_CONTENT));
         var stickyContent = [].slice.call(document.querySelectorAll(SELECTOR_STICKY_CONTENT)); // Adjust fixed content padding
 
-        $__default['default'](fixedContent).each(function (index, element) {
+        $(fixedContent).each(function (index, element) {
           var actualPadding = element.style.paddingRight;
-          var calculatedPadding = $__default['default'](element).css('padding-right');
-          $__default['default'](element).data('padding-right', actualPadding).css('padding-right', parseFloat(calculatedPadding) + _this10._scrollbarWidth + "px");
+          var calculatedPadding = $(element).css('padding-right');
+          $(element).data('padding-right', actualPadding).css('padding-right', parseFloat(calculatedPadding) + _this10._scrollbarWidth + "px");
         }); // Adjust sticky content margin
 
-        $__default['default'](stickyContent).each(function (index, element) {
+        $(stickyContent).each(function (index, element) {
           var actualMargin = element.style.marginRight;
-          var calculatedMargin = $__default['default'](element).css('margin-right');
-          $__default['default'](element).data('margin-right', actualMargin).css('margin-right', parseFloat(calculatedMargin) - _this10._scrollbarWidth + "px");
+          var calculatedMargin = $(element).css('margin-right');
+          $(element).data('margin-right', actualMargin).css('margin-right', parseFloat(calculatedMargin) - _this10._scrollbarWidth + "px");
         }); // Adjust body padding
 
         var actualPadding = document.body.style.paddingRight;
-        var calculatedPadding = $__default['default'](document.body).css('padding-right');
-        $__default['default'](document.body).data('padding-right', actualPadding).css('padding-right', parseFloat(calculatedPadding) + this._scrollbarWidth + "px");
+        var calculatedPadding = $(document.body).css('padding-right');
+        $(document.body).data('padding-right', actualPadding).css('padding-right', parseFloat(calculatedPadding) + this._scrollbarWidth + "px");
       }
 
-      $__default['default'](document.body).addClass(CLASS_NAME_OPEN);
+      $(document.body).addClass(CLASS_NAME_OPEN);
     };
 
     _proto._resetScrollbar = function _resetScrollbar() {
       // Restore fixed content padding
       var fixedContent = [].slice.call(document.querySelectorAll(SELECTOR_FIXED_CONTENT));
-      $__default['default'](fixedContent).each(function (index, element) {
-        var padding = $__default['default'](element).data('padding-right');
-        $__default['default'](element).removeData('padding-right');
+      $(fixedContent).each(function (index, element) {
+        var padding = $(element).data('padding-right');
+        $(element).removeData('padding-right');
         element.style.paddingRight = padding ? padding : '';
       }); // Restore sticky content
 
       var elements = [].slice.call(document.querySelectorAll("" + SELECTOR_STICKY_CONTENT));
-      $__default['default'](elements).each(function (index, element) {
-        var margin = $__default['default'](element).data('margin-right');
+      $(elements).each(function (index, element) {
+        var margin = $(element).data('margin-right');
 
         if (typeof margin !== 'undefined') {
-          $__default['default'](element).css('margin-right', margin).removeData('margin-right');
+          $(element).css('margin-right', margin).removeData('margin-right');
         }
       }); // Restore body padding
 
-      var padding = $__default['default'](document.body).data('padding-right');
-      $__default['default'](document.body).removeData('padding-right');
+      var padding = $(document.body).data('padding-right');
+      $(document.body).removeData('padding-right');
       document.body.style.paddingRight = padding ? padding : '';
     };
 
@@ -6387,13 +4462,13 @@ module.exports = {
 
     Modal._jQueryInterface = function _jQueryInterface(config, relatedTarget) {
       return this.each(function () {
-        var data = $__default['default'](this).data(DATA_KEY$5);
+        var data = $(this).data(DATA_KEY$5);
 
-        var _config = _extends({}, Default$3, $__default['default'](this).data(), typeof config === 'object' && config ? config : {});
+        var _config = _extends({}, Default$3, $(this).data(), typeof config === 'object' && config ? config : {});
 
         if (!data) {
           data = new Modal(this, _config);
-          $__default['default'](this).data(DATA_KEY$5, data);
+          $(this).data(DATA_KEY$5, data);
         }
 
         if (typeof config === 'string') {
@@ -6429,7 +4504,7 @@ module.exports = {
    */
 
 
-  $__default['default'](document).on(EVENT_CLICK_DATA_API$5, SELECTOR_DATA_TOGGLE$3, function (event) {
+  $(document).on(EVENT_CLICK_DATA_API$5, SELECTOR_DATA_TOGGLE$3, function (event) {
     var _this11 = this;
 
     var target;
@@ -6439,26 +4514,26 @@ module.exports = {
       target = document.querySelector(selector);
     }
 
-    var config = $__default['default'](target).data(DATA_KEY$5) ? 'toggle' : _extends({}, $__default['default'](target).data(), $__default['default'](this).data());
+    var config = $(target).data(DATA_KEY$5) ? 'toggle' : _extends({}, $(target).data(), $(this).data());
 
     if (this.tagName === 'A' || this.tagName === 'AREA') {
       event.preventDefault();
     }
 
-    var $target = $__default['default'](target).one(EVENT_SHOW$2, function (showEvent) {
+    var $target = $(target).one(EVENT_SHOW$2, function (showEvent) {
       if (showEvent.isDefaultPrevented()) {
         // Only register focus restorer if modal will actually get shown
         return;
       }
 
       $target.one(EVENT_HIDDEN$2, function () {
-        if ($__default['default'](_this11).is(':visible')) {
+        if ($(_this11).is(':visible')) {
           _this11.focus();
         }
       });
     });
 
-    Modal._jQueryInterface.call($__default['default'](target), config, this);
+    Modal._jQueryInterface.call($(target), config, this);
   });
   /**
    * ------------------------------------------------------------------------
@@ -6466,17 +4541,17 @@ module.exports = {
    * ------------------------------------------------------------------------
    */
 
-  $__default['default'].fn[NAME$5] = Modal._jQueryInterface;
-  $__default['default'].fn[NAME$5].Constructor = Modal;
+  $.fn[NAME$5] = Modal._jQueryInterface;
+  $.fn[NAME$5].Constructor = Modal;
 
-  $__default['default'].fn[NAME$5].noConflict = function () {
-    $__default['default'].fn[NAME$5] = JQUERY_NO_CONFLICT$5;
+  $.fn[NAME$5].noConflict = function () {
+    $.fn[NAME$5] = JQUERY_NO_CONFLICT$5;
     return Modal._jQueryInterface;
   };
 
   /**
    * --------------------------------------------------------------------------
-   * Bootstrap (v4.5.3): tools/sanitizer.js
+   * Bootstrap (v4.5.2): tools/sanitizer.js
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
@@ -6602,10 +4677,10 @@ module.exports = {
    */
 
   var NAME$6 = 'tooltip';
-  var VERSION$6 = '4.5.3';
+  var VERSION$6 = '4.5.2';
   var DATA_KEY$6 = 'bs.tooltip';
   var EVENT_KEY$6 = "." + DATA_KEY$6;
-  var JQUERY_NO_CONFLICT$6 = $__default['default'].fn[NAME$6];
+  var JQUERY_NO_CONFLICT$6 = $.fn[NAME$6];
   var CLASS_PREFIX = 'bs-tooltip';
   var BSCLS_PREFIX_REGEX = new RegExp("(^|\\s)" + CLASS_PREFIX + "\\S+", 'g');
   var DISALLOWED_ATTRIBUTES = ['sanitize', 'whiteList', 'sanitizeFn'];
@@ -6682,7 +4757,7 @@ module.exports = {
 
   var Tooltip = /*#__PURE__*/function () {
     function Tooltip(element, config) {
-      if (typeof Popper__default['default'] === 'undefined') {
+      if (typeof Popper === 'undefined') {
         throw new TypeError('Bootstrap\'s tooltips require Popper.js (https://popper.js.org/)');
       } // private
 
@@ -6723,11 +4798,11 @@ module.exports = {
 
       if (event) {
         var dataKey = this.constructor.DATA_KEY;
-        var context = $__default['default'](event.currentTarget).data(dataKey);
+        var context = $(event.currentTarget).data(dataKey);
 
         if (!context) {
           context = new this.constructor(event.currentTarget, this._getDelegateConfig());
-          $__default['default'](event.currentTarget).data(dataKey, context);
+          $(event.currentTarget).data(dataKey, context);
         }
 
         context._activeTrigger.click = !context._activeTrigger.click;
@@ -6738,7 +4813,7 @@ module.exports = {
           context._leave(null, context);
         }
       } else {
-        if ($__default['default'](this.getTipElement()).hasClass(CLASS_NAME_SHOW$4)) {
+        if ($(this.getTipElement()).hasClass(CLASS_NAME_SHOW$4)) {
           this._leave(null, this);
 
           return;
@@ -6750,12 +4825,12 @@ module.exports = {
 
     _proto.dispose = function dispose() {
       clearTimeout(this._timeout);
-      $__default['default'].removeData(this.element, this.constructor.DATA_KEY);
-      $__default['default'](this.element).off(this.constructor.EVENT_KEY);
-      $__default['default'](this.element).closest('.modal').off('hide.bs.modal', this._hideModalHandler);
+      $.removeData(this.element, this.constructor.DATA_KEY);
+      $(this.element).off(this.constructor.EVENT_KEY);
+      $(this.element).closest('.modal').off('hide.bs.modal', this._hideModalHandler);
 
       if (this.tip) {
-        $__default['default'](this.tip).remove();
+        $(this.tip).remove();
       }
 
       this._isEnabled = null;
@@ -6776,16 +4851,16 @@ module.exports = {
     _proto.show = function show() {
       var _this = this;
 
-      if ($__default['default'](this.element).css('display') === 'none') {
+      if ($(this.element).css('display') === 'none') {
         throw new Error('Please use show on visible elements');
       }
 
-      var showEvent = $__default['default'].Event(this.constructor.Event.SHOW);
+      var showEvent = $.Event(this.constructor.Event.SHOW);
 
       if (this.isWithContent() && this._isEnabled) {
-        $__default['default'](this.element).trigger(showEvent);
+        $(this.element).trigger(showEvent);
         var shadowRoot = Util.findShadowRoot(this.element);
-        var isInTheDom = $__default['default'].contains(shadowRoot !== null ? shadowRoot : this.element.ownerDocument.documentElement, this.element);
+        var isInTheDom = $.contains(shadowRoot !== null ? shadowRoot : this.element.ownerDocument.documentElement, this.element);
 
         if (showEvent.isDefaultPrevented() || !isInTheDom) {
           return;
@@ -6798,7 +4873,7 @@ module.exports = {
         this.setContent();
 
         if (this.config.animation) {
-          $__default['default'](tip).addClass(CLASS_NAME_FADE$2);
+          $(tip).addClass(CLASS_NAME_FADE$2);
         }
 
         var placement = typeof this.config.placement === 'function' ? this.config.placement.call(this, tip, this.element) : this.config.placement;
@@ -6809,21 +4884,21 @@ module.exports = {
 
         var container = this._getContainer();
 
-        $__default['default'](tip).data(this.constructor.DATA_KEY, this);
+        $(tip).data(this.constructor.DATA_KEY, this);
 
-        if (!$__default['default'].contains(this.element.ownerDocument.documentElement, this.tip)) {
-          $__default['default'](tip).appendTo(container);
+        if (!$.contains(this.element.ownerDocument.documentElement, this.tip)) {
+          $(tip).appendTo(container);
         }
 
-        $__default['default'](this.element).trigger(this.constructor.Event.INSERTED);
-        this._popper = new Popper__default['default'](this.element, tip, this._getPopperConfig(attachment));
-        $__default['default'](tip).addClass(CLASS_NAME_SHOW$4); // If this is a touch-enabled device we add extra
+        $(this.element).trigger(this.constructor.Event.INSERTED);
+        this._popper = new Popper(this.element, tip, this._getPopperConfig(attachment));
+        $(tip).addClass(CLASS_NAME_SHOW$4); // If this is a touch-enabled device we add extra
         // empty mouseover listeners to the body's immediate children;
         // only needed because of broken event delegation on iOS
         // https://www.quirksmode.org/blog/archives/2014/02/mouse_event_bub.html
 
         if ('ontouchstart' in document.documentElement) {
-          $__default['default'](document.body).children().on('mouseover', null, $__default['default'].noop);
+          $(document.body).children().on('mouseover', null, $.noop);
         }
 
         var complete = function complete() {
@@ -6833,16 +4908,16 @@ module.exports = {
 
           var prevHoverState = _this._hoverState;
           _this._hoverState = null;
-          $__default['default'](_this.element).trigger(_this.constructor.Event.SHOWN);
+          $(_this.element).trigger(_this.constructor.Event.SHOWN);
 
           if (prevHoverState === HOVER_STATE_OUT) {
             _this._leave(null, _this);
           }
         };
 
-        if ($__default['default'](this.tip).hasClass(CLASS_NAME_FADE$2)) {
+        if ($(this.tip).hasClass(CLASS_NAME_FADE$2)) {
           var transitionDuration = Util.getTransitionDurationFromElement(this.tip);
-          $__default['default'](this.tip).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
+          $(this.tip).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
         } else {
           complete();
         }
@@ -6853,7 +4928,7 @@ module.exports = {
       var _this2 = this;
 
       var tip = this.getTipElement();
-      var hideEvent = $__default['default'].Event(this.constructor.Event.HIDE);
+      var hideEvent = $.Event(this.constructor.Event.HIDE);
 
       var complete = function complete() {
         if (_this2._hoverState !== HOVER_STATE_SHOW && tip.parentNode) {
@@ -6864,7 +4939,7 @@ module.exports = {
 
         _this2.element.removeAttribute('aria-describedby');
 
-        $__default['default'](_this2.element).trigger(_this2.constructor.Event.HIDDEN);
+        $(_this2.element).trigger(_this2.constructor.Event.HIDDEN);
 
         if (_this2._popper !== null) {
           _this2._popper.destroy();
@@ -6875,26 +4950,26 @@ module.exports = {
         }
       };
 
-      $__default['default'](this.element).trigger(hideEvent);
+      $(this.element).trigger(hideEvent);
 
       if (hideEvent.isDefaultPrevented()) {
         return;
       }
 
-      $__default['default'](tip).removeClass(CLASS_NAME_SHOW$4); // If this is a touch-enabled device we remove the extra
+      $(tip).removeClass(CLASS_NAME_SHOW$4); // If this is a touch-enabled device we remove the extra
       // empty mouseover listeners we added for iOS support
 
       if ('ontouchstart' in document.documentElement) {
-        $__default['default'](document.body).children().off('mouseover', null, $__default['default'].noop);
+        $(document.body).children().off('mouseover', null, $.noop);
       }
 
       this._activeTrigger[TRIGGER_CLICK] = false;
       this._activeTrigger[TRIGGER_FOCUS] = false;
       this._activeTrigger[TRIGGER_HOVER] = false;
 
-      if ($__default['default'](this.tip).hasClass(CLASS_NAME_FADE$2)) {
+      if ($(this.tip).hasClass(CLASS_NAME_FADE$2)) {
         var transitionDuration = Util.getTransitionDurationFromElement(tip);
-        $__default['default'](tip).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
+        $(tip).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
       } else {
         complete();
       }
@@ -6914,29 +4989,29 @@ module.exports = {
     };
 
     _proto.addAttachmentClass = function addAttachmentClass(attachment) {
-      $__default['default'](this.getTipElement()).addClass(CLASS_PREFIX + "-" + attachment);
+      $(this.getTipElement()).addClass(CLASS_PREFIX + "-" + attachment);
     };
 
     _proto.getTipElement = function getTipElement() {
-      this.tip = this.tip || $__default['default'](this.config.template)[0];
+      this.tip = this.tip || $(this.config.template)[0];
       return this.tip;
     };
 
     _proto.setContent = function setContent() {
       var tip = this.getTipElement();
-      this.setElementContent($__default['default'](tip.querySelectorAll(SELECTOR_TOOLTIP_INNER)), this.getTitle());
-      $__default['default'](tip).removeClass(CLASS_NAME_FADE$2 + " " + CLASS_NAME_SHOW$4);
+      this.setElementContent($(tip.querySelectorAll(SELECTOR_TOOLTIP_INNER)), this.getTitle());
+      $(tip).removeClass(CLASS_NAME_FADE$2 + " " + CLASS_NAME_SHOW$4);
     };
 
     _proto.setElementContent = function setElementContent($element, content) {
       if (typeof content === 'object' && (content.nodeType || content.jquery)) {
         // Content is a DOM node or a jQuery
         if (this.config.html) {
-          if (!$__default['default'](content).parent().is($element)) {
+          if (!$(content).parent().is($element)) {
             $element.empty().append(content);
           }
         } else {
-          $element.text($__default['default'](content).text());
+          $element.text($(content).text());
         }
 
         return;
@@ -7016,10 +5091,10 @@ module.exports = {
       }
 
       if (Util.isElement(this.config.container)) {
-        return $__default['default'](this.config.container);
+        return $(this.config.container);
       }
 
-      return $__default['default'](document).find(this.config.container);
+      return $(document).find(this.config.container);
     };
 
     _proto._getAttachment = function _getAttachment(placement) {
@@ -7032,13 +5107,13 @@ module.exports = {
       var triggers = this.config.trigger.split(' ');
       triggers.forEach(function (trigger) {
         if (trigger === 'click') {
-          $__default['default'](_this5.element).on(_this5.constructor.Event.CLICK, _this5.config.selector, function (event) {
+          $(_this5.element).on(_this5.constructor.Event.CLICK, _this5.config.selector, function (event) {
             return _this5.toggle(event);
           });
         } else if (trigger !== TRIGGER_MANUAL) {
           var eventIn = trigger === TRIGGER_HOVER ? _this5.constructor.Event.MOUSEENTER : _this5.constructor.Event.FOCUSIN;
           var eventOut = trigger === TRIGGER_HOVER ? _this5.constructor.Event.MOUSELEAVE : _this5.constructor.Event.FOCUSOUT;
-          $__default['default'](_this5.element).on(eventIn, _this5.config.selector, function (event) {
+          $(_this5.element).on(eventIn, _this5.config.selector, function (event) {
             return _this5._enter(event);
           }).on(eventOut, _this5.config.selector, function (event) {
             return _this5._leave(event);
@@ -7052,7 +5127,7 @@ module.exports = {
         }
       };
 
-      $__default['default'](this.element).closest('.modal').on('hide.bs.modal', this._hideModalHandler);
+      $(this.element).closest('.modal').on('hide.bs.modal', this._hideModalHandler);
 
       if (this.config.selector) {
         this.config = _extends({}, this.config, {
@@ -7075,18 +5150,18 @@ module.exports = {
 
     _proto._enter = function _enter(event, context) {
       var dataKey = this.constructor.DATA_KEY;
-      context = context || $__default['default'](event.currentTarget).data(dataKey);
+      context = context || $(event.currentTarget).data(dataKey);
 
       if (!context) {
         context = new this.constructor(event.currentTarget, this._getDelegateConfig());
-        $__default['default'](event.currentTarget).data(dataKey, context);
+        $(event.currentTarget).data(dataKey, context);
       }
 
       if (event) {
         context._activeTrigger[event.type === 'focusin' ? TRIGGER_FOCUS : TRIGGER_HOVER] = true;
       }
 
-      if ($__default['default'](context.getTipElement()).hasClass(CLASS_NAME_SHOW$4) || context._hoverState === HOVER_STATE_SHOW) {
+      if ($(context.getTipElement()).hasClass(CLASS_NAME_SHOW$4) || context._hoverState === HOVER_STATE_SHOW) {
         context._hoverState = HOVER_STATE_SHOW;
         return;
       }
@@ -7108,11 +5183,11 @@ module.exports = {
 
     _proto._leave = function _leave(event, context) {
       var dataKey = this.constructor.DATA_KEY;
-      context = context || $__default['default'](event.currentTarget).data(dataKey);
+      context = context || $(event.currentTarget).data(dataKey);
 
       if (!context) {
         context = new this.constructor(event.currentTarget, this._getDelegateConfig());
-        $__default['default'](event.currentTarget).data(dataKey, context);
+        $(event.currentTarget).data(dataKey, context);
       }
 
       if (event) {
@@ -7149,7 +5224,7 @@ module.exports = {
     };
 
     _proto._getConfig = function _getConfig(config) {
-      var dataAttributes = $__default['default'](this.element).data();
+      var dataAttributes = $(this.element).data();
       Object.keys(dataAttributes).forEach(function (dataAttr) {
         if (DISALLOWED_ATTRIBUTES.indexOf(dataAttr) !== -1) {
           delete dataAttributes[dataAttr];
@@ -7196,7 +5271,7 @@ module.exports = {
     };
 
     _proto._cleanTipClass = function _cleanTipClass() {
-      var $tip = $__default['default'](this.getTipElement());
+      var $tip = $(this.getTipElement());
       var tabClass = $tip.attr('class').match(BSCLS_PREFIX_REGEX);
 
       if (tabClass !== null && tabClass.length) {
@@ -7220,7 +5295,7 @@ module.exports = {
         return;
       }
 
-      $__default['default'](tip).removeClass(CLASS_NAME_FADE$2);
+      $(tip).removeClass(CLASS_NAME_FADE$2);
       this.config.animation = false;
       this.hide();
       this.show();
@@ -7230,8 +5305,7 @@ module.exports = {
 
     Tooltip._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var $element = $__default['default'](this);
-        var data = $element.data(DATA_KEY$6);
+        var data = $(this).data(DATA_KEY$6);
 
         var _config = typeof config === 'object' && config;
 
@@ -7241,7 +5315,7 @@ module.exports = {
 
         if (!data) {
           data = new Tooltip(this, _config);
-          $element.data(DATA_KEY$6, data);
+          $(this).data(DATA_KEY$6, data);
         }
 
         if (typeof config === 'string') {
@@ -7300,11 +5374,11 @@ module.exports = {
    */
 
 
-  $__default['default'].fn[NAME$6] = Tooltip._jQueryInterface;
-  $__default['default'].fn[NAME$6].Constructor = Tooltip;
+  $.fn[NAME$6] = Tooltip._jQueryInterface;
+  $.fn[NAME$6].Constructor = Tooltip;
 
-  $__default['default'].fn[NAME$6].noConflict = function () {
-    $__default['default'].fn[NAME$6] = JQUERY_NO_CONFLICT$6;
+  $.fn[NAME$6].noConflict = function () {
+    $.fn[NAME$6] = JQUERY_NO_CONFLICT$6;
     return Tooltip._jQueryInterface;
   };
 
@@ -7315,10 +5389,10 @@ module.exports = {
    */
 
   var NAME$7 = 'popover';
-  var VERSION$7 = '4.5.3';
+  var VERSION$7 = '4.5.2';
   var DATA_KEY$7 = 'bs.popover';
   var EVENT_KEY$7 = "." + DATA_KEY$7;
-  var JQUERY_NO_CONFLICT$7 = $__default['default'].fn[NAME$7];
+  var JQUERY_NO_CONFLICT$7 = $.fn[NAME$7];
   var CLASS_PREFIX$1 = 'bs-popover';
   var BSCLS_PREFIX_REGEX$1 = new RegExp("(^|\\s)" + CLASS_PREFIX$1 + "\\S+", 'g');
 
@@ -7370,16 +5444,16 @@ module.exports = {
     };
 
     _proto.addAttachmentClass = function addAttachmentClass(attachment) {
-      $__default['default'](this.getTipElement()).addClass(CLASS_PREFIX$1 + "-" + attachment);
+      $(this.getTipElement()).addClass(CLASS_PREFIX$1 + "-" + attachment);
     };
 
     _proto.getTipElement = function getTipElement() {
-      this.tip = this.tip || $__default['default'](this.config.template)[0];
+      this.tip = this.tip || $(this.config.template)[0];
       return this.tip;
     };
 
     _proto.setContent = function setContent() {
-      var $tip = $__default['default'](this.getTipElement()); // We use append for html objects to maintain js events
+      var $tip = $(this.getTipElement()); // We use append for html objects to maintain js events
 
       this.setElementContent($tip.find(SELECTOR_TITLE), this.getTitle());
 
@@ -7399,7 +5473,7 @@ module.exports = {
     };
 
     _proto._cleanTipClass = function _cleanTipClass() {
-      var $tip = $__default['default'](this.getTipElement());
+      var $tip = $(this.getTipElement());
       var tabClass = $tip.attr('class').match(BSCLS_PREFIX_REGEX$1);
 
       if (tabClass !== null && tabClass.length > 0) {
@@ -7410,7 +5484,7 @@ module.exports = {
 
     Popover._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var data = $__default['default'](this).data(DATA_KEY$7);
+        var data = $(this).data(DATA_KEY$7);
 
         var _config = typeof config === 'object' ? config : null;
 
@@ -7420,7 +5494,7 @@ module.exports = {
 
         if (!data) {
           data = new Popover(this, _config);
-          $__default['default'](this).data(DATA_KEY$7, data);
+          $(this).data(DATA_KEY$7, data);
         }
 
         if (typeof config === 'string') {
@@ -7480,11 +5554,11 @@ module.exports = {
    */
 
 
-  $__default['default'].fn[NAME$7] = Popover._jQueryInterface;
-  $__default['default'].fn[NAME$7].Constructor = Popover;
+  $.fn[NAME$7] = Popover._jQueryInterface;
+  $.fn[NAME$7].Constructor = Popover;
 
-  $__default['default'].fn[NAME$7].noConflict = function () {
-    $__default['default'].fn[NAME$7] = JQUERY_NO_CONFLICT$7;
+  $.fn[NAME$7].noConflict = function () {
+    $.fn[NAME$7] = JQUERY_NO_CONFLICT$7;
     return Popover._jQueryInterface;
   };
 
@@ -7495,11 +5569,11 @@ module.exports = {
    */
 
   var NAME$8 = 'scrollspy';
-  var VERSION$8 = '4.5.3';
+  var VERSION$8 = '4.5.2';
   var DATA_KEY$8 = 'bs.scrollspy';
   var EVENT_KEY$8 = "." + DATA_KEY$8;
   var DATA_API_KEY$6 = '.data-api';
-  var JQUERY_NO_CONFLICT$8 = $__default['default'].fn[NAME$8];
+  var JQUERY_NO_CONFLICT$8 = $.fn[NAME$8];
   var Default$6 = {
     offset: 10,
     method: 'auto',
@@ -7543,7 +5617,7 @@ module.exports = {
       this._targets = [];
       this._activeTarget = null;
       this._scrollHeight = 0;
-      $__default['default'](this._scrollElement).on(EVENT_SCROLL, function (event) {
+      $(this._scrollElement).on(EVENT_SCROLL, function (event) {
         return _this._process(event);
       });
       this.refresh();
@@ -7578,7 +5652,7 @@ module.exports = {
 
           if (targetBCR.width || targetBCR.height) {
             // TODO (fat): remove sketch reliance on jQuery position/offset
-            return [$__default['default'](target)[offsetMethod]().top + offsetBase, targetSelector];
+            return [$(target)[offsetMethod]().top + offsetBase, targetSelector];
           }
         }
 
@@ -7595,8 +5669,8 @@ module.exports = {
     };
 
     _proto.dispose = function dispose() {
-      $__default['default'].removeData(this._element, DATA_KEY$8);
-      $__default['default'](this._scrollElement).off(EVENT_KEY$8);
+      $.removeData(this._element, DATA_KEY$8);
+      $(this._scrollElement).off(EVENT_KEY$8);
       this._element = null;
       this._scrollElement = null;
       this._config = null;
@@ -7612,11 +5686,11 @@ module.exports = {
       config = _extends({}, Default$6, typeof config === 'object' && config ? config : {});
 
       if (typeof config.target !== 'string' && Util.isElement(config.target)) {
-        var id = $__default['default'](config.target).attr('id');
+        var id = $(config.target).attr('id');
 
         if (!id) {
           id = Util.getUID(NAME$8);
-          $__default['default'](config.target).attr('id', id);
+          $(config.target).attr('id', id);
         }
 
         config.target = "#" + id;
@@ -7685,7 +5759,7 @@ module.exports = {
         return selector + "[data-target=\"" + target + "\"]," + selector + "[href=\"" + target + "\"]";
       });
 
-      var $link = $__default['default']([].slice.call(document.querySelectorAll(queries.join(','))));
+      var $link = $([].slice.call(document.querySelectorAll(queries.join(','))));
 
       if ($link.hasClass(CLASS_NAME_DROPDOWN_ITEM)) {
         $link.closest(SELECTOR_DROPDOWN).find(SELECTOR_DROPDOWN_TOGGLE).addClass(CLASS_NAME_ACTIVE$2);
@@ -7700,7 +5774,7 @@ module.exports = {
         $link.parents(SELECTOR_NAV_LIST_GROUP).prev(SELECTOR_NAV_ITEMS).children(SELECTOR_NAV_LINKS).addClass(CLASS_NAME_ACTIVE$2);
       }
 
-      $__default['default'](this._scrollElement).trigger(EVENT_ACTIVATE, {
+      $(this._scrollElement).trigger(EVENT_ACTIVATE, {
         relatedTarget: target
       });
     };
@@ -7716,13 +5790,13 @@ module.exports = {
 
     ScrollSpy._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var data = $__default['default'](this).data(DATA_KEY$8);
+        var data = $(this).data(DATA_KEY$8);
 
         var _config = typeof config === 'object' && config;
 
         if (!data) {
           data = new ScrollSpy(this, _config);
-          $__default['default'](this).data(DATA_KEY$8, data);
+          $(this).data(DATA_KEY$8, data);
         }
 
         if (typeof config === 'string') {
@@ -7756,12 +5830,12 @@ module.exports = {
    */
 
 
-  $__default['default'](window).on(EVENT_LOAD_DATA_API$2, function () {
+  $(window).on(EVENT_LOAD_DATA_API$2, function () {
     var scrollSpys = [].slice.call(document.querySelectorAll(SELECTOR_DATA_SPY));
     var scrollSpysLength = scrollSpys.length;
 
     for (var i = scrollSpysLength; i--;) {
-      var $spy = $__default['default'](scrollSpys[i]);
+      var $spy = $(scrollSpys[i]);
 
       ScrollSpy._jQueryInterface.call($spy, $spy.data());
     }
@@ -7772,11 +5846,11 @@ module.exports = {
    * ------------------------------------------------------------------------
    */
 
-  $__default['default'].fn[NAME$8] = ScrollSpy._jQueryInterface;
-  $__default['default'].fn[NAME$8].Constructor = ScrollSpy;
+  $.fn[NAME$8] = ScrollSpy._jQueryInterface;
+  $.fn[NAME$8].Constructor = ScrollSpy;
 
-  $__default['default'].fn[NAME$8].noConflict = function () {
-    $__default['default'].fn[NAME$8] = JQUERY_NO_CONFLICT$8;
+  $.fn[NAME$8].noConflict = function () {
+    $.fn[NAME$8] = JQUERY_NO_CONFLICT$8;
     return ScrollSpy._jQueryInterface;
   };
 
@@ -7787,11 +5861,11 @@ module.exports = {
    */
 
   var NAME$9 = 'tab';
-  var VERSION$9 = '4.5.3';
+  var VERSION$9 = '4.5.2';
   var DATA_KEY$9 = 'bs.tab';
   var EVENT_KEY$9 = "." + DATA_KEY$9;
   var DATA_API_KEY$7 = '.data-api';
-  var JQUERY_NO_CONFLICT$9 = $__default['default'].fn[NAME$9];
+  var JQUERY_NO_CONFLICT$9 = $.fn[NAME$9];
   var EVENT_HIDE$3 = "hide" + EVENT_KEY$9;
   var EVENT_HIDDEN$3 = "hidden" + EVENT_KEY$9;
   var EVENT_SHOW$3 = "show" + EVENT_KEY$9;
@@ -7827,33 +5901,33 @@ module.exports = {
     _proto.show = function show() {
       var _this = this;
 
-      if (this._element.parentNode && this._element.parentNode.nodeType === Node.ELEMENT_NODE && $__default['default'](this._element).hasClass(CLASS_NAME_ACTIVE$3) || $__default['default'](this._element).hasClass(CLASS_NAME_DISABLED$1)) {
+      if (this._element.parentNode && this._element.parentNode.nodeType === Node.ELEMENT_NODE && $(this._element).hasClass(CLASS_NAME_ACTIVE$3) || $(this._element).hasClass(CLASS_NAME_DISABLED$1)) {
         return;
       }
 
       var target;
       var previous;
-      var listElement = $__default['default'](this._element).closest(SELECTOR_NAV_LIST_GROUP$1)[0];
+      var listElement = $(this._element).closest(SELECTOR_NAV_LIST_GROUP$1)[0];
       var selector = Util.getSelectorFromElement(this._element);
 
       if (listElement) {
         var itemSelector = listElement.nodeName === 'UL' || listElement.nodeName === 'OL' ? SELECTOR_ACTIVE_UL : SELECTOR_ACTIVE$2;
-        previous = $__default['default'].makeArray($__default['default'](listElement).find(itemSelector));
+        previous = $.makeArray($(listElement).find(itemSelector));
         previous = previous[previous.length - 1];
       }
 
-      var hideEvent = $__default['default'].Event(EVENT_HIDE$3, {
+      var hideEvent = $.Event(EVENT_HIDE$3, {
         relatedTarget: this._element
       });
-      var showEvent = $__default['default'].Event(EVENT_SHOW$3, {
+      var showEvent = $.Event(EVENT_SHOW$3, {
         relatedTarget: previous
       });
 
       if (previous) {
-        $__default['default'](previous).trigger(hideEvent);
+        $(previous).trigger(hideEvent);
       }
 
-      $__default['default'](this._element).trigger(showEvent);
+      $(this._element).trigger(showEvent);
 
       if (showEvent.isDefaultPrevented() || hideEvent.isDefaultPrevented()) {
         return;
@@ -7866,14 +5940,14 @@ module.exports = {
       this._activate(this._element, listElement);
 
       var complete = function complete() {
-        var hiddenEvent = $__default['default'].Event(EVENT_HIDDEN$3, {
+        var hiddenEvent = $.Event(EVENT_HIDDEN$3, {
           relatedTarget: _this._element
         });
-        var shownEvent = $__default['default'].Event(EVENT_SHOWN$3, {
+        var shownEvent = $.Event(EVENT_SHOWN$3, {
           relatedTarget: previous
         });
-        $__default['default'](previous).trigger(hiddenEvent);
-        $__default['default'](_this._element).trigger(shownEvent);
+        $(previous).trigger(hiddenEvent);
+        $(_this._element).trigger(shownEvent);
       };
 
       if (target) {
@@ -7884,7 +5958,7 @@ module.exports = {
     };
 
     _proto.dispose = function dispose() {
-      $__default['default'].removeData(this._element, DATA_KEY$9);
+      $.removeData(this._element, DATA_KEY$9);
       this._element = null;
     } // Private
     ;
@@ -7892,9 +5966,9 @@ module.exports = {
     _proto._activate = function _activate(element, container, callback) {
       var _this2 = this;
 
-      var activeElements = container && (container.nodeName === 'UL' || container.nodeName === 'OL') ? $__default['default'](container).find(SELECTOR_ACTIVE_UL) : $__default['default'](container).children(SELECTOR_ACTIVE$2);
+      var activeElements = container && (container.nodeName === 'UL' || container.nodeName === 'OL') ? $(container).find(SELECTOR_ACTIVE_UL) : $(container).children(SELECTOR_ACTIVE$2);
       var active = activeElements[0];
-      var isTransitioning = callback && active && $__default['default'](active).hasClass(CLASS_NAME_FADE$4);
+      var isTransitioning = callback && active && $(active).hasClass(CLASS_NAME_FADE$4);
 
       var complete = function complete() {
         return _this2._transitionComplete(element, active, callback);
@@ -7902,7 +5976,7 @@ module.exports = {
 
       if (active && isTransitioning) {
         var transitionDuration = Util.getTransitionDurationFromElement(active);
-        $__default['default'](active).removeClass(CLASS_NAME_SHOW$6).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
+        $(active).removeClass(CLASS_NAME_SHOW$6).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
       } else {
         complete();
       }
@@ -7910,11 +5984,11 @@ module.exports = {
 
     _proto._transitionComplete = function _transitionComplete(element, active, callback) {
       if (active) {
-        $__default['default'](active).removeClass(CLASS_NAME_ACTIVE$3);
-        var dropdownChild = $__default['default'](active.parentNode).find(SELECTOR_DROPDOWN_ACTIVE_CHILD)[0];
+        $(active).removeClass(CLASS_NAME_ACTIVE$3);
+        var dropdownChild = $(active.parentNode).find(SELECTOR_DROPDOWN_ACTIVE_CHILD)[0];
 
         if (dropdownChild) {
-          $__default['default'](dropdownChild).removeClass(CLASS_NAME_ACTIVE$3);
+          $(dropdownChild).removeClass(CLASS_NAME_ACTIVE$3);
         }
 
         if (active.getAttribute('role') === 'tab') {
@@ -7922,7 +5996,7 @@ module.exports = {
         }
       }
 
-      $__default['default'](element).addClass(CLASS_NAME_ACTIVE$3);
+      $(element).addClass(CLASS_NAME_ACTIVE$3);
 
       if (element.getAttribute('role') === 'tab') {
         element.setAttribute('aria-selected', true);
@@ -7934,12 +6008,12 @@ module.exports = {
         element.classList.add(CLASS_NAME_SHOW$6);
       }
 
-      if (element.parentNode && $__default['default'](element.parentNode).hasClass(CLASS_NAME_DROPDOWN_MENU)) {
-        var dropdownElement = $__default['default'](element).closest(SELECTOR_DROPDOWN$1)[0];
+      if (element.parentNode && $(element.parentNode).hasClass(CLASS_NAME_DROPDOWN_MENU)) {
+        var dropdownElement = $(element).closest(SELECTOR_DROPDOWN$1)[0];
 
         if (dropdownElement) {
           var dropdownToggleList = [].slice.call(dropdownElement.querySelectorAll(SELECTOR_DROPDOWN_TOGGLE$1));
-          $__default['default'](dropdownToggleList).addClass(CLASS_NAME_ACTIVE$3);
+          $(dropdownToggleList).addClass(CLASS_NAME_ACTIVE$3);
         }
 
         element.setAttribute('aria-expanded', true);
@@ -7953,7 +6027,7 @@ module.exports = {
 
     Tab._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var $this = $__default['default'](this);
+        var $this = $(this);
         var data = $this.data(DATA_KEY$9);
 
         if (!data) {
@@ -7987,10 +6061,10 @@ module.exports = {
    */
 
 
-  $__default['default'](document).on(EVENT_CLICK_DATA_API$6, SELECTOR_DATA_TOGGLE$4, function (event) {
+  $(document).on(EVENT_CLICK_DATA_API$6, SELECTOR_DATA_TOGGLE$4, function (event) {
     event.preventDefault();
 
-    Tab._jQueryInterface.call($__default['default'](this), 'show');
+    Tab._jQueryInterface.call($(this), 'show');
   });
   /**
    * ------------------------------------------------------------------------
@@ -7998,11 +6072,11 @@ module.exports = {
    * ------------------------------------------------------------------------
    */
 
-  $__default['default'].fn[NAME$9] = Tab._jQueryInterface;
-  $__default['default'].fn[NAME$9].Constructor = Tab;
+  $.fn[NAME$9] = Tab._jQueryInterface;
+  $.fn[NAME$9].Constructor = Tab;
 
-  $__default['default'].fn[NAME$9].noConflict = function () {
-    $__default['default'].fn[NAME$9] = JQUERY_NO_CONFLICT$9;
+  $.fn[NAME$9].noConflict = function () {
+    $.fn[NAME$9] = JQUERY_NO_CONFLICT$9;
     return Tab._jQueryInterface;
   };
 
@@ -8013,10 +6087,10 @@ module.exports = {
    */
 
   var NAME$a = 'toast';
-  var VERSION$a = '4.5.3';
+  var VERSION$a = '4.5.2';
   var DATA_KEY$a = 'bs.toast';
   var EVENT_KEY$a = "." + DATA_KEY$a;
-  var JQUERY_NO_CONFLICT$a = $__default['default'].fn[NAME$a];
+  var JQUERY_NO_CONFLICT$a = $.fn[NAME$a];
   var EVENT_CLICK_DISMISS$1 = "click.dismiss" + EVENT_KEY$a;
   var EVENT_HIDE$4 = "hide" + EVENT_KEY$a;
   var EVENT_HIDDEN$4 = "hidden" + EVENT_KEY$a;
@@ -8059,8 +6133,8 @@ module.exports = {
     _proto.show = function show() {
       var _this = this;
 
-      var showEvent = $__default['default'].Event(EVENT_SHOW$4);
-      $__default['default'](this._element).trigger(showEvent);
+      var showEvent = $.Event(EVENT_SHOW$4);
+      $(this._element).trigger(showEvent);
 
       if (showEvent.isDefaultPrevented()) {
         return;
@@ -8077,7 +6151,7 @@ module.exports = {
 
         _this._element.classList.add(CLASS_NAME_SHOW$7);
 
-        $__default['default'](_this._element).trigger(EVENT_SHOWN$4);
+        $(_this._element).trigger(EVENT_SHOWN$4);
 
         if (_this._config.autohide) {
           _this._timeout = setTimeout(function () {
@@ -8094,7 +6168,7 @@ module.exports = {
 
       if (this._config.animation) {
         var transitionDuration = Util.getTransitionDurationFromElement(this._element);
-        $__default['default'](this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
+        $(this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
       } else {
         complete();
       }
@@ -8105,8 +6179,8 @@ module.exports = {
         return;
       }
 
-      var hideEvent = $__default['default'].Event(EVENT_HIDE$4);
-      $__default['default'](this._element).trigger(hideEvent);
+      var hideEvent = $.Event(EVENT_HIDE$4);
+      $(this._element).trigger(hideEvent);
 
       if (hideEvent.isDefaultPrevented()) {
         return;
@@ -8122,15 +6196,15 @@ module.exports = {
         this._element.classList.remove(CLASS_NAME_SHOW$7);
       }
 
-      $__default['default'](this._element).off(EVENT_CLICK_DISMISS$1);
-      $__default['default'].removeData(this._element, DATA_KEY$a);
+      $(this._element).off(EVENT_CLICK_DISMISS$1);
+      $.removeData(this._element, DATA_KEY$a);
       this._element = null;
       this._config = null;
     } // Private
     ;
 
     _proto._getConfig = function _getConfig(config) {
-      config = _extends({}, Default$7, $__default['default'](this._element).data(), typeof config === 'object' && config ? config : {});
+      config = _extends({}, Default$7, $(this._element).data(), typeof config === 'object' && config ? config : {});
       Util.typeCheckConfig(NAME$a, config, this.constructor.DefaultType);
       return config;
     };
@@ -8138,7 +6212,7 @@ module.exports = {
     _proto._setListeners = function _setListeners() {
       var _this2 = this;
 
-      $__default['default'](this._element).on(EVENT_CLICK_DISMISS$1, SELECTOR_DATA_DISMISS$1, function () {
+      $(this._element).on(EVENT_CLICK_DISMISS$1, SELECTOR_DATA_DISMISS$1, function () {
         return _this2.hide();
       });
     };
@@ -8149,14 +6223,14 @@ module.exports = {
       var complete = function complete() {
         _this3._element.classList.add(CLASS_NAME_HIDE);
 
-        $__default['default'](_this3._element).trigger(EVENT_HIDDEN$4);
+        $(_this3._element).trigger(EVENT_HIDDEN$4);
       };
 
       this._element.classList.remove(CLASS_NAME_SHOW$7);
 
       if (this._config.animation) {
         var transitionDuration = Util.getTransitionDurationFromElement(this._element);
-        $__default['default'](this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
+        $(this._element).one(Util.TRANSITION_END, complete).emulateTransitionEnd(transitionDuration);
       } else {
         complete();
       }
@@ -8170,7 +6244,7 @@ module.exports = {
 
     Toast._jQueryInterface = function _jQueryInterface(config) {
       return this.each(function () {
-        var $element = $__default['default'](this);
+        var $element = $(this);
         var data = $element.data(DATA_KEY$a);
 
         var _config = typeof config === 'object' && config;
@@ -8216,11 +6290,11 @@ module.exports = {
    */
 
 
-  $__default['default'].fn[NAME$a] = Toast._jQueryInterface;
-  $__default['default'].fn[NAME$a].Constructor = Toast;
+  $.fn[NAME$a] = Toast._jQueryInterface;
+  $.fn[NAME$a].Constructor = Toast;
 
-  $__default['default'].fn[NAME$a].noConflict = function () {
-    $__default['default'].fn[NAME$a] = JQUERY_NO_CONFLICT$a;
+  $.fn[NAME$a].noConflict = function () {
+    $.fn[NAME$a] = JQUERY_NO_CONFLICT$a;
     return Toast._jQueryInterface;
   };
 
@@ -36294,6 +34368,6676 @@ return jQuery;
 
 /***/ }),
 
+/***/ "./node_modules/overlayscrollbars/js/OverlayScrollbars.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/overlayscrollbars/js/OverlayScrollbars.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_RESULT__;/*!
+ * OverlayScrollbars
+ * https://github.com/KingSora/OverlayScrollbars
+ *
+ * Version: 1.13.0
+ *
+ * Copyright KingSora | Rene Haas.
+ * https://github.com/KingSora
+ *
+ * Released under the MIT license.
+ * Date: 02.08.2020
+ */
+
+(function (global, factory) {
+    if (true)
+        !(__WEBPACK_AMD_DEFINE_RESULT__ = (function () { return factory(global, global.document, undefined); }).call(exports, __webpack_require__, exports, module),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+    else {}
+}(typeof window !== 'undefined' ? window : this,
+    function (window, document, undefined) {
+        'use strict';
+        var PLUGINNAME = 'OverlayScrollbars';
+        var TYPES = {
+            o: 'object',
+            f: 'function',
+            a: 'array',
+            s: 'string',
+            b: 'boolean',
+            n: 'number',
+            u: 'undefined',
+            z: 'null'
+            //d : 'date',
+            //e : 'error',
+            //r : 'regexp',
+            //y : 'symbol'
+        };
+        var LEXICON = {
+            c: 'class',
+            s: 'style',
+            i: 'id',
+            l: 'length',
+            p: 'prototype',
+            ti: 'tabindex',
+            oH: 'offsetHeight',
+            cH: 'clientHeight',
+            sH: 'scrollHeight',
+            oW: 'offsetWidth',
+            cW: 'clientWidth',
+            sW: 'scrollWidth',
+            hOP: 'hasOwnProperty',
+            bCR: 'getBoundingClientRect'
+        };
+        var VENDORS = (function () {
+            //https://developer.mozilla.org/en-US/docs/Glossary/Vendor_Prefix
+            var jsCache = {};
+            var cssCache = {};
+            var cssPrefixes = ['-webkit-', '-moz-', '-o-', '-ms-'];
+            var jsPrefixes = ['WebKit', 'Moz', 'O', 'MS'];
+            function firstLetterToUpper(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            return {
+                _cssPrefixes: cssPrefixes,
+                _jsPrefixes: jsPrefixes,
+                _cssProperty: function (name) {
+                    var result = cssCache[name];
+
+                    if (cssCache[LEXICON.hOP](name))
+                        return result;
+
+                    var uppercasedName = firstLetterToUpper(name);
+                    var elmStyle = document.createElement('div')[LEXICON.s];
+                    var resultPossibilities;
+                    var i = 0;
+                    var v;
+                    var currVendorWithoutDashes;
+
+                    for (; i < cssPrefixes.length; i++) {
+                        currVendorWithoutDashes = cssPrefixes[i].replace(/-/g, '');
+                        resultPossibilities = [
+                            name, //transition
+                            cssPrefixes[i] + name, //-webkit-transition
+                            currVendorWithoutDashes + uppercasedName, //webkitTransition
+                            firstLetterToUpper(currVendorWithoutDashes) + uppercasedName //WebkitTransition
+                        ];
+                        for (v = 0; v < resultPossibilities[LEXICON.l]; v++) {
+                            if (elmStyle[resultPossibilities[v]] !== undefined) {
+                                result = resultPossibilities[v];
+                                break;
+                            }
+                        }
+                    }
+
+                    cssCache[name] = result;
+                    return result;
+                },
+                _cssPropertyValue: function (property, values, suffix) {
+                    var name = property + ' ' + values;
+                    var result = cssCache[name];
+
+                    if (cssCache[LEXICON.hOP](name))
+                        return result;
+
+                    var dummyStyle = document.createElement('div')[LEXICON.s];
+                    var possbleValues = values.split(' ');
+                    var preparedSuffix = suffix || '';
+                    var i = 0;
+                    var v = -1;
+                    var prop;
+
+                    for (; i < possbleValues[LEXICON.l]; i++) {
+                        for (; v < VENDORS._cssPrefixes[LEXICON.l]; v++) {
+                            prop = v < 0 ? possbleValues[i] : VENDORS._cssPrefixes[v] + possbleValues[i];
+                            dummyStyle.cssText = property + ':' + prop + preparedSuffix;
+                            if (dummyStyle[LEXICON.l]) {
+                                result = prop;
+                                break;
+                            }
+                        }
+                    }
+
+                    cssCache[name] = result;
+                    return result;
+                },
+                _jsAPI: function (name, isInterface, fallback) {
+                    var i = 0;
+                    var result = jsCache[name];
+
+                    if (!jsCache[LEXICON.hOP](name)) {
+                        result = window[name];
+                        for (; i < jsPrefixes[LEXICON.l]; i++)
+                            result = result || window[(isInterface ? jsPrefixes[i] : jsPrefixes[i].toLowerCase()) + firstLetterToUpper(name)];
+                        jsCache[name] = result;
+                    }
+                    return result || fallback;
+                }
+            }
+        })();
+        var COMPATIBILITY = (function () {
+            function windowSize(x) {
+                return x ? window.innerWidth || document.documentElement[LEXICON.cW] || document.body[LEXICON.cW] : window.innerHeight || document.documentElement[LEXICON.cH] || document.body[LEXICON.cH];
+            }
+            function bind(func, thisObj) {
+                if (typeof func != TYPES.f) {
+                    throw "Can't bind function!";
+                    // closest thing possible to the ECMAScript 5
+                    // internal IsCallable function
+                    //throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+                }
+                var proto = LEXICON.p;
+                var aArgs = Array[proto].slice.call(arguments, 2);
+                var fNOP = function () { };
+                var fBound = function () { return func.apply(this instanceof fNOP ? this : thisObj, aArgs.concat(Array[proto].slice.call(arguments))); };
+
+                if (func[proto])
+                    fNOP[proto] = func[proto]; // Function.prototype doesn't have a prototype property
+                fBound[proto] = new fNOP();
+
+                return fBound;
+            }
+
+            return {
+                /**
+                 * Gets the current window width.
+                 * @returns {Number|number} The current window width in pixel.
+                 */
+                wW: bind(windowSize, 0, true),
+
+                /**
+                 * Gets the current window height.
+                 * @returns {Number|number} The current window height in pixel.
+                 */
+                wH: bind(windowSize, 0),
+
+                /**
+                 * Gets the MutationObserver Object or undefined if not supported.
+                 * @returns {MutationObserver|*|undefined} The MutationsObserver Object or undefined.
+                 */
+                mO: bind(VENDORS._jsAPI, 0, 'MutationObserver', true),
+
+                /**
+                 * Gets the ResizeObserver Object or undefined if not supported.
+                 * @returns {MutationObserver|*|undefined} The ResizeObserver Object or undefined.
+                 */
+                rO: bind(VENDORS._jsAPI, 0, 'ResizeObserver', true),
+
+                /**
+                 * Gets the RequestAnimationFrame method or it's corresponding polyfill.
+                 * @returns {*|Function} The RequestAnimationFrame method or it's corresponding polyfill.
+                 */
+                rAF: bind(VENDORS._jsAPI, 0, 'requestAnimationFrame', false, function (func) { return window.setTimeout(func, 1000 / 60); }),
+
+                /**
+                 * Gets the CancelAnimationFrame method or it's corresponding polyfill.
+                 * @returns {*|Function} The CancelAnimationFrame method or it's corresponding polyfill.
+                 */
+                cAF: bind(VENDORS._jsAPI, 0, 'cancelAnimationFrame', false, function (id) { return window.clearTimeout(id); }),
+
+                /**
+                 * Gets the current time.
+                 * @returns {number} The current time.
+                 */
+                now: function () {
+                    return Date.now && Date.now() || new Date().getTime();
+                },
+
+                /**
+                 * Stops the propagation of the given event.
+                 * @param event The event of which the propagation shall be stoped.
+                 */
+                stpP: function (event) {
+                    if (event.stopPropagation)
+                        event.stopPropagation();
+                    else
+                        event.cancelBubble = true;
+                },
+
+                /**
+                 * Prevents the default action of the given event.
+                 * @param event The event of which the default action shall be prevented.
+                 */
+                prvD: function (event) {
+                    if (event.preventDefault && event.cancelable)
+                        event.preventDefault();
+                    else
+                        event.returnValue = false;
+                },
+
+                /**
+                 * Gets the pageX and pageY values of the given mouse event.
+                 * @param event The mouse event of which the pageX and pageX shall be got.
+                 * @returns {{x: number, y: number}} x = pageX value, y = pageY value.
+                 */
+                page: function (event) {
+                    event = event.originalEvent || event;
+
+                    var strPage = 'page';
+                    var strClient = 'client';
+                    var strX = 'X';
+                    var strY = 'Y';
+                    var target = event.target || event.srcElement || document;
+                    var eventDoc = target.ownerDocument || document;
+                    var doc = eventDoc.documentElement;
+                    var body = eventDoc.body;
+
+                    //if touch event return return pageX/Y of it
+                    if (event.touches !== undefined) {
+                        var touch = event.touches[0];
+                        return {
+                            x: touch[strPage + strX],
+                            y: touch[strPage + strY]
+                        }
+                    }
+
+                    // Calculate pageX/Y if not native supported
+                    if (!event[strPage + strX] && event[strClient + strX] && event[strClient + strX] != null) {
+
+                        return {
+                            x: event[strClient + strX] +
+                                (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+                                (doc && doc.clientLeft || body && body.clientLeft || 0),
+                            y: event[strClient + strY] +
+                                (doc && doc.scrollTop || body && body.scrollTop || 0) -
+                                (doc && doc.clientTop || body && body.clientTop || 0)
+                        }
+                    }
+                    return {
+                        x: event[strPage + strX],
+                        y: event[strPage + strY]
+                    };
+                },
+
+                /**
+                 * Gets the clicked mouse button of the given mouse event.
+                 * @param event The mouse event of which the clicked button shal be got.
+                 * @returns {number} The number of the clicked mouse button. (0 : none | 1 : leftButton | 2 : middleButton | 3 : rightButton)
+                 */
+                mBtn: function (event) {
+                    var button = event.button;
+                    if (!event.which && button !== undefined)
+                        return (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
+                    else
+                        return event.which;
+                },
+
+                /**
+                 * Checks whether a item is in the given array and returns its index.
+                 * @param item The item of which the position in the array shall be determined.
+                 * @param arr The array.
+                 * @returns {number} The zero based index of the item or -1 if the item isn't in the array.
+                 */
+                inA: function (item, arr) {
+                    for (var i = 0; i < arr[LEXICON.l]; i++)
+                        //Sometiems in IE a "SCRIPT70" Permission denied error occurs if HTML elements in a iFrame are compared
+                        try {
+                            if (arr[i] === item)
+                                return i;
+                        }
+                        catch (e) { }
+                    return -1;
+                },
+
+                /**
+                 * Returns true if the given value is a array.
+                 * @param arr The potential array.
+                 * @returns {boolean} True if the given value is a array, false otherwise.
+                 */
+                isA: function (arr) {
+                    var def = Array.isArray;
+                    return def ? def(arr) : this.type(arr) == TYPES.a;
+                },
+
+                /**
+                 * Determine the internal JavaScript [[Class]] of the given object.
+                 * @param obj The object of which the type shall be determined.
+                 * @returns {string} The type of the given object.
+                 */
+                type: function (obj) {
+                    if (obj === undefined)
+                        return obj + '';
+                    if (obj === null)
+                        return obj + '';
+                    return Object[LEXICON.p].toString.call(obj).replace(/^\[object (.+)\]$/, '$1').toLowerCase();
+                },
+
+
+                bind: bind
+
+                /**
+                 * Gets the vendor-prefixed CSS property by the given name.
+                 * For example the given name is "transform" and you're using a old Firefox browser then the returned value would be "-moz-transform".
+                 * If the browser doesn't need a vendor-prefix, then the returned string is the given name.
+                 * If the browser doesn't support the given property name at all (not even with a vendor-prefix) the returned value is null.
+                 * @param propName The unprefixed CSS property name.
+                 * @returns {string|null} The vendor-prefixed CSS property or null if the browser doesn't support the given CSS property.
+
+                cssProp: function(propName) {
+                    return VENDORS._cssProperty(propName);
+                }
+                */
+            }
+        })();
+
+
+        var MATH = Math;
+        var JQUERY = window.jQuery;
+        var EASING = (function () {
+            var _easingsMath = {
+                p: MATH.PI,
+                c: MATH.cos,
+                s: MATH.sin,
+                w: MATH.pow,
+                t: MATH.sqrt,
+                n: MATH.asin,
+                a: MATH.abs,
+                o: 1.70158
+            };
+
+            /*
+             x : current percent (0 - 1),
+             t : current time (duration * percent),
+             b : start value (from),
+             c : end value (to),
+             d : duration
+
+             easingName : function(x, t, b, c, d) { return easedValue; }
+             */
+
+            return {
+                swing: function (x, t, b, c, d) {
+                    return 0.5 - _easingsMath.c(x * _easingsMath.p) / 2;
+                },
+                linear: function (x, t, b, c, d) {
+                    return x;
+                },
+                easeInQuad: function (x, t, b, c, d) {
+                    return c * (t /= d) * t + b;
+                },
+                easeOutQuad: function (x, t, b, c, d) {
+                    return -c * (t /= d) * (t - 2) + b;
+                },
+                easeInOutQuad: function (x, t, b, c, d) {
+                    return ((t /= d / 2) < 1) ? c / 2 * t * t + b : -c / 2 * ((--t) * (t - 2) - 1) + b;
+                },
+                easeInCubic: function (x, t, b, c, d) {
+                    return c * (t /= d) * t * t + b;
+                },
+                easeOutCubic: function (x, t, b, c, d) {
+                    return c * ((t = t / d - 1) * t * t + 1) + b;
+                },
+                easeInOutCubic: function (x, t, b, c, d) {
+                    return ((t /= d / 2) < 1) ? c / 2 * t * t * t + b : c / 2 * ((t -= 2) * t * t + 2) + b;
+                },
+                easeInQuart: function (x, t, b, c, d) {
+                    return c * (t /= d) * t * t * t + b;
+                },
+                easeOutQuart: function (x, t, b, c, d) {
+                    return -c * ((t = t / d - 1) * t * t * t - 1) + b;
+                },
+                easeInOutQuart: function (x, t, b, c, d) {
+                    return ((t /= d / 2) < 1) ? c / 2 * t * t * t * t + b : -c / 2 * ((t -= 2) * t * t * t - 2) + b;
+                },
+                easeInQuint: function (x, t, b, c, d) {
+                    return c * (t /= d) * t * t * t * t + b;
+                },
+                easeOutQuint: function (x, t, b, c, d) {
+                    return c * ((t = t / d - 1) * t * t * t * t + 1) + b;
+                },
+                easeInOutQuint: function (x, t, b, c, d) {
+                    return ((t /= d / 2) < 1) ? c / 2 * t * t * t * t * t + b : c / 2 * ((t -= 2) * t * t * t * t + 2) + b;
+                },
+                easeInSine: function (x, t, b, c, d) {
+                    return -c * _easingsMath.c(t / d * (_easingsMath.p / 2)) + c + b;
+                },
+                easeOutSine: function (x, t, b, c, d) {
+                    return c * _easingsMath.s(t / d * (_easingsMath.p / 2)) + b;
+                },
+                easeInOutSine: function (x, t, b, c, d) {
+                    return -c / 2 * (_easingsMath.c(_easingsMath.p * t / d) - 1) + b;
+                },
+                easeInExpo: function (x, t, b, c, d) {
+                    return (t == 0) ? b : c * _easingsMath.w(2, 10 * (t / d - 1)) + b;
+                },
+                easeOutExpo: function (x, t, b, c, d) {
+                    return (t == d) ? b + c : c * (-_easingsMath.w(2, -10 * t / d) + 1) + b;
+                },
+                easeInOutExpo: function (x, t, b, c, d) {
+                    if (t == 0) return b;
+                    if (t == d) return b + c;
+                    if ((t /= d / 2) < 1) return c / 2 * _easingsMath.w(2, 10 * (t - 1)) + b;
+                    return c / 2 * (-_easingsMath.w(2, -10 * --t) + 2) + b;
+                },
+                easeInCirc: function (x, t, b, c, d) {
+                    return -c * (_easingsMath.t(1 - (t /= d) * t) - 1) + b;
+                },
+                easeOutCirc: function (x, t, b, c, d) {
+                    return c * _easingsMath.t(1 - (t = t / d - 1) * t) + b;
+                },
+                easeInOutCirc: function (x, t, b, c, d) {
+                    return ((t /= d / 2) < 1) ? -c / 2 * (_easingsMath.t(1 - t * t) - 1) + b : c / 2 * (_easingsMath.t(1 - (t -= 2) * t) + 1) + b;
+                },
+                easeInElastic: function (x, t, b, c, d) {
+                    var s = _easingsMath.o; var p = 0; var a = c;
+                    if (t == 0) return b; if ((t /= d) == 1) return b + c; if (!p) p = d * .3;
+                    if (a < _easingsMath.a(c)) { a = c; s = p / 4; }
+                    else s = p / (2 * _easingsMath.p) * _easingsMath.n(c / a);
+                    return -(a * _easingsMath.w(2, 10 * (t -= 1)) * _easingsMath.s((t * d - s) * (2 * _easingsMath.p) / p)) + b;
+                },
+                easeOutElastic: function (x, t, b, c, d) {
+                    var s = _easingsMath.o; var p = 0; var a = c;
+                    if (t == 0) return b;
+                    if ((t /= d) == 1) return b + c;
+                    if (!p) p = d * .3;
+                    if (a < _easingsMath.a(c)) { a = c; s = p / 4; }
+                    else s = p / (2 * _easingsMath.p) * _easingsMath.n(c / a);
+                    return a * _easingsMath.w(2, -10 * t) * _easingsMath.s((t * d - s) * (2 * _easingsMath.p) / p) + c + b;
+                },
+                easeInOutElastic: function (x, t, b, c, d) {
+                    var s = _easingsMath.o; var p = 0; var a = c;
+                    if (t == 0) return b;
+                    if ((t /= d / 2) == 2) return b + c;
+                    if (!p) p = d * (.3 * 1.5);
+                    if (a < _easingsMath.a(c)) { a = c; s = p / 4; }
+                    else s = p / (2 * _easingsMath.p) * _easingsMath.n(c / a);
+                    if (t < 1) return -.5 * (a * _easingsMath.w(2, 10 * (t -= 1)) * _easingsMath.s((t * d - s) * (2 * _easingsMath.p) / p)) + b;
+                    return a * _easingsMath.w(2, -10 * (t -= 1)) * _easingsMath.s((t * d - s) * (2 * _easingsMath.p) / p) * .5 + c + b;
+                },
+                easeInBack: function (x, t, b, c, d, s) {
+                    s = s || _easingsMath.o;
+                    return c * (t /= d) * t * ((s + 1) * t - s) + b;
+                },
+                easeOutBack: function (x, t, b, c, d, s) {
+                    s = s || _easingsMath.o;
+                    return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
+                },
+                easeInOutBack: function (x, t, b, c, d, s) {
+                    s = s || _easingsMath.o;
+                    return ((t /= d / 2) < 1) ? c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b : c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
+                },
+                easeInBounce: function (x, t, b, c, d) {
+                    return c - this.easeOutBounce(x, d - t, 0, c, d) + b;
+                },
+                easeOutBounce: function (x, t, b, c, d) {
+                    var o = 7.5625;
+                    if ((t /= d) < (1 / 2.75)) {
+                        return c * (o * t * t) + b;
+                    } else if (t < (2 / 2.75)) {
+                        return c * (o * (t -= (1.5 / 2.75)) * t + .75) + b;
+                    } else if (t < (2.5 / 2.75)) {
+                        return c * (o * (t -= (2.25 / 2.75)) * t + .9375) + b;
+                    } else {
+                        return c * (o * (t -= (2.625 / 2.75)) * t + .984375) + b;
+                    }
+                },
+                easeInOutBounce: function (x, t, b, c, d) {
+                    return (t < d / 2) ? this.easeInBounce(x, t * 2, 0, c, d) * .5 + b : this.easeOutBounce(x, t * 2 - d, 0, c, d) * .5 + c * .5 + b;
+                }
+            };
+            /*
+             *
+             * TERMS OF USE - EASING EQUATIONS
+             *
+             * Open source under the BSD License.
+             *
+             * Copyright Â© 2001 Robert Penner
+             * All rights reserved.
+             *
+             * Redistribution and use in source and binary forms, with or without modification,
+             * are permitted provided that the following conditions are met:
+             *
+             * Redistributions of source code must retain the above copyright notice, this list of
+             * conditions and the following disclaimer.
+             * Redistributions in binary form must reproduce the above copyright notice, this list
+             * of conditions and the following disclaimer in the documentation and/or other materials
+             * provided with the distribution.
+             *
+             * Neither the name of the author nor the names of contributors may be used to endorse
+             * or promote products derived from this software without specific prior written permission.
+             *
+             * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+             * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+             * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+             *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+             *  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+             *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+             * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+             *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+             * OF THE POSSIBILITY OF SUCH DAMAGE.
+             *
+             */
+        })();
+        var FRAMEWORK = (function () {
+            var _rnothtmlwhite = (/[^\x20\t\r\n\f]+/g);
+            var _strSpace = ' ';
+            var _strEmpty = '';
+            var _strScrollLeft = 'scrollLeft';
+            var _strScrollTop = 'scrollTop';
+            var _animations = [];
+            var _type = COMPATIBILITY.type;
+            var _cssNumber = {
+                animationIterationCount: true,
+                columnCount: true,
+                fillOpacity: true,
+                flexGrow: true,
+                flexShrink: true,
+                fontWeight: true,
+                lineHeight: true,
+                opacity: true,
+                order: true,
+                orphans: true,
+                widows: true,
+                zIndex: true,
+                zoom: true
+            };
+
+            function extend() {
+                var src, copyIsArray, copy, name, options, clone, target = arguments[0] || {},
+                    i = 1,
+                    length = arguments[LEXICON.l],
+                    deep = false;
+
+                // Handle a deep copy situation
+                if (_type(target) == TYPES.b) {
+                    deep = target;
+                    target = arguments[1] || {};
+                    // skip the boolean and the target
+                    i = 2;
+                }
+
+                // Handle case when target is a string or something (possible in deep copy)
+                if (_type(target) != TYPES.o && !_type(target) == TYPES.f) {
+                    target = {};
+                }
+
+                // extend jQuery itself if only one argument is passed
+                if (length === i) {
+                    target = FakejQuery;
+                    --i;
+                }
+
+                for (; i < length; i++) {
+                    // Only deal with non-null/undefined values
+                    if ((options = arguments[i]) != null) {
+                        // Extend the base object
+                        for (name in options) {
+                            src = target[name];
+                            copy = options[name];
+
+                            // Prevent never-ending loop
+                            if (target === copy) {
+                                continue;
+                            }
+
+                            // Recurse if we're merging plain objects or arrays
+                            if (deep && copy && (isPlainObject(copy) || (copyIsArray = COMPATIBILITY.isA(copy)))) {
+                                if (copyIsArray) {
+                                    copyIsArray = false;
+                                    clone = src && COMPATIBILITY.isA(src) ? src : [];
+
+                                } else {
+                                    clone = src && isPlainObject(src) ? src : {};
+                                }
+
+                                // Never move original objects, clone them
+                                target[name] = extend(deep, clone, copy);
+
+                                // Don't bring in undefined values
+                            } else if (copy !== undefined) {
+                                target[name] = copy;
+                            }
+                        }
+                    }
+                }
+
+                // Return the modified object
+                return target;
+            };
+
+            function inArray(item, arr, fromIndex) {
+                for (var i = fromIndex || 0; i < arr[LEXICON.l]; i++)
+                    if (arr[i] === item)
+                        return i;
+                return -1;
+            }
+
+            function isFunction(obj) {
+                return _type(obj) == TYPES.f;
+            };
+
+            function isEmptyObject(obj) {
+                for (var name in obj)
+                    return false;
+                return true;
+            };
+
+            function isPlainObject(obj) {
+                if (!obj || _type(obj) != TYPES.o)
+                    return false;
+
+                var key;
+                var proto = LEXICON.p;
+                var hasOwnProperty = Object[proto].hasOwnProperty;
+                var hasOwnConstructor = hasOwnProperty.call(obj, 'constructor');
+                var hasIsPrototypeOf = obj.constructor && obj.constructor[proto] && hasOwnProperty.call(obj.constructor[proto], 'isPrototypeOf');
+
+                if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
+                    return false;
+                }
+
+
+                for (key in obj) { /**/ }
+
+                return _type(key) == TYPES.u || hasOwnProperty.call(obj, key);
+            };
+
+            function each(obj, callback) {
+                var i = 0;
+
+                if (isArrayLike(obj)) {
+                    for (; i < obj[LEXICON.l]; i++) {
+                        if (callback.call(obj[i], i, obj[i]) === false)
+                            break;
+                    }
+                }
+                else {
+                    for (i in obj) {
+                        if (callback.call(obj[i], i, obj[i]) === false)
+                            break;
+                    }
+                }
+
+                return obj;
+            };
+
+            function isArrayLike(obj) {
+                var length = !!obj && [LEXICON.l] in obj && obj[LEXICON.l];
+                var t = _type(obj);
+                return isFunction(t) ? false : (t == TYPES.a || length === 0 || _type(length) == TYPES.n && length > 0 && (length - 1) in obj);
+            }
+
+            function stripAndCollapse(value) {
+                var tokens = value.match(_rnothtmlwhite) || [];
+                return tokens.join(_strSpace);
+            }
+
+            function matches(elem, selector) {
+                var nodeList = (elem.parentNode || document).querySelectorAll(selector) || [];
+                var i = nodeList[LEXICON.l];
+
+                while (i--)
+                    if (nodeList[i] == elem)
+                        return true;
+
+                return false;
+            }
+
+            function insertAdjacentElement(el, strategy, child) {
+                if (COMPATIBILITY.isA(child)) {
+                    for (var i = 0; i < child[LEXICON.l]; i++)
+                        insertAdjacentElement(el, strategy, child[i]);
+                }
+                else if (_type(child) == TYPES.s)
+                    el.insertAdjacentHTML(strategy, child);
+                else
+                    el.insertAdjacentElement(strategy, child.nodeType ? child : child[0]);
+            }
+
+            function setCSSVal(el, prop, val) {
+                try {
+                    if (el[LEXICON.s][prop] !== undefined)
+                        el[LEXICON.s][prop] = parseCSSVal(prop, val);
+                } catch (e) { }
+            }
+
+            function parseCSSVal(prop, val) {
+                if (!_cssNumber[prop.toLowerCase()] && _type(val) == TYPES.n)
+                    val += 'px';
+                return val;
+            }
+
+            function startNextAnimationInQ(animObj, removeFromQ) {
+                var index;
+                var nextAnim;
+                if (removeFromQ !== false)
+                    animObj.q.splice(0, 1);
+                if (animObj.q[LEXICON.l] > 0) {
+                    nextAnim = animObj.q[0];
+                    animate(animObj.el, nextAnim.props, nextAnim.duration, nextAnim.easing, nextAnim.complete, true);
+                }
+                else {
+                    index = inArray(animObj, _animations);
+                    if (index > -1)
+                        _animations.splice(index, 1);
+                }
+            }
+
+            function setAnimationValue(el, prop, value) {
+                if (prop === _strScrollLeft || prop === _strScrollTop)
+                    el[prop] = value;
+                else
+                    setCSSVal(el, prop, value);
+            }
+
+            function animate(el, props, options, easing, complete, guaranteedNext) {
+                var hasOptions = isPlainObject(options);
+                var from = {};
+                var to = {};
+                var i = 0;
+                var key;
+                var animObj;
+                var start;
+                var progress;
+                var step;
+                var specialEasing;
+                var duration;
+                if (hasOptions) {
+                    easing = options.easing;
+                    start = options.start;
+                    progress = options.progress;
+                    step = options.step;
+                    specialEasing = options.specialEasing;
+                    complete = options.complete;
+                    duration = options.duration;
+                }
+                else
+                    duration = options;
+                specialEasing = specialEasing || {};
+                duration = duration || 400;
+                easing = easing || 'swing';
+                guaranteedNext = guaranteedNext || false;
+
+                for (; i < _animations[LEXICON.l]; i++) {
+                    if (_animations[i].el === el) {
+                        animObj = _animations[i];
+                        break;
+                    }
+                }
+
+                if (!animObj) {
+                    animObj = {
+                        el: el,
+                        q: []
+                    };
+                    _animations.push(animObj);
+                }
+
+                for (key in props) {
+                    if (key === _strScrollLeft || key === _strScrollTop)
+                        from[key] = el[key];
+                    else
+                        from[key] = FakejQuery(el).css(key);
+                }
+
+                for (key in from) {
+                    if (from[key] !== props[key] && props[key] !== undefined)
+                        to[key] = props[key];
+                }
+
+                if (!isEmptyObject(to)) {
+                    var timeNow;
+                    var end;
+                    var percent;
+                    var fromVal;
+                    var toVal;
+                    var easedVal;
+                    var timeStart;
+                    var frame;
+                    var elapsed;
+                    var qPos = guaranteedNext ? 0 : inArray(qObj, animObj.q);
+                    var qObj = {
+                        props: to,
+                        duration: hasOptions ? options : duration,
+                        easing: easing,
+                        complete: complete
+                    };
+                    if (qPos === -1) {
+                        qPos = animObj.q[LEXICON.l];
+                        animObj.q.push(qObj);
+                    }
+
+                    if (qPos === 0) {
+                        if (duration > 0) {
+                            timeStart = COMPATIBILITY.now();
+                            frame = function () {
+                                timeNow = COMPATIBILITY.now();
+                                elapsed = (timeNow - timeStart);
+                                end = qObj.stop || elapsed >= duration;
+                                percent = 1 - ((MATH.max(0, timeStart + duration - timeNow) / duration) || 0);
+
+                                for (key in to) {
+                                    fromVal = parseFloat(from[key]);
+                                    toVal = parseFloat(to[key]);
+                                    easedVal = (toVal - fromVal) * EASING[specialEasing[key] || easing](percent, percent * duration, 0, 1, duration) + fromVal;
+                                    setAnimationValue(el, key, easedVal);
+                                    if (isFunction(step)) {
+                                        step(easedVal, {
+                                            elem: el,
+                                            prop: key,
+                                            start: fromVal,
+                                            now: easedVal,
+                                            end: toVal,
+                                            pos: percent,
+                                            options: {
+                                                easing: easing,
+                                                speacialEasing: specialEasing,
+                                                duration: duration,
+                                                complete: complete,
+                                                step: step
+                                            },
+                                            startTime: timeStart
+                                        });
+                                    }
+                                }
+
+                                if (isFunction(progress))
+                                    progress({}, percent, MATH.max(0, duration - elapsed));
+
+                                if (end) {
+                                    startNextAnimationInQ(animObj);
+                                    if (isFunction(complete))
+                                        complete();
+                                }
+                                else
+                                    qObj.frame = COMPATIBILITY.rAF()(frame);
+                            };
+                            qObj.frame = COMPATIBILITY.rAF()(frame);
+                        }
+                        else {
+                            for (key in to)
+                                setAnimationValue(el, key, to[key]);
+                            startNextAnimationInQ(animObj);
+                        }
+                    }
+                }
+                else if (guaranteedNext)
+                    startNextAnimationInQ(animObj);
+            }
+
+            function stop(el, clearQ, jumpToEnd) {
+                var animObj;
+                var qObj;
+                var key;
+                var i = 0;
+                for (; i < _animations[LEXICON.l]; i++) {
+                    animObj = _animations[i];
+                    if (animObj.el === el) {
+                        if (animObj.q[LEXICON.l] > 0) {
+                            qObj = animObj.q[0];
+                            qObj.stop = true;
+                            COMPATIBILITY.cAF()(qObj.frame);
+                            animObj.q.splice(0, 1);
+
+                            if (jumpToEnd)
+                                for (key in qObj.props)
+                                    setAnimationValue(el, key, qObj.props[key]);
+
+                            if (clearQ)
+                                animObj.q = [];
+                            else
+                                startNextAnimationInQ(animObj, false);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            function elementIsVisible(el) {
+                return !!(el[LEXICON.oW] || el[LEXICON.oH] || el.getClientRects()[LEXICON.l]);
+            }
+
+            function FakejQuery(selector) {
+                if (arguments[LEXICON.l] === 0)
+                    return this;
+
+                var base = new FakejQuery();
+                var elements = selector;
+                var i = 0;
+                var elms;
+                var el;
+
+                if (_type(selector) == TYPES.s) {
+                    elements = [];
+                    if (selector.charAt(0) === '<') {
+                        el = document.createElement('div');
+                        el.innerHTML = selector;
+                        elms = el.children;
+                    }
+                    else {
+                        elms = document.querySelectorAll(selector);
+                    }
+
+                    for (; i < elms[LEXICON.l]; i++)
+                        elements.push(elms[i]);
+                }
+
+                if (elements) {
+                    if (_type(elements) != TYPES.s && (!isArrayLike(elements) || elements === window || elements === elements.self))
+                        elements = [elements];
+
+                    for (i = 0; i < elements[LEXICON.l]; i++)
+                        base[i] = elements[i];
+
+                    base[LEXICON.l] = elements[LEXICON.l];
+                }
+
+                return base;
+            };
+
+            FakejQuery[LEXICON.p] = {
+
+                //EVENTS:
+
+                on: function (eventName, handler) {
+                    eventName = (eventName || _strEmpty).match(_rnothtmlwhite) || [_strEmpty];
+
+                    var eventNameLength = eventName[LEXICON.l];
+                    var i = 0;
+                    var el;
+                    return this.each(function () {
+                        el = this;
+                        try {
+                            if (el.addEventListener) {
+                                for (; i < eventNameLength; i++)
+                                    el.addEventListener(eventName[i], handler);
+                            }
+                            else if (el.detachEvent) {
+                                for (; i < eventNameLength; i++)
+                                    el.attachEvent('on' + eventName[i], handler);
+                            }
+                        } catch (e) { }
+                    });
+                },
+
+                off: function (eventName, handler) {
+                    eventName = (eventName || _strEmpty).match(_rnothtmlwhite) || [_strEmpty];
+
+                    var eventNameLength = eventName[LEXICON.l];
+                    var i = 0;
+                    var el;
+                    return this.each(function () {
+                        el = this;
+                        try {
+                            if (el.removeEventListener) {
+                                for (; i < eventNameLength; i++)
+                                    el.removeEventListener(eventName[i], handler);
+                            }
+                            else if (el.detachEvent) {
+                                for (; i < eventNameLength; i++)
+                                    el.detachEvent('on' + eventName[i], handler);
+                            }
+                        } catch (e) { }
+                    });
+                },
+
+                one: function (eventName, handler) {
+                    eventName = (eventName || _strEmpty).match(_rnothtmlwhite) || [_strEmpty];
+                    return this.each(function () {
+                        var el = FakejQuery(this);
+                        FakejQuery.each(eventName, function (i, oneEventName) {
+                            var oneHandler = function (e) {
+                                handler.call(this, e);
+                                el.off(oneEventName, oneHandler);
+                            };
+                            el.on(oneEventName, oneHandler);
+                        });
+                    });
+                },
+
+                trigger: function (eventName) {
+                    var el;
+                    var event;
+                    return this.each(function () {
+                        el = this;
+                        if (document.createEvent) {
+                            event = document.createEvent('HTMLEvents');
+                            event.initEvent(eventName, true, false);
+                            el.dispatchEvent(event);
+                        }
+                        else {
+                            el.fireEvent('on' + eventName);
+                        }
+                    });
+                },
+
+                //DOM NODE INSERTING / REMOVING:
+
+                append: function (child) {
+                    return this.each(function () { insertAdjacentElement(this, 'beforeend', child); });
+                },
+
+                prepend: function (child) {
+                    return this.each(function () { insertAdjacentElement(this, 'afterbegin', child); });
+                },
+
+                before: function (child) {
+                    return this.each(function () { insertAdjacentElement(this, 'beforebegin', child); });
+                },
+
+                after: function (child) {
+                    return this.each(function () { insertAdjacentElement(this, 'afterend', child); });
+                },
+
+                remove: function () {
+                    return this.each(function () {
+                        var el = this;
+                        var parentNode = el.parentNode;
+                        if (parentNode != null)
+                            parentNode.removeChild(el);
+                    });
+                },
+
+                unwrap: function () {
+                    var parents = [];
+                    var i;
+                    var el;
+                    var parent;
+
+                    this.each(function () {
+                        parent = this.parentNode;
+                        if (inArray(parent, parents) === - 1)
+                            parents.push(parent);
+                    });
+
+                    for (i = 0; i < parents[LEXICON.l]; i++) {
+                        el = parents[i];
+                        parent = el.parentNode;
+                        while (el.firstChild)
+                            parent.insertBefore(el.firstChild, el);
+                        parent.removeChild(el);
+                    }
+
+                    return this;
+                },
+
+                wrapAll: function (wrapperHTML) {
+                    var i;
+                    var nodes = this;
+                    var wrapper = FakejQuery(wrapperHTML)[0];
+                    var deepest = wrapper;
+                    var parent = nodes[0].parentNode;
+                    var previousSibling = nodes[0].previousSibling;
+                    while (deepest.childNodes[LEXICON.l] > 0)
+                        deepest = deepest.childNodes[0];
+
+                    for (i = 0; nodes[LEXICON.l] - i; deepest.firstChild === nodes[0] && i++)
+                        deepest.appendChild(nodes[i]);
+
+                    var nextSibling = previousSibling ? previousSibling.nextSibling : parent.firstChild;
+                    parent.insertBefore(wrapper, nextSibling);
+
+                    return this;
+                },
+
+                wrapInner: function (wrapperHTML) {
+                    return this.each(function () {
+                        var el = FakejQuery(this);
+                        var contents = el.contents();
+
+                        if (contents[LEXICON.l])
+                            contents.wrapAll(wrapperHTML);
+                        else
+                            el.append(wrapperHTML);
+                    });
+                },
+
+                wrap: function (wrapperHTML) {
+                    return this.each(function () { FakejQuery(this).wrapAll(wrapperHTML); });
+                },
+
+
+                //DOM NODE MANIPULATION / INFORMATION:
+
+                css: function (styles, val) {
+                    var el;
+                    var key;
+                    var cptStyle;
+                    var getCptStyle = window.getComputedStyle;
+                    if (_type(styles) == TYPES.s) {
+                        if (val === undefined) {
+                            el = this[0];
+                            cptStyle = getCptStyle ? getCptStyle(el, null) : el.currentStyle[styles];
+
+                            //https://bugzilla.mozilla.org/show_bug.cgi?id=548397 can be null sometimes if iframe with display: none (firefox only!)
+                            return getCptStyle ? cptStyle != null ? cptStyle.getPropertyValue(styles) : el[LEXICON.s][styles] : cptStyle;
+                        }
+                        else {
+                            return this.each(function () {
+                                setCSSVal(this, styles, val);
+                            });
+                        }
+                    }
+                    else {
+                        return this.each(function () {
+                            for (key in styles)
+                                setCSSVal(this, key, styles[key]);
+                        });
+                    }
+                },
+
+                hasClass: function (className) {
+                    var elem, i = 0;
+                    var classNamePrepared = _strSpace + className + _strSpace;
+                    var classList;
+
+                    while ((elem = this[i++])) {
+                        classList = elem.classList;
+                        if (classList && classList.contains(className))
+                            return true;
+                        else if (elem.nodeType === 1 && (_strSpace + stripAndCollapse(elem.className + _strEmpty) + _strSpace).indexOf(classNamePrepared) > -1)
+                            return true;
+                    }
+
+                    return false;
+                },
+
+                addClass: function (className) {
+                    var classes;
+                    var elem;
+                    var cur;
+                    var curValue;
+                    var clazz;
+                    var finalValue;
+                    var supportClassList;
+                    var elmClassList;
+                    var i = 0;
+                    var v = 0;
+
+                    if (className) {
+                        classes = className.match(_rnothtmlwhite) || [];
+
+                        while ((elem = this[i++])) {
+                            elmClassList = elem.classList;
+                            if (supportClassList === undefined)
+                                supportClassList = elmClassList !== undefined;
+
+                            if (supportClassList) {
+                                while ((clazz = classes[v++]))
+                                    elmClassList.add(clazz);
+                            }
+                            else {
+                                curValue = elem.className + _strEmpty;
+                                cur = elem.nodeType === 1 && (_strSpace + stripAndCollapse(curValue) + _strSpace);
+
+                                if (cur) {
+                                    while ((clazz = classes[v++]))
+                                        if (cur.indexOf(_strSpace + clazz + _strSpace) < 0)
+                                            cur += clazz + _strSpace;
+
+                                    finalValue = stripAndCollapse(cur);
+                                    if (curValue !== finalValue)
+                                        elem.className = finalValue;
+                                }
+                            }
+                        }
+                    }
+
+                    return this;
+                },
+
+                removeClass: function (className) {
+                    var classes;
+                    var elem;
+                    var cur;
+                    var curValue;
+                    var clazz;
+                    var finalValue;
+                    var supportClassList;
+                    var elmClassList;
+                    var i = 0;
+                    var v = 0;
+
+                    if (className) {
+                        classes = className.match(_rnothtmlwhite) || [];
+
+                        while ((elem = this[i++])) {
+                            elmClassList = elem.classList;
+                            if (supportClassList === undefined)
+                                supportClassList = elmClassList !== undefined;
+
+                            if (supportClassList) {
+                                while ((clazz = classes[v++]))
+                                    elmClassList.remove(clazz);
+                            }
+                            else {
+                                curValue = elem.className + _strEmpty;
+                                cur = elem.nodeType === 1 && (_strSpace + stripAndCollapse(curValue) + _strSpace);
+
+                                if (cur) {
+                                    while ((clazz = classes[v++]))
+                                        while (cur.indexOf(_strSpace + clazz + _strSpace) > -1)
+                                            cur = cur.replace(_strSpace + clazz + _strSpace, _strSpace);
+
+                                    finalValue = stripAndCollapse(cur);
+                                    if (curValue !== finalValue)
+                                        elem.className = finalValue;
+                                }
+                            }
+                        }
+                    }
+
+                    return this;
+                },
+
+                hide: function () {
+                    return this.each(function () { this[LEXICON.s].display = 'none'; });
+                },
+
+                show: function () {
+                    return this.each(function () { this[LEXICON.s].display = 'block'; });
+                },
+
+                attr: function (attrName, value) {
+                    var i = 0;
+                    var el;
+                    while (el = this[i++]) {
+                        if (value === undefined)
+                            return el.getAttribute(attrName);
+                        el.setAttribute(attrName, value);
+                    }
+                    return this;
+                },
+
+                removeAttr: function (attrName) {
+                    return this.each(function () { this.removeAttribute(attrName); });
+                },
+
+                offset: function () {
+                    var el = this[0];
+                    var rect = el[LEXICON.bCR]();
+                    var scrollLeft = window.pageXOffset || document.documentElement[_strScrollLeft];
+                    var scrollTop = window.pageYOffset || document.documentElement[_strScrollTop];
+                    return {
+                        top: rect.top + scrollTop,
+                        left: rect.left + scrollLeft
+                    };
+                },
+
+                position: function () {
+                    var el = this[0];
+                    return {
+                        top: el.offsetTop,
+                        left: el.offsetLeft
+                    };
+                },
+
+                scrollLeft: function (value) {
+                    var i = 0;
+                    var el;
+                    while (el = this[i++]) {
+                        if (value === undefined)
+                            return el[_strScrollLeft];
+                        el[_strScrollLeft] = value;
+                    }
+                    return this;
+                },
+
+                scrollTop: function (value) {
+                    var i = 0;
+                    var el;
+                    while (el = this[i++]) {
+                        if (value === undefined)
+                            return el[_strScrollTop];
+                        el[_strScrollTop] = value;
+                    }
+                    return this;
+                },
+
+                val: function (value) {
+                    var el = this[0];
+                    if (!value)
+                        return el.value;
+                    el.value = value;
+                    return this;
+                },
+
+
+                //DOM TRAVERSAL / FILTERING:
+
+                first: function () {
+                    return this.eq(0);
+                },
+
+                last: function () {
+                    return this.eq(-1);
+                },
+
+                eq: function (index) {
+                    return FakejQuery(this[index >= 0 ? index : this[LEXICON.l] + index]);
+                },
+
+                find: function (selector) {
+                    var children = [];
+                    var i;
+                    this.each(function () {
+                        var el = this;
+                        var ch = el.querySelectorAll(selector);
+                        for (i = 0; i < ch[LEXICON.l]; i++)
+                            children.push(ch[i]);
+                    });
+                    return FakejQuery(children);
+                },
+
+                children: function (selector) {
+                    var children = [];
+                    var el;
+                    var ch;
+                    var i;
+
+                    this.each(function () {
+                        ch = this.children;
+                        for (i = 0; i < ch[LEXICON.l]; i++) {
+                            el = ch[i];
+                            if (selector) {
+                                if ((el.matches && el.matches(selector)) || matches(el, selector))
+                                    children.push(el);
+                            }
+                            else
+                                children.push(el);
+                        }
+                    });
+                    return FakejQuery(children);
+                },
+
+                parent: function (selector) {
+                    var parents = [];
+                    var parent;
+                    this.each(function () {
+                        parent = this.parentNode;
+                        if (selector ? FakejQuery(parent).is(selector) : true)
+                            parents.push(parent);
+                    });
+                    return FakejQuery(parents);
+                },
+
+                is: function (selector) {
+
+                    var el;
+                    var i;
+                    for (i = 0; i < this[LEXICON.l]; i++) {
+                        el = this[i];
+                        if (selector === ':visible')
+                            return elementIsVisible(el);
+                        if (selector === ':hidden')
+                            return !elementIsVisible(el);
+                        if ((el.matches && el.matches(selector)) || matches(el, selector))
+                            return true;
+                    }
+                    return false;
+                },
+
+                contents: function () {
+                    var contents = [];
+                    var childs;
+                    var i;
+
+                    this.each(function () {
+                        childs = this.childNodes;
+                        for (i = 0; i < childs[LEXICON.l]; i++)
+                            contents.push(childs[i]);
+                    });
+
+                    return FakejQuery(contents);
+                },
+
+                each: function (callback) {
+                    return each(this, callback);
+                },
+
+
+                //ANIMATION:
+
+                animate: function (props, duration, easing, complete) {
+                    return this.each(function () { animate(this, props, duration, easing, complete); });
+                },
+
+                stop: function (clearQ, jump) {
+                    return this.each(function () { stop(this, clearQ, jump); });
+                }
+            };
+
+            extend(FakejQuery, {
+                extend: extend,
+                inArray: inArray,
+                isEmptyObject: isEmptyObject,
+                isPlainObject: isPlainObject,
+                each: each
+            });
+
+            return FakejQuery;
+        })();
+        var INSTANCES = (function () {
+            var _targets = [];
+            var _instancePropertyString = '__overlayScrollbars__';
+
+            /**
+             * Register, unregister or get a certain (or all) instances.
+             * Register: Pass the target and the instance.
+             * Unregister: Pass the target and null.
+             * Get Instance: Pass the target from which the instance shall be got.
+             * Get Targets: Pass no arguments.
+             * @param target The target to which the instance shall be registered / from which the instance shall be unregistered / the instance shall be got
+             * @param instance The instance.
+             * @returns {*|void} Returns the instance from the given target.
+             */
+            return function (target, instance) {
+                var argLen = arguments[LEXICON.l];
+                if (argLen < 1) {
+                    //return all targets
+                    return _targets;
+                }
+                else {
+                    if (instance) {
+                        //register instance
+                        target[_instancePropertyString] = instance;
+                        _targets.push(target);
+                    }
+                    else {
+                        var index = COMPATIBILITY.inA(target, _targets);
+                        if (index > -1) {
+                            if (argLen > 1) {
+                                //unregister instance
+                                delete target[_instancePropertyString];
+                                _targets.splice(index, 1);
+                            }
+                            else {
+                                //get instance from target
+                                return _targets[index][_instancePropertyString];
+                            }
+                        }
+                    }
+                }
+            }
+        })();
+        var PLUGIN = (function () {
+            var _plugin;
+            var _pluginsGlobals;
+            var _pluginsAutoUpdateLoop;
+            var _pluginsExtensions = [];
+            var _pluginsOptions = (function () {
+                var type = COMPATIBILITY.type;
+                var possibleTemplateTypes = [
+                    TYPES.b, //boolean
+                    TYPES.n, //number
+                    TYPES.s, //string
+                    TYPES.a, //array
+                    TYPES.o, //object
+                    TYPES.f, //function
+                    TYPES.z  //null
+                ];
+                var restrictedStringsSplit = ' ';
+                var restrictedStringsPossibilitiesSplit = ':';
+                var classNameAllowedValues = [TYPES.z, TYPES.s];
+                var numberAllowedValues = TYPES.n;
+                var booleanNullAllowedValues = [TYPES.z, TYPES.b];
+                var booleanTrueTemplate = [true, TYPES.b];
+                var booleanFalseTemplate = [false, TYPES.b];
+                var callbackTemplate = [null, [TYPES.z, TYPES.f]];
+                var updateOnLoadTemplate = [['img'], [TYPES.s, TYPES.a, TYPES.z]];
+                var inheritedAttrsTemplate = [['style', 'class'], [TYPES.s, TYPES.a, TYPES.z]];
+                var resizeAllowedValues = 'n:none b:both h:horizontal v:vertical';
+                var overflowBehaviorAllowedValues = 'v-h:visible-hidden v-s:visible-scroll s:scroll h:hidden';
+                var scrollbarsVisibilityAllowedValues = 'v:visible h:hidden a:auto';
+                var scrollbarsAutoHideAllowedValues = 'n:never s:scroll l:leave m:move';
+                var optionsDefaultsAndTemplate = {
+                    className: ['os-theme-dark', classNameAllowedValues],                //null || string
+                    resize: ['none', resizeAllowedValues],                               //none || both  || horizontal || vertical || n || b || h || v
+                    sizeAutoCapable: booleanTrueTemplate,                                //true || false
+                    clipAlways: booleanTrueTemplate,                                     //true || false
+                    normalizeRTL: booleanTrueTemplate,                                   //true || false
+                    paddingAbsolute: booleanFalseTemplate,                               //true || false
+                    autoUpdate: [null, booleanNullAllowedValues],                        //true || false || null
+                    autoUpdateInterval: [33, numberAllowedValues],                       //number
+                    updateOnLoad: updateOnLoadTemplate,                                  //string || array || null
+                    nativeScrollbarsOverlaid: {
+                        showNativeScrollbars: booleanFalseTemplate,                      //true || false
+                        initialize: booleanTrueTemplate                                  //true || false
+                    },
+                    overflowBehavior: {
+                        x: ['scroll', overflowBehaviorAllowedValues],                    //visible-hidden  || visible-scroll || hidden || scroll || v-h || v-s || h || s
+                        y: ['scroll', overflowBehaviorAllowedValues]                     //visible-hidden  || visible-scroll || hidden || scroll || v-h || v-s || h || s
+                    },
+                    scrollbars: {
+                        visibility: ['auto', scrollbarsVisibilityAllowedValues],         //visible || hidden || auto || v || h || a
+                        autoHide: ['never', scrollbarsAutoHideAllowedValues],            //never || scroll || leave || move || n || s || l || m
+                        autoHideDelay: [800, numberAllowedValues],                       //number
+                        dragScrolling: booleanTrueTemplate,                              //true || false
+                        clickScrolling: booleanFalseTemplate,                            //true || false
+                        touchSupport: booleanTrueTemplate,                               //true || false
+                        snapHandle: booleanFalseTemplate                                 //true || false
+                    },
+                    textarea: {
+                        dynWidth: booleanFalseTemplate,                                  //true || false
+                        dynHeight: booleanFalseTemplate,                                 //true || false
+                        inheritedAttrs: inheritedAttrsTemplate                           //string || array || null
+                    },
+                    callbacks: {
+                        onInitialized: callbackTemplate,                                 //null || function
+                        onInitializationWithdrawn: callbackTemplate,                     //null || function
+                        onDestroyed: callbackTemplate,                                   //null || function
+                        onScrollStart: callbackTemplate,                                 //null || function
+                        onScroll: callbackTemplate,                                      //null || function
+                        onScrollStop: callbackTemplate,                                  //null || function
+                        onOverflowChanged: callbackTemplate,                             //null || function
+                        onOverflowAmountChanged: callbackTemplate,                       //null || function
+                        onDirectionChanged: callbackTemplate,                            //null || function
+                        onContentSizeChanged: callbackTemplate,                          //null || function
+                        onHostSizeChanged: callbackTemplate,                             //null || function
+                        onUpdated: callbackTemplate                                      //null || function
+                    }
+                };
+                var convert = function (template) {
+                    var recursive = function (obj) {
+                        var key;
+                        var val;
+                        var valType;
+                        for (key in obj) {
+                            if (!obj[LEXICON.hOP](key))
+                                continue;
+                            val = obj[key];
+                            valType = type(val);
+                            if (valType == TYPES.a)
+                                obj[key] = val[template ? 1 : 0];
+                            else if (valType == TYPES.o)
+                                obj[key] = recursive(val);
+                        }
+                        return obj;
+                    };
+                    return recursive(FRAMEWORK.extend(true, {}, optionsDefaultsAndTemplate));
+                };
+
+                return {
+                    _defaults: convert(),
+
+                    _template: convert(true),
+
+                    /**
+                     * Validates the passed object by the passed template.
+                     * @param obj The object which shall be validated.
+                     * @param template The template which defines the allowed values and types.
+                     * @param writeErrors True if errors shall be logged to the console.
+                     * @param diffObj If a object is passed then only valid differences to this object will be returned.
+                     * @returns {{}} A object which contains two objects called "default" and "prepared" which contains only the valid properties of the passed original object and discards not different values compared to the passed diffObj.
+                     */
+                    _validate: function (obj, template, writeErrors, diffObj) {
+                        var validatedOptions = {};
+                        var validatedOptionsPrepared = {};
+                        var objectCopy = FRAMEWORK.extend(true, {}, obj);
+                        var inArray = FRAMEWORK.inArray;
+                        var isEmptyObj = FRAMEWORK.isEmptyObject;
+                        var checkObjectProps = function (data, template, diffData, validatedOptions, validatedOptionsPrepared, prevPropName) {
+                            for (var prop in template) {
+                                if (template[LEXICON.hOP](prop) && data[LEXICON.hOP](prop)) {
+                                    var isValid = false;
+                                    var isDiff = false;
+                                    var templateValue = template[prop];
+                                    var templateValueType = type(templateValue);
+                                    var templateIsComplex = templateValueType == TYPES.o;
+                                    var templateTypes = !COMPATIBILITY.isA(templateValue) ? [templateValue] : templateValue;
+                                    var dataDiffValue = diffData[prop];
+                                    var dataValue = data[prop];
+                                    var dataValueType = type(dataValue);
+                                    var propPrefix = prevPropName ? prevPropName + '.' : '';
+                                    var error = "The option \"" + propPrefix + prop + "\" wasn't set, because";
+                                    var errorPossibleTypes = [];
+                                    var errorRestrictedStrings = [];
+                                    var restrictedStringValuesSplit;
+                                    var restrictedStringValuesPossibilitiesSplit;
+                                    var isRestrictedValue;
+                                    var mainPossibility;
+                                    var currType;
+                                    var i;
+                                    var v;
+                                    var j;
+
+                                    dataDiffValue = dataDiffValue === undefined ? {} : dataDiffValue;
+
+                                    //if the template has a object as value, it means that the options are complex (verschachtelt)
+                                    if (templateIsComplex && dataValueType == TYPES.o) {
+                                        validatedOptions[prop] = {};
+                                        validatedOptionsPrepared[prop] = {};
+                                        checkObjectProps(dataValue, templateValue, dataDiffValue, validatedOptions[prop], validatedOptionsPrepared[prop], propPrefix + prop);
+                                        FRAMEWORK.each([data, validatedOptions, validatedOptionsPrepared], function (index, value) {
+                                            if (isEmptyObj(value[prop])) {
+                                                delete value[prop];
+                                            }
+                                        });
+                                    }
+                                    else if (!templateIsComplex) {
+                                        for (i = 0; i < templateTypes[LEXICON.l]; i++) {
+                                            currType = templateTypes[i];
+                                            templateValueType = type(currType);
+                                            //if currtype is string and starts with restrictedStringPrefix and end with restrictedStringSuffix
+                                            isRestrictedValue = templateValueType == TYPES.s && inArray(currType, possibleTemplateTypes) === -1;
+                                            if (isRestrictedValue) {
+                                                errorPossibleTypes.push(TYPES.s);
+
+                                                //split it into a array which contains all possible values for example: ["y:yes", "n:no", "m:maybe"]
+                                                restrictedStringValuesSplit = currType.split(restrictedStringsSplit);
+                                                errorRestrictedStrings = errorRestrictedStrings.concat(restrictedStringValuesSplit);
+                                                for (v = 0; v < restrictedStringValuesSplit[LEXICON.l]; v++) {
+                                                    //split the possible values into their possibiliteis for example: ["y", "yes"] -> the first is always the mainPossibility
+                                                    restrictedStringValuesPossibilitiesSplit = restrictedStringValuesSplit[v].split(restrictedStringsPossibilitiesSplit);
+                                                    mainPossibility = restrictedStringValuesPossibilitiesSplit[0];
+                                                    for (j = 0; j < restrictedStringValuesPossibilitiesSplit[LEXICON.l]; j++) {
+                                                        //if any possibility matches with the dataValue, its valid
+                                                        if (dataValue === restrictedStringValuesPossibilitiesSplit[j]) {
+                                                            isValid = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if (isValid)
+                                                        break;
+                                                }
+                                            }
+                                            else {
+                                                errorPossibleTypes.push(currType);
+
+                                                if (dataValueType === currType) {
+                                                    isValid = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if (isValid) {
+                                            isDiff = dataValue !== dataDiffValue;
+
+                                            if (isDiff)
+                                                validatedOptions[prop] = dataValue;
+
+                                            if (isRestrictedValue ? inArray(dataDiffValue, restrictedStringValuesPossibilitiesSplit) < 0 : isDiff)
+                                                validatedOptionsPrepared[prop] = isRestrictedValue ? mainPossibility : dataValue;
+                                        }
+                                        else if (writeErrors) {
+                                            console.warn(error + " it doesn't accept the type [ " + dataValueType.toUpperCase() + " ] with the value of \"" + dataValue + "\".\r\n" +
+                                                "Accepted types are: [ " + errorPossibleTypes.join(', ').toUpperCase() + " ]." +
+                                                (errorRestrictedStrings[length] > 0 ? "\r\nValid strings are: [ " + errorRestrictedStrings.join(', ').split(restrictedStringsPossibilitiesSplit).join(', ') + " ]." : ''));
+                                        }
+                                        delete data[prop];
+                                    }
+                                }
+                            }
+                        };
+                        checkObjectProps(objectCopy, template, diffObj || {}, validatedOptions, validatedOptionsPrepared);
+
+                        //add values which aren't specified in the template to the finished validated object to prevent them from being discarded
+                        /*
+                        if(keepForeignProps) {
+                            FRAMEWORK.extend(true, validatedOptions, objectCopy);
+                            FRAMEWORK.extend(true, validatedOptionsPrepared, objectCopy);
+                        }
+                        */
+
+                        if (!isEmptyObj(objectCopy) && writeErrors)
+                            console.warn('The following options are discarded due to invalidity:\r\n' + window.JSON.stringify(objectCopy, null, 2));
+
+                        return {
+                            _default: validatedOptions,
+                            _prepared: validatedOptionsPrepared
+                        };
+                    }
+                }
+            }());
+
+            /**
+             * Initializes the object which contains global information about the plugin and each instance of it.
+             */
+            function initOverlayScrollbarsStatics() {
+                if (!_pluginsGlobals)
+                    _pluginsGlobals = new OverlayScrollbarsGlobals(_pluginsOptions._defaults);
+                if (!_pluginsAutoUpdateLoop)
+                    _pluginsAutoUpdateLoop = new OverlayScrollbarsAutoUpdateLoop(_pluginsGlobals);
+            }
+
+            /**
+             * The global object for the OverlayScrollbars objects. It contains resources which every OverlayScrollbars object needs. This object is initialized only once: if the first OverlayScrollbars object gets initialized.
+             * @param defaultOptions
+             * @constructor
+             */
+            function OverlayScrollbarsGlobals(defaultOptions) {
+                var _base = this;
+                var strOverflow = 'overflow';
+                var strHidden = 'hidden';
+                var strScroll = 'scroll';
+                var bodyElement = FRAMEWORK('body');
+                var scrollbarDummyElement = FRAMEWORK('<div id="os-dummy-scrollbar-size"><div></div></div>');
+                var scrollbarDummyElement0 = scrollbarDummyElement[0];
+                var dummyContainerChild = FRAMEWORK(scrollbarDummyElement.children('div').eq(0));
+
+                bodyElement.append(scrollbarDummyElement);
+                scrollbarDummyElement.hide().show(); //fix IE8 bug (incorrect measuring)
+
+                var nativeScrollbarSize = calcNativeScrollbarSize(scrollbarDummyElement0);
+                var nativeScrollbarIsOverlaid = {
+                    x: nativeScrollbarSize.x === 0,
+                    y: nativeScrollbarSize.y === 0
+                };
+                var msie = (function () {
+                    var ua = window.navigator.userAgent;
+                    var strIndexOf = 'indexOf';
+                    var strSubString = 'substring';
+                    var msie = ua[strIndexOf]('MSIE ');
+                    var trident = ua[strIndexOf]('Trident/');
+                    var edge = ua[strIndexOf]('Edge/');
+                    var rv = ua[strIndexOf]('rv:');
+                    var result;
+                    var parseIntFunc = parseInt;
+
+                    // IE 10 or older => return version number
+                    if (msie > 0)
+                        result = parseIntFunc(ua[strSubString](msie + 5, ua[strIndexOf]('.', msie)), 10);
+
+                    // IE 11 => return version number
+                    else if (trident > 0)
+                        result = parseIntFunc(ua[strSubString](rv + 3, ua[strIndexOf]('.', rv)), 10);
+
+                    // Edge (IE 12+) => return version number
+                    else if (edge > 0)
+                        result = parseIntFunc(ua[strSubString](edge + 5, ua[strIndexOf]('.', edge)), 10);
+
+                    // other browser
+                    return result;
+                })();
+
+                FRAMEWORK.extend(_base, {
+                    defaultOptions: defaultOptions,
+                    msie: msie,
+                    autoUpdateLoop: false,
+                    autoUpdateRecommended: !COMPATIBILITY.mO(),
+                    nativeScrollbarSize: nativeScrollbarSize,
+                    nativeScrollbarIsOverlaid: nativeScrollbarIsOverlaid,
+                    nativeScrollbarStyling: (function () {
+                        var result = false;
+                        scrollbarDummyElement.addClass('os-viewport-native-scrollbars-invisible');
+                        try {
+                            result = (scrollbarDummyElement.css('scrollbar-width') === 'none' && (msie > 9 || !msie)) || window.getComputedStyle(scrollbarDummyElement0, '::-webkit-scrollbar').getPropertyValue('display') === 'none';
+                        } catch (ex) { }
+
+                        //fix opera bug: scrollbar styles will only appear if overflow value is scroll or auto during the activation of the style.
+                        //and set overflow to scroll
+                        //scrollbarDummyElement.css(strOverflow, strHidden).hide().css(strOverflow, strScroll).show();
+                        //return (scrollbarDummyElement0[LEXICON.oH] - scrollbarDummyElement0[LEXICON.cH]) === 0 && (scrollbarDummyElement0[LEXICON.oW] - scrollbarDummyElement0[LEXICON.cW]) === 0;
+
+                        return result;
+                    })(),
+                    overlayScrollbarDummySize: { x: 30, y: 30 },
+                    cssCalc: VENDORS._cssPropertyValue('width', 'calc', '(1px)') || null,
+                    restrictedMeasuring: (function () {
+                        //https://bugzilla.mozilla.org/show_bug.cgi?id=1439305
+                        //since 1.11.0 always false -> fixed via CSS (hopefully)
+                        scrollbarDummyElement.css(strOverflow, strHidden);
+                        var scrollSize = {
+                            w: scrollbarDummyElement0[LEXICON.sW],
+                            h: scrollbarDummyElement0[LEXICON.sH]
+                        };
+                        scrollbarDummyElement.css(strOverflow, 'visible');
+                        var scrollSize2 = {
+                            w: scrollbarDummyElement0[LEXICON.sW],
+                            h: scrollbarDummyElement0[LEXICON.sH]
+                        };
+                        return (scrollSize.w - scrollSize2.w) !== 0 || (scrollSize.h - scrollSize2.h) !== 0;
+                    })(),
+                    rtlScrollBehavior: (function () {
+                        scrollbarDummyElement.css({ 'overflow-y': strHidden, 'overflow-x': strScroll, 'direction': 'rtl' }).scrollLeft(0);
+                        var dummyContainerOffset = scrollbarDummyElement.offset();
+                        var dummyContainerChildOffset = dummyContainerChild.offset();
+                        //https://github.com/KingSora/OverlayScrollbars/issues/187
+                        scrollbarDummyElement.scrollLeft(-999);
+                        var dummyContainerChildOffsetAfterScroll = dummyContainerChild.offset();
+                        return {
+                            //origin direction = determines if the zero scroll position is on the left or right side
+                            //'i' means 'invert' (i === true means that the axis must be inverted to be correct)
+                            //true = on the left side
+                            //false = on the right side
+                            i: dummyContainerOffset.left === dummyContainerChildOffset.left,
+                            //negative = determines if the maximum scroll is positive or negative
+                            //'n' means 'negate' (n === true means that the axis must be negated to be correct)
+                            //true = negative
+                            //false = positive
+                            n: dummyContainerChildOffset.left !== dummyContainerChildOffsetAfterScroll.left
+                        };
+                    })(),
+                    supportTransform: !!VENDORS._cssProperty('transform'),
+                    supportTransition: !!VENDORS._cssProperty('transition'),
+                    supportPassiveEvents: (function () {
+                        var supportsPassive = false;
+                        try {
+                            window.addEventListener('test', null, Object.defineProperty({}, 'passive', {
+                                get: function () {
+                                    supportsPassive = true;
+                                }
+                            }));
+                        } catch (e) { }
+                        return supportsPassive;
+                    })(),
+                    supportResizeObserver: !!COMPATIBILITY.rO(),
+                    supportMutationObserver: !!COMPATIBILITY.mO()
+                });
+
+                scrollbarDummyElement.removeAttr(LEXICON.s).remove();
+
+                //Catch zoom event:
+                (function () {
+                    if (nativeScrollbarIsOverlaid.x && nativeScrollbarIsOverlaid.y)
+                        return;
+
+                    var abs = MATH.abs;
+                    var windowWidth = COMPATIBILITY.wW();
+                    var windowHeight = COMPATIBILITY.wH();
+                    var windowDpr = getWindowDPR();
+                    var onResize = function () {
+                        if (INSTANCES().length > 0) {
+                            var newW = COMPATIBILITY.wW();
+                            var newH = COMPATIBILITY.wH();
+                            var deltaW = newW - windowWidth;
+                            var deltaH = newH - windowHeight;
+
+                            if (deltaW === 0 && deltaH === 0)
+                                return;
+
+                            var deltaWRatio = MATH.round(newW / (windowWidth / 100.0));
+                            var deltaHRatio = MATH.round(newH / (windowHeight / 100.0));
+                            var absDeltaW = abs(deltaW);
+                            var absDeltaH = abs(deltaH);
+                            var absDeltaWRatio = abs(deltaWRatio);
+                            var absDeltaHRatio = abs(deltaHRatio);
+                            var newDPR = getWindowDPR();
+
+                            var deltaIsBigger = absDeltaW > 2 && absDeltaH > 2;
+                            var difference = !differenceIsBiggerThanOne(absDeltaWRatio, absDeltaHRatio);
+                            var dprChanged = newDPR !== windowDpr && windowDpr > 0;
+                            var isZoom = deltaIsBigger && difference && dprChanged;
+                            var oldScrollbarSize = _base.nativeScrollbarSize;
+                            var newScrollbarSize;
+
+                            if (isZoom) {
+                                bodyElement.append(scrollbarDummyElement);
+                                newScrollbarSize = _base.nativeScrollbarSize = calcNativeScrollbarSize(scrollbarDummyElement[0]);
+                                scrollbarDummyElement.remove();
+                                if (oldScrollbarSize.x !== newScrollbarSize.x || oldScrollbarSize.y !== newScrollbarSize.y) {
+                                    FRAMEWORK.each(INSTANCES(), function () {
+                                        if (INSTANCES(this))
+                                            INSTANCES(this).update('zoom');
+                                    });
+                                }
+                            }
+
+                            windowWidth = newW;
+                            windowHeight = newH;
+                            windowDpr = newDPR;
+                        }
+                    };
+
+                    function differenceIsBiggerThanOne(valOne, valTwo) {
+                        var absValOne = abs(valOne);
+                        var absValTwo = abs(valTwo);
+                        return !(absValOne === absValTwo || absValOne + 1 === absValTwo || absValOne - 1 === absValTwo);
+                    }
+
+                    function getWindowDPR() {
+                        var dDPI = window.screen.deviceXDPI || 0;
+                        var sDPI = window.screen.logicalXDPI || 1;
+                        return window.devicePixelRatio || (dDPI / sDPI);
+                    }
+
+                    FRAMEWORK(window).on('resize', onResize);
+                })();
+
+                function calcNativeScrollbarSize(measureElement) {
+                    return {
+                        x: measureElement[LEXICON.oH] - measureElement[LEXICON.cH],
+                        y: measureElement[LEXICON.oW] - measureElement[LEXICON.cW]
+                    };
+                }
+            }
+
+            /**
+             * The object which manages the auto update loop for all OverlayScrollbars objects. This object is initialized only once: if the first OverlayScrollbars object gets initialized.
+             * @constructor
+             */
+            function OverlayScrollbarsAutoUpdateLoop(globals) {
+                var _base = this;
+                var _inArray = FRAMEWORK.inArray;
+                var _getNow = COMPATIBILITY.now;
+                var _strAutoUpdate = 'autoUpdate';
+                var _strAutoUpdateInterval = _strAutoUpdate + 'Interval';
+                var _strLength = LEXICON.l;
+                var _loopingInstances = [];
+                var _loopingInstancesIntervalCache = [];
+                var _loopIsActive = false;
+                var _loopIntervalDefault = 33;
+                var _loopInterval = _loopIntervalDefault;
+                var _loopTimeOld = _getNow();
+                var _loopID;
+
+
+                /**
+                 * The auto update loop which will run every 50 milliseconds or less if the update interval of a instance is lower than 50 milliseconds.
+                 */
+                var loop = function () {
+                    if (_loopingInstances[_strLength] > 0 && _loopIsActive) {
+                        _loopID = COMPATIBILITY.rAF()(function () {
+                            loop();
+                        });
+                        var timeNew = _getNow();
+                        var timeDelta = timeNew - _loopTimeOld;
+                        var lowestInterval;
+                        var instance;
+                        var instanceOptions;
+                        var instanceAutoUpdateAllowed;
+                        var instanceAutoUpdateInterval;
+                        var now;
+
+                        if (timeDelta > _loopInterval) {
+                            _loopTimeOld = timeNew - (timeDelta % _loopInterval);
+                            lowestInterval = _loopIntervalDefault;
+                            for (var i = 0; i < _loopingInstances[_strLength]; i++) {
+                                instance = _loopingInstances[i];
+                                if (instance !== undefined) {
+                                    instanceOptions = instance.options();
+                                    instanceAutoUpdateAllowed = instanceOptions[_strAutoUpdate];
+                                    instanceAutoUpdateInterval = MATH.max(1, instanceOptions[_strAutoUpdateInterval]);
+                                    now = _getNow();
+
+                                    if ((instanceAutoUpdateAllowed === true || instanceAutoUpdateAllowed === null) && (now - _loopingInstancesIntervalCache[i]) > instanceAutoUpdateInterval) {
+                                        instance.update('auto');
+                                        _loopingInstancesIntervalCache[i] = new Date(now += instanceAutoUpdateInterval);
+                                    }
+
+                                    lowestInterval = MATH.max(1, MATH.min(lowestInterval, instanceAutoUpdateInterval));
+                                }
+                            }
+                            _loopInterval = lowestInterval;
+                        }
+                    } else {
+                        _loopInterval = _loopIntervalDefault;
+                    }
+                };
+
+                /**
+                 * Add OverlayScrollbars instance to the auto update loop. Only successful if the instance isn't already added.
+                 * @param instance The instance which shall be updated in a loop automatically.
+                 */
+                _base.add = function (instance) {
+                    if (_inArray(instance, _loopingInstances) === -1) {
+                        _loopingInstances.push(instance);
+                        _loopingInstancesIntervalCache.push(_getNow());
+                        if (_loopingInstances[_strLength] > 0 && !_loopIsActive) {
+                            _loopIsActive = true;
+                            globals.autoUpdateLoop = _loopIsActive;
+                            loop();
+                        }
+                    }
+                };
+
+                /**
+                 * Remove OverlayScrollbars instance from the auto update loop. Only successful if the instance was added before.
+                 * @param instance The instance which shall be updated in a loop automatically.
+                 */
+                _base.remove = function (instance) {
+                    var index = _inArray(instance, _loopingInstances);
+                    if (index > -1) {
+                        //remove from loopingInstances list
+                        _loopingInstancesIntervalCache.splice(index, 1);
+                        _loopingInstances.splice(index, 1);
+
+                        //correct update loop behavior
+                        if (_loopingInstances[_strLength] === 0 && _loopIsActive) {
+                            _loopIsActive = false;
+                            globals.autoUpdateLoop = _loopIsActive;
+                            if (_loopID !== undefined) {
+                                COMPATIBILITY.cAF()(_loopID);
+                                _loopID = -1;
+                            }
+                        }
+                    }
+                };
+            }
+
+            /**
+             * A object which manages the scrollbars visibility of the target element.
+             * @param pluginTargetElement The element from which the scrollbars shall be hidden.
+             * @param options The custom options.
+             * @param extensions The custom extensions.
+             * @param globals
+             * @param autoUpdateLoop
+             * @returns {*}
+             * @constructor
+             */
+            function OverlayScrollbarsInstance(pluginTargetElement, options, extensions, globals, autoUpdateLoop) {
+                //shortcuts
+                var type = COMPATIBILITY.type;
+                var inArray = FRAMEWORK.inArray;
+                var each = FRAMEWORK.each;
+
+                //make correct instanceof
+                var _base = new _plugin();
+                var _frameworkProto = FRAMEWORK[LEXICON.p];
+
+                //if passed element is no HTML element: skip and return
+                if (!isHTMLElement(pluginTargetElement))
+                    return;
+
+                //if passed element is already initialized: set passed options if there are any and return its instance
+                if (INSTANCES(pluginTargetElement)) {
+                    var inst = INSTANCES(pluginTargetElement);
+                    inst.options(options);
+                    return inst;
+                }
+
+                //globals:
+                var _nativeScrollbarIsOverlaid;
+                var _overlayScrollbarDummySize;
+                var _rtlScrollBehavior;
+                var _autoUpdateRecommended;
+                var _msieVersion;
+                var _nativeScrollbarStyling;
+                var _cssCalc;
+                var _nativeScrollbarSize;
+                var _supportTransition;
+                var _supportTransform;
+                var _supportPassiveEvents;
+                var _supportResizeObserver;
+                var _supportMutationObserver;
+                var _restrictedMeasuring;
+
+                //general readonly:
+                var _initialized;
+                var _destroyed;
+                var _isTextarea;
+                var _isBody;
+                var _documentMixed;
+                var _domExists;
+
+                //general:
+                var _isBorderBox;
+                var _sizeAutoObserverAdded;
+                var _paddingX;
+                var _paddingY;
+                var _borderX;
+                var _borderY;
+                var _marginX;
+                var _marginY;
+                var _isRTL;
+                var _sleeping;
+                var _contentBorderSize = {};
+                var _scrollHorizontalInfo = {};
+                var _scrollVerticalInfo = {};
+                var _viewportSize = {};
+                var _nativeScrollbarMinSize = {};
+
+                //naming:
+                var _strMinusHidden = '-hidden';
+                var _strMarginMinus = 'margin-';
+                var _strPaddingMinus = 'padding-';
+                var _strBorderMinus = 'border-';
+                var _strTop = 'top';
+                var _strRight = 'right';
+                var _strBottom = 'bottom';
+                var _strLeft = 'left';
+                var _strMinMinus = 'min-';
+                var _strMaxMinus = 'max-';
+                var _strWidth = 'width';
+                var _strHeight = 'height';
+                var _strFloat = 'float';
+                var _strEmpty = '';
+                var _strAuto = 'auto';
+                var _strSync = 'sync';
+                var _strScroll = 'scroll';
+                var _strHundredPercent = '100%';
+                var _strX = 'x';
+                var _strY = 'y';
+                var _strDot = '.';
+                var _strSpace = ' ';
+                var _strScrollbar = 'scrollbar';
+                var _strMinusHorizontal = '-horizontal';
+                var _strMinusVertical = '-vertical';
+                var _strScrollLeft = _strScroll + 'Left';
+                var _strScrollTop = _strScroll + 'Top';
+                var _strMouseTouchDownEvent = 'mousedown touchstart';
+                var _strMouseTouchUpEvent = 'mouseup touchend touchcancel';
+                var _strMouseTouchMoveEvent = 'mousemove touchmove';
+                var _strMouseEnter = 'mouseenter';
+                var _strMouseLeave = 'mouseleave';
+                var _strKeyDownEvent = 'keydown';
+                var _strKeyUpEvent = 'keyup';
+                var _strSelectStartEvent = 'selectstart';
+                var _strTransitionEndEvent = 'transitionend webkitTransitionEnd oTransitionEnd';
+                var _strResizeObserverProperty = '__overlayScrollbarsRO__';
+
+                //class names:
+                var _cassNamesPrefix = 'os-';
+                var _classNameHTMLElement = _cassNamesPrefix + 'html';
+                var _classNameHostElement = _cassNamesPrefix + 'host';
+                var _classNameHostElementForeign = _classNameHostElement + '-foreign';
+                var _classNameHostTextareaElement = _classNameHostElement + '-textarea';
+                var _classNameHostScrollbarHorizontalHidden = _classNameHostElement + '-' + _strScrollbar + _strMinusHorizontal + _strMinusHidden;
+                var _classNameHostScrollbarVerticalHidden = _classNameHostElement + '-' + _strScrollbar + _strMinusVertical + _strMinusHidden;
+                var _classNameHostTransition = _classNameHostElement + '-transition';
+                var _classNameHostRTL = _classNameHostElement + '-rtl';
+                var _classNameHostResizeDisabled = _classNameHostElement + '-resize-disabled';
+                var _classNameHostScrolling = _classNameHostElement + '-scrolling';
+                var _classNameHostOverflow = _classNameHostElement + '-overflow';
+                var _classNameHostOverflow = _classNameHostElement + '-overflow';
+                var _classNameHostOverflowX = _classNameHostOverflow + '-x';
+                var _classNameHostOverflowY = _classNameHostOverflow + '-y';
+                var _classNameTextareaElement = _cassNamesPrefix + 'textarea';
+                var _classNameTextareaCoverElement = _classNameTextareaElement + '-cover';
+                var _classNamePaddingElement = _cassNamesPrefix + 'padding';
+                var _classNameViewportElement = _cassNamesPrefix + 'viewport';
+                var _classNameViewportNativeScrollbarsInvisible = _classNameViewportElement + '-native-scrollbars-invisible';
+                var _classNameViewportNativeScrollbarsOverlaid = _classNameViewportElement + '-native-scrollbars-overlaid';
+                var _classNameContentElement = _cassNamesPrefix + 'content';
+                var _classNameContentArrangeElement = _cassNamesPrefix + 'content-arrange';
+                var _classNameContentGlueElement = _cassNamesPrefix + 'content-glue';
+                var _classNameSizeAutoObserverElement = _cassNamesPrefix + 'size-auto-observer';
+                var _classNameResizeObserverElement = _cassNamesPrefix + 'resize-observer';
+                var _classNameResizeObserverItemElement = _cassNamesPrefix + 'resize-observer-item';
+                var _classNameResizeObserverItemFinalElement = _classNameResizeObserverItemElement + '-final';
+                var _classNameTextInherit = _cassNamesPrefix + 'text-inherit';
+                var _classNameScrollbar = _cassNamesPrefix + _strScrollbar;
+                var _classNameScrollbarTrack = _classNameScrollbar + '-track';
+                var _classNameScrollbarTrackOff = _classNameScrollbarTrack + '-off';
+                var _classNameScrollbarHandle = _classNameScrollbar + '-handle';
+                var _classNameScrollbarHandleOff = _classNameScrollbarHandle + '-off';
+                var _classNameScrollbarUnusable = _classNameScrollbar + '-unusable';
+                var _classNameScrollbarAutoHidden = _classNameScrollbar + '-' + _strAuto + _strMinusHidden;
+                var _classNameScrollbarCorner = _classNameScrollbar + '-corner';
+                var _classNameScrollbarCornerResize = _classNameScrollbarCorner + '-resize';
+                var _classNameScrollbarCornerResizeB = _classNameScrollbarCornerResize + '-both';
+                var _classNameScrollbarCornerResizeH = _classNameScrollbarCornerResize + _strMinusHorizontal;
+                var _classNameScrollbarCornerResizeV = _classNameScrollbarCornerResize + _strMinusVertical;
+                var _classNameScrollbarHorizontal = _classNameScrollbar + _strMinusHorizontal;
+                var _classNameScrollbarVertical = _classNameScrollbar + _strMinusVertical;
+                var _classNameDragging = _cassNamesPrefix + 'dragging';
+                var _classNameThemeNone = _cassNamesPrefix + 'theme-none';
+                var _classNamesDynamicDestroy = [
+                    _classNameViewportNativeScrollbarsInvisible,
+                    _classNameViewportNativeScrollbarsOverlaid,
+                    _classNameScrollbarTrackOff,
+                    _classNameScrollbarHandleOff,
+                    _classNameScrollbarUnusable,
+                    _classNameScrollbarAutoHidden,
+                    _classNameScrollbarCornerResize,
+                    _classNameScrollbarCornerResizeB,
+                    _classNameScrollbarCornerResizeH,
+                    _classNameScrollbarCornerResizeV,
+                    _classNameDragging].join(_strSpace);
+
+                //callbacks:
+                var _callbacksInitQeueue = [];
+
+                //attrs viewport shall inherit from target
+                var _viewportAttrsFromTarget = [LEXICON.ti];
+
+                //options:
+                var _defaultOptions;
+                var _currentOptions;
+                var _currentPreparedOptions;
+
+                //extensions:
+                var _extensions = {};
+                var _extensionsPrivateMethods = 'added removed on contract';
+
+                //update
+                var _lastUpdateTime;
+                var _swallowedUpdateHints = {};
+                var _swallowedUpdateTimeout;
+                var _swallowUpdateLag = 42;
+                var _updateOnLoadEventName = 'load';
+                var _updateOnLoadElms = [];
+
+                //DOM elements:
+                var _windowElement;
+                var _documentElement;
+                var _htmlElement;
+                var _bodyElement;
+                var _targetElement;                     //the target element of this OverlayScrollbars object
+                var _hostElement;                       //the host element of this OverlayScrollbars object -> may be the same as targetElement
+                var _sizeAutoObserverElement;           //observes size auto changes
+                var _sizeObserverElement;               //observes size and padding changes
+                var _paddingElement;                    //manages the padding
+                var _viewportElement;                   //is the viewport of our scrollbar model
+                var _contentElement;                    //the element which holds the content
+                var _contentArrangeElement;             //is needed for correct sizing of the content element (only if native scrollbars are overlays)
+                var _contentGlueElement;                //has always the size of the content element
+                var _textareaCoverElement;              //only applied if target is a textarea element. Used for correct size calculation and for prevention of uncontrolled scrolling
+                var _scrollbarCornerElement;
+                var _scrollbarHorizontalElement;
+                var _scrollbarHorizontalTrackElement;
+                var _scrollbarHorizontalHandleElement;
+                var _scrollbarVerticalElement;
+                var _scrollbarVerticalTrackElement;
+                var _scrollbarVerticalHandleElement;
+                var _windowElementNative;
+                var _documentElementNative;
+                var _targetElementNative;
+                var _hostElementNative;
+                var _sizeAutoObserverElementNative;
+                var _sizeObserverElementNative;
+                var _paddingElementNative;
+                var _viewportElementNative;
+                var _contentElementNative;
+
+                //Cache:
+                var _hostSizeCache;
+                var _contentScrollSizeCache;
+                var _arrangeContentSizeCache;
+                var _hasOverflowCache;
+                var _hideOverflowCache;
+                var _widthAutoCache;
+                var _heightAutoCache;
+                var _cssBoxSizingCache;
+                var _cssPaddingCache;
+                var _cssBorderCache;
+                var _cssMarginCache;
+                var _cssDirectionCache;
+                var _cssDirectionDetectedCache;
+                var _paddingAbsoluteCache;
+                var _clipAlwaysCache;
+                var _contentGlueSizeCache;
+                var _overflowBehaviorCache;
+                var _overflowAmountCache;
+                var _ignoreOverlayScrollbarHidingCache;
+                var _autoUpdateCache;
+                var _sizeAutoCapableCache;
+                var _contentElementScrollSizeChangeDetectedCache;
+                var _hostElementSizeChangeDetectedCache;
+                var _scrollbarsVisibilityCache;
+                var _scrollbarsAutoHideCache;
+                var _scrollbarsClickScrollingCache;
+                var _scrollbarsDragScrollingCache;
+                var _resizeCache;
+                var _normalizeRTLCache;
+                var _classNameCache;
+                var _oldClassName;
+                var _textareaAutoWrappingCache;
+                var _textareaInfoCache;
+                var _textareaSizeCache;
+                var _textareaDynHeightCache;
+                var _textareaDynWidthCache;
+                var _bodyMinSizeCache;
+                var _updateAutoCache = {};
+
+                //MutationObserver:
+                var _mutationObserverHost;
+                var _mutationObserverContent;
+                var _mutationObserverHostCallback;
+                var _mutationObserverContentCallback;
+                var _mutationObserversConnected;
+                var _mutationObserverAttrsTextarea = ['wrap', 'cols', 'rows'];
+                var _mutationObserverAttrsHost = [LEXICON.i, LEXICON.c, LEXICON.s, 'open'].concat(_viewportAttrsFromTarget);
+
+                //events:
+                var _destroyEvents = [];
+
+                //textarea:
+                var _textareaHasFocus;
+
+                //scrollbars:
+                var _scrollbarsAutoHideTimeoutId;
+                var _scrollbarsAutoHideMoveTimeoutId;
+                var _scrollbarsAutoHideDelay;
+                var _scrollbarsAutoHideNever;
+                var _scrollbarsAutoHideScroll;
+                var _scrollbarsAutoHideMove;
+                var _scrollbarsAutoHideLeave;
+                var _scrollbarsHandleHovered;
+                var _scrollbarsHandlesDefineScrollPos;
+
+                //resize
+                var _resizeNone;
+                var _resizeBoth;
+                var _resizeHorizontal;
+                var _resizeVertical;
+
+
+                //==== Event Listener ====//
+
+                /**
+                 * Adds or removes a event listener from the given element.
+                 * @param element The element to which the event listener shall be applied or removed.
+                 * @param eventNames The name(s) of the events.
+                 * @param listener The method which shall be called.
+                 * @param remove True if the handler shall be removed, false or undefined if the handler shall be added.
+                 * @param passiveOrOptions The options for the event.
+                 */
+                function setupResponsiveEventListener(element, eventNames, listener, remove, passiveOrOptions) {
+                    var collected = COMPATIBILITY.isA(eventNames) && COMPATIBILITY.isA(listener);
+                    var method = remove ? 'removeEventListener' : 'addEventListener';
+                    var onOff = remove ? 'off' : 'on';
+                    var events = collected ? false : eventNames.split(_strSpace)
+                    var i = 0;
+
+                    var passiveOrOptionsIsObj = FRAMEWORK.isPlainObject(passiveOrOptions);
+                    var passive = _supportPassiveEvents && (passiveOrOptionsIsObj ? (passiveOrOptions._passive || false) : passiveOrOptions);
+                    var capture = passiveOrOptionsIsObj && (passiveOrOptions._capture || false);
+                    var useNative = capture || passive;
+                    var nativeParam = passive ? {
+                        passive: passive,
+                        capture: capture,
+                    } : capture;
+
+                    if (collected) {
+                        for (; i < eventNames[LEXICON.l]; i++)
+                            setupResponsiveEventListener(element, eventNames[i], listener[i], remove, passiveOrOptions);
+                    }
+                    else {
+                        for (; i < events[LEXICON.l]; i++) {
+                            if(useNative) {
+                                element[0][method](events[i], listener, nativeParam);
+                            }
+                            else {
+                                element[onOff](events[i], listener);
+                            }
+                        }
+                    }
+                }
+
+
+                function addDestroyEventListener(element, eventNames, listener, passive) {
+                    setupResponsiveEventListener(element, eventNames, listener, false, passive);
+                    _destroyEvents.push(COMPATIBILITY.bind(setupResponsiveEventListener, 0, element, eventNames, listener, true, passive));
+                }
+
+                //==== Resize Observer ====//
+
+                /**
+                 * Adds or removes a resize observer from the given element.
+                 * @param targetElement The element to which the resize observer shall be added or removed.
+                 * @param onElementResizedCallback The callback which is fired every time the resize observer registers a size change or false / undefined if the resizeObserver shall be removed.
+                 */
+                function setupResizeObserver(targetElement, onElementResizedCallback) {
+                    if (targetElement) {
+                        var resizeObserver = COMPATIBILITY.rO();
+                        var strAnimationStartEvent = 'animationstart mozAnimationStart webkitAnimationStart MSAnimationStart';
+                        var strChildNodes = 'childNodes';
+                        var constScroll = 3333333;
+                        var callback = function () {
+                            targetElement[_strScrollTop](constScroll)[_strScrollLeft](_isRTL ? _rtlScrollBehavior.n ? -constScroll : _rtlScrollBehavior.i ? 0 : constScroll : constScroll);
+                            onElementResizedCallback();
+                        };
+                        //add resize observer:
+                        if (onElementResizedCallback) {
+                            if (_supportResizeObserver) {
+                                var element = targetElement.addClass('observed').append(generateDiv(_classNameResizeObserverElement)).contents()[0];
+                                var observer = element[_strResizeObserverProperty] = new resizeObserver(callback);
+                                observer.observe(element);
+                            }
+                            else {
+                                if (_msieVersion > 9 || !_autoUpdateRecommended) {
+                                    targetElement.prepend(
+                                        generateDiv(_classNameResizeObserverElement,
+                                            generateDiv({ c: _classNameResizeObserverItemElement, dir: 'ltr' },
+                                                generateDiv(_classNameResizeObserverItemElement,
+                                                    generateDiv(_classNameResizeObserverItemFinalElement)
+                                                ) +
+                                                generateDiv(_classNameResizeObserverItemElement,
+                                                    generateDiv({ c: _classNameResizeObserverItemFinalElement, style: 'width: 200%; height: 200%' })
+                                                )
+                                            )
+                                        )
+                                    );
+
+                                    var observerElement = targetElement[0][strChildNodes][0][strChildNodes][0];
+                                    var shrinkElement = FRAMEWORK(observerElement[strChildNodes][1]);
+                                    var expandElement = FRAMEWORK(observerElement[strChildNodes][0]);
+                                    var expandElementChild = FRAMEWORK(expandElement[0][strChildNodes][0]);
+                                    var widthCache = observerElement[LEXICON.oW];
+                                    var heightCache = observerElement[LEXICON.oH];
+                                    var isDirty;
+                                    var rAFId;
+                                    var currWidth;
+                                    var currHeight;
+                                    var factor = 2;
+                                    var nativeScrollbarSize = globals.nativeScrollbarSize; //care don't make changes to this object!!!
+                                    var reset = function () {
+                                        /*
+                                         var sizeResetWidth = observerElement[LEXICON.oW] + nativeScrollbarSize.x * factor + nativeScrollbarSize.y * factor + _overlayScrollbarDummySize.x + _overlayScrollbarDummySize.y;
+                                         var sizeResetHeight = observerElement[LEXICON.oH] + nativeScrollbarSize.x * factor + nativeScrollbarSize.y * factor + _overlayScrollbarDummySize.x + _overlayScrollbarDummySize.y;
+                                         var expandChildCSS = {};
+                                         expandChildCSS[_strWidth] = sizeResetWidth;
+                                         expandChildCSS[_strHeight] = sizeResetHeight;
+                                         expandElementChild.css(expandChildCSS);
+
+
+                                         expandElement[_strScrollLeft](sizeResetWidth)[_strScrollTop](sizeResetHeight);
+                                         shrinkElement[_strScrollLeft](sizeResetWidth)[_strScrollTop](sizeResetHeight);
+                                         */
+                                        expandElement[_strScrollLeft](constScroll)[_strScrollTop](constScroll);
+                                        shrinkElement[_strScrollLeft](constScroll)[_strScrollTop](constScroll);
+                                    };
+                                    var onResized = function () {
+                                        rAFId = 0;
+                                        if (!isDirty)
+                                            return;
+
+                                        widthCache = currWidth;
+                                        heightCache = currHeight;
+                                        callback();
+                                    };
+                                    var onScroll = function (event) {
+                                        currWidth = observerElement[LEXICON.oW];
+                                        currHeight = observerElement[LEXICON.oH];
+                                        isDirty = currWidth != widthCache || currHeight != heightCache;
+
+                                        if (event && isDirty && !rAFId) {
+                                            COMPATIBILITY.cAF()(rAFId);
+                                            rAFId = COMPATIBILITY.rAF()(onResized);
+                                        }
+                                        else if (!event)
+                                            onResized();
+
+                                        reset();
+                                        if (event) {
+                                            COMPATIBILITY.prvD(event);
+                                            COMPATIBILITY.stpP(event);
+                                        }
+                                        return false;
+                                    };
+                                    var expandChildCSS = {};
+                                    var observerElementCSS = {};
+
+                                    setTopRightBottomLeft(observerElementCSS, _strEmpty, [
+                                        -((nativeScrollbarSize.y + 1) * factor),
+                                        nativeScrollbarSize.x * -factor,
+                                        nativeScrollbarSize.y * -factor,
+                                        -((nativeScrollbarSize.x + 1) * factor)
+                                    ]);
+
+                                    FRAMEWORK(observerElement).css(observerElementCSS);
+                                    expandElement.on(_strScroll, onScroll);
+                                    shrinkElement.on(_strScroll, onScroll);
+                                    targetElement.on(strAnimationStartEvent, function () {
+                                        onScroll(false);
+                                    });
+                                    //lets assume that the divs will never be that large and a constant value is enough
+                                    expandChildCSS[_strWidth] = constScroll;
+                                    expandChildCSS[_strHeight] = constScroll;
+                                    expandElementChild.css(expandChildCSS);
+
+                                    reset();
+                                }
+                                else {
+                                    var attachEvent = _documentElementNative.attachEvent;
+                                    var isIE = _msieVersion !== undefined;
+                                    if (attachEvent) {
+                                        targetElement.prepend(generateDiv(_classNameResizeObserverElement));
+                                        findFirst(targetElement, _strDot + _classNameResizeObserverElement)[0].attachEvent('onresize', callback);
+                                    }
+                                    else {
+                                        var obj = _documentElementNative.createElement(TYPES.o);
+                                        obj.setAttribute(LEXICON.ti, '-1');
+                                        obj.setAttribute(LEXICON.c, _classNameResizeObserverElement);
+                                        obj.onload = function () {
+                                            var wnd = this.contentDocument.defaultView;
+                                            wnd.addEventListener('resize', callback);
+                                            wnd.document.documentElement.style.display = 'none';
+                                        };
+                                        obj.type = 'text/html';
+                                        if (isIE)
+                                            targetElement.prepend(obj);
+                                        obj.data = 'about:blank';
+                                        if (!isIE)
+                                            targetElement.prepend(obj);
+                                        targetElement.on(strAnimationStartEvent, callback);
+                                    }
+                                }
+                            }
+
+                            if (targetElement[0] === _sizeObserverElementNative) {
+                                var directionChanged = function () {
+                                    var dir = _hostElement.css('direction');
+                                    var css = {};
+                                    var scrollLeftValue = 0;
+                                    var result = false;
+                                    if (dir !== _cssDirectionDetectedCache) {
+                                        if (dir === 'ltr') {
+                                            css[_strLeft] = 0;
+                                            css[_strRight] = _strAuto;
+                                            scrollLeftValue = constScroll;
+                                        }
+                                        else {
+                                            css[_strLeft] = _strAuto;
+                                            css[_strRight] = 0;
+                                            scrollLeftValue = _rtlScrollBehavior.n ? -constScroll : _rtlScrollBehavior.i ? 0 : constScroll;
+                                        }
+                                        //execution order is important for IE!!!
+                                        _sizeObserverElement.children().eq(0).css(css);
+                                        _sizeObserverElement[_strScrollLeft](scrollLeftValue)[_strScrollTop](constScroll);
+                                        _cssDirectionDetectedCache = dir;
+                                        result = true;
+                                    }
+                                    return result;
+                                };
+                                directionChanged();
+                                addDestroyEventListener(targetElement, _strScroll, function (event) {
+                                    if (directionChanged())
+                                        update();
+                                    COMPATIBILITY.prvD(event);
+                                    COMPATIBILITY.stpP(event);
+                                    return false;
+                                });
+                            }
+                        }
+                        //remove resize observer:
+                        else {
+                            if (_supportResizeObserver) {
+                                var element = targetElement.contents()[0];
+                                var resizeObserverObj = element[_strResizeObserverProperty];
+                                if (resizeObserverObj) {
+                                    resizeObserverObj.disconnect();
+                                    delete element[_strResizeObserverProperty];
+                                }
+                            }
+                            else {
+                                remove(targetElement.children(_strDot + _classNameResizeObserverElement).eq(0));
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * Freezes or unfreezes the given resize observer.
+                 * @param targetElement The element to which the target resize observer is applied.
+                 * @param freeze True if the resize observer shall be frozen, false otherwise.
+
+                function freezeResizeObserver(targetElement, freeze) {
+                    if (targetElement !== undefined) {
+                        if(freeze) {
+                            if (_supportResizeObserver) {
+                                var element = targetElement.contents()[0];
+                                element[_strResizeObserverProperty].unobserve(element);
+                            }
+                            else {
+                                targetElement = targetElement.children(_strDot + _classNameResizeObserverElement).eq(0);
+                                var w = targetElement.css(_strWidth);
+                                var h = targetElement.css(_strHeight);
+                                var css = {};
+                                css[_strWidth] = w;
+                                css[_strHeight] = h;
+                                targetElement.css(css);
+                            }
+                        }
+                        else {
+                            if (_supportResizeObserver) {
+                                var element = targetElement.contents()[0];
+                                element[_strResizeObserverProperty].observe(element);
+                            }
+                            else {
+                                var css = { };
+                                css[_strHeight] = _strEmpty;
+                                css[_strWidth] = _strEmpty;
+                                targetElement.children(_strDot + _classNameResizeObserverElement).eq(0).css(css);
+                            }
+                        }
+                    }
+                }
+                */
+
+
+                //==== Mutation Observers ====//
+
+                /**
+                 * Creates MutationObservers for the host and content Element if they are supported.
+                 */
+                function createMutationObservers() {
+                    if (_supportMutationObserver) {
+                        var mutationObserverContentLag = 11;
+                        var mutationObserver = COMPATIBILITY.mO();
+                        var contentLastUpdate = COMPATIBILITY.now();
+                        var mutationTarget;
+                        var mutationAttrName;
+                        var mutationIsClass;
+                        var oldMutationVal;
+                        var newClassVal;
+                        var hostClassNameRegex;
+                        var contentTimeout;
+                        var now;
+                        var sizeAuto;
+                        var action;
+
+                        _mutationObserverHostCallback = function (mutations) {
+
+                            var doUpdate = false;
+                            var doUpdateForce = false;
+                            var mutation;
+                            var mutatedAttrs = [];
+
+                            if (_initialized && !_sleeping) {
+                                each(mutations, function () {
+                                    mutation = this;
+                                    mutationTarget = mutation.target;
+                                    mutationAttrName = mutation.attributeName;
+                                    mutationIsClass = mutationAttrName === LEXICON.c;
+                                    oldMutationVal = mutation.oldValue;
+                                    newClassVal = mutationTarget.className;
+
+                                    if (_domExists && mutationIsClass && !doUpdateForce) {
+                                        // if old class value contains _classNameHostElementForeign and new class value doesn't
+                                        if (oldMutationVal.indexOf(_classNameHostElementForeign) > -1 && newClassVal.indexOf(_classNameHostElementForeign) < 0) {
+                                            hostClassNameRegex = createHostClassNameRegExp(true);
+                                            _hostElementNative.className = newClassVal.split(_strSpace).concat(oldMutationVal.split(_strSpace).filter(function (name) {
+                                                return name.match(hostClassNameRegex);
+                                            })).join(_strSpace);
+                                            doUpdate = doUpdateForce = true;
+                                        }
+                                    }
+
+                                    if (!doUpdate) {
+                                        doUpdate = mutationIsClass
+                                            ? hostClassNamesChanged(oldMutationVal, newClassVal)
+                                            : mutationAttrName === LEXICON.s
+                                                ? oldMutationVal !== mutationTarget[LEXICON.s].cssText
+                                                : true;
+                                    }
+
+                                    mutatedAttrs.push(mutationAttrName);
+                                });
+
+                                updateViewportAttrsFromTarget(mutatedAttrs);
+
+                                if (doUpdate)
+                                    _base.update(doUpdateForce || _strAuto);
+                            }
+                            return doUpdate;
+                        };
+                        _mutationObserverContentCallback = function (mutations) {
+                            var doUpdate = false;
+                            var mutation;
+
+                            if (_initialized && !_sleeping) {
+                                each(mutations, function () {
+                                    mutation = this;
+                                    doUpdate = isUnknownMutation(mutation);
+                                    return !doUpdate;
+                                });
+
+                                if (doUpdate) {
+                                    now = COMPATIBILITY.now();
+                                    sizeAuto = (_heightAutoCache || _widthAutoCache);
+                                    action = function () {
+                                        if (!_destroyed) {
+                                            contentLastUpdate = now;
+
+                                            //if cols, rows or wrap attr was changed
+                                            if (_isTextarea)
+                                                textareaUpdate();
+
+                                            if (sizeAuto)
+                                                update();
+                                            else
+                                                _base.update(_strAuto);
+                                        }
+                                    };
+                                    clearTimeout(contentTimeout);
+                                    if (mutationObserverContentLag <= 0 || now - contentLastUpdate > mutationObserverContentLag || !sizeAuto)
+                                        action();
+                                    else
+                                        contentTimeout = setTimeout(action, mutationObserverContentLag);
+                                }
+                            }
+                            return doUpdate;
+                        }
+
+                        _mutationObserverHost = new mutationObserver(_mutationObserverHostCallback);
+                        _mutationObserverContent = new mutationObserver(_mutationObserverContentCallback);
+                    }
+                }
+
+                /**
+                 * Connects the MutationObservers if they are supported.
+                 */
+                function connectMutationObservers() {
+                    if (_supportMutationObserver && !_mutationObserversConnected) {
+                        _mutationObserverHost.observe(_hostElementNative, {
+                            attributes: true,
+                            attributeOldValue: true,
+                            attributeFilter: _mutationObserverAttrsHost
+                        });
+
+                        _mutationObserverContent.observe(_isTextarea ? _targetElementNative : _contentElementNative, {
+                            attributes: true,
+                            attributeOldValue: true,
+                            subtree: !_isTextarea,
+                            childList: !_isTextarea,
+                            characterData: !_isTextarea,
+                            attributeFilter: _isTextarea ? _mutationObserverAttrsTextarea : _mutationObserverAttrsHost
+                        });
+
+                        _mutationObserversConnected = true;
+                    }
+                }
+
+                /**
+                 * Disconnects the MutationObservers if they are supported.
+                 */
+                function disconnectMutationObservers() {
+                    if (_supportMutationObserver && _mutationObserversConnected) {
+                        _mutationObserverHost.disconnect();
+                        _mutationObserverContent.disconnect();
+
+                        _mutationObserversConnected = false;
+                    }
+                }
+
+
+                //==== Events of elements ====//
+
+                /**
+                 * This method gets called every time the host element gets resized. IMPORTANT: Padding changes are detected too!!
+                 * It refreshes the hostResizedEventArgs and the hostSizeResizeCache.
+                 * If there are any size changes, the update method gets called.
+                 */
+                function hostOnResized() {
+                    if (!_sleeping) {
+                        var changed;
+                        var hostSize = {
+                            w: _sizeObserverElementNative[LEXICON.sW],
+                            h: _sizeObserverElementNative[LEXICON.sH]
+                        };
+
+                        changed = checkCache(hostSize, _hostElementSizeChangeDetectedCache);
+                        _hostElementSizeChangeDetectedCache = hostSize;
+                        if (changed)
+                            update({ _hostSizeChanged: true });
+                    }
+                }
+
+                /**
+                 * The mouse enter event of the host element. This event is only needed for the autoHide feature.
+                 */
+                function hostOnMouseEnter() {
+                    if (_scrollbarsAutoHideLeave)
+                        refreshScrollbarsAutoHide(true);
+                }
+
+                /**
+                 * The mouse leave event of the host element. This event is only needed for the autoHide feature.
+                 */
+                function hostOnMouseLeave() {
+                    if (_scrollbarsAutoHideLeave && !_bodyElement.hasClass(_classNameDragging))
+                        refreshScrollbarsAutoHide(false);
+                }
+
+                /**
+                 * The mouse move event of the host element. This event is only needed for the autoHide "move" feature.
+                 */
+                function hostOnMouseMove() {
+                    if (_scrollbarsAutoHideMove) {
+                        refreshScrollbarsAutoHide(true);
+                        clearTimeout(_scrollbarsAutoHideMoveTimeoutId);
+                        _scrollbarsAutoHideMoveTimeoutId = setTimeout(function () {
+                            if (_scrollbarsAutoHideMove && !_destroyed)
+                                refreshScrollbarsAutoHide(false);
+                        }, 100);
+                    }
+                }
+
+                /**
+                 * Prevents text from deselection if attached to the document element on the mousedown event of a DOM element.
+                 * @param event The select start event.
+                 */
+                function documentOnSelectStart(event) {
+                    COMPATIBILITY.prvD(event);
+                    return false;
+                }
+
+                /**
+                 * A callback which will be called after a element has loaded.
+                 */
+                function updateOnLoadCallback(event) {
+                    var elm = FRAMEWORK(event.target);
+
+                    eachUpdateOnLoad(function (i, updateOnLoadSelector) {
+                        if (elm.is(updateOnLoadSelector)) {
+                            update({ _contentSizeChanged: true });
+                        }
+                    });
+                }
+
+                /**
+                * Adds or removes mouse & touch events of the host element. (for handling auto-hiding of the scrollbars)
+                * @param destroy Indicates whether the events shall be added or removed.
+                */
+                function setupHostMouseTouchEvents(destroy) {
+                    if (!destroy)
+                        setupHostMouseTouchEvents(true);
+
+                    setupResponsiveEventListener(_hostElement,
+                        _strMouseTouchMoveEvent.split(_strSpace)[0],
+                        hostOnMouseMove,
+                        (!_scrollbarsAutoHideMove || destroy), true);
+                    setupResponsiveEventListener(_hostElement,
+                        [_strMouseEnter, _strMouseLeave],
+                        [hostOnMouseEnter, hostOnMouseLeave],
+                        (!_scrollbarsAutoHideLeave || destroy), true);
+
+                    //if the plugin is initialized and the mouse is over the host element, make the scrollbars visible
+                    if (!_initialized && !destroy)
+                        _hostElement.one('mouseover', hostOnMouseEnter);
+                }
+
+
+                //==== Update Detection ====//
+
+                /**
+                 * Measures the min width and min height of the body element and refreshes the related cache.
+                 * @returns {boolean} True if the min width or min height has changed, false otherwise.
+                 */
+                function bodyMinSizeChanged() {
+                    var bodyMinSize = {};
+                    if (_isBody && _contentArrangeElement) {
+                        bodyMinSize.w = parseToZeroOrNumber(_contentArrangeElement.css(_strMinMinus + _strWidth));
+                        bodyMinSize.h = parseToZeroOrNumber(_contentArrangeElement.css(_strMinMinus + _strHeight));
+                        bodyMinSize.c = checkCache(bodyMinSize, _bodyMinSizeCache);
+                        bodyMinSize.f = true; //flag for "measured at least once"
+                    }
+                    _bodyMinSizeCache = bodyMinSize;
+                    return !!bodyMinSize.c;
+                }
+
+                /**
+                 * Returns true if the class names really changed (new class without plugin host prefix)
+                 * @param oldClassNames The old ClassName string or array.
+                 * @param newClassNames The new ClassName string or array.
+                 * @returns {boolean} True if the class names has really changed, false otherwise.
+                 */
+                function hostClassNamesChanged(oldClassNames, newClassNames) {
+                    var currClasses = typeof newClassNames == TYPES.s ? newClassNames.split(_strSpace) : [];
+                    var oldClasses = typeof oldClassNames == TYPES.s ? oldClassNames.split(_strSpace) : [];
+                    var diff = getArrayDifferences(oldClasses, currClasses);
+
+                    // remove none theme from diff list to prevent update
+                    var idx = inArray(_classNameThemeNone, diff);
+                    var i;
+                    var regex;
+
+                    if (idx > -1)
+                        diff.splice(idx, 1);
+
+                    if (diff[LEXICON.l] > 0) {
+                        regex = createHostClassNameRegExp(true, true);
+                        for (i = 0; i < diff.length; i++) {
+                            if (!diff[i].match(regex)) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
+
+                /**
+                 * Returns true if the given mutation is not from a from the plugin generated element. If the target element is a textarea the mutation is always unknown.
+                 * @param mutation The mutation which shall be checked.
+                 * @returns {boolean} True if the mutation is from a unknown element, false otherwise.
+                 */
+                function isUnknownMutation(mutation) {
+                    var attributeName = mutation.attributeName;
+                    var mutationTarget = mutation.target;
+                    var mutationType = mutation.type;
+                    var strClosest = 'closest';
+
+                    if (mutationTarget === _contentElementNative)
+                        return attributeName === null;
+                    if (mutationType === 'attributes' && (attributeName === LEXICON.c || attributeName === LEXICON.s) && !_isTextarea) {
+                        //ignore className changes by the plugin
+                        if (attributeName === LEXICON.c && FRAMEWORK(mutationTarget).hasClass(_classNameHostElement))
+                            return hostClassNamesChanged(mutation.oldValue, mutationTarget.className);
+
+                        //only do it of browser support it natively
+                        if (typeof mutationTarget[strClosest] != TYPES.f)
+                            return true;
+                        if (mutationTarget[strClosest](_strDot + _classNameResizeObserverElement) !== null ||
+                            mutationTarget[strClosest](_strDot + _classNameScrollbar) !== null ||
+                            mutationTarget[strClosest](_strDot + _classNameScrollbarCorner) !== null)
+                            return false;
+                    }
+                    return true;
+                }
+
+                /**
+                 * Returns true if the content size was changed since the last time this method was called.
+                 * @returns {boolean} True if the content size was changed, false otherwise.
+                 */
+                function updateAutoContentSizeChanged() {
+                    if (_sleeping)
+                        return false;
+
+                    var contentMeasureElement = getContentMeasureElement();
+                    var textareaValueLength = _isTextarea && _widthAutoCache && !_textareaAutoWrappingCache ? _targetElement.val().length : 0;
+                    var setCSS = !_mutationObserversConnected && _widthAutoCache && !_isTextarea;
+                    var css = {};
+                    var float;
+                    var bodyMinSizeC;
+                    var changed;
+                    var contentElementScrollSize;
+
+                    if (setCSS) {
+                        float = _contentElement.css(_strFloat);
+                        css[_strFloat] = _isRTL ? _strRight : _strLeft;
+                        css[_strWidth] = _strAuto;
+                        _contentElement.css(css);
+                    }
+                    contentElementScrollSize = {
+                        w: contentMeasureElement[LEXICON.sW] + textareaValueLength,
+                        h: contentMeasureElement[LEXICON.sH] + textareaValueLength
+                    };
+                    if (setCSS) {
+                        css[_strFloat] = float;
+                        css[_strWidth] = _strHundredPercent;
+                        _contentElement.css(css);
+                    }
+
+                    bodyMinSizeC = bodyMinSizeChanged();
+                    changed = checkCache(contentElementScrollSize, _contentElementScrollSizeChangeDetectedCache);
+
+                    _contentElementScrollSizeChangeDetectedCache = contentElementScrollSize;
+
+                    return changed || bodyMinSizeC;
+                }
+
+                /**
+                 * Returns true when a attribute which the MutationObserver would observe has changed.
+                 * @returns {boolean} True if one of the attributes which a MutationObserver would observe has changed, false or undefined otherwise.
+                 */
+                function meaningfulAttrsChanged() {
+                    if (_sleeping || _mutationObserversConnected)
+                        return;
+
+                    var elem;
+                    var curr;
+                    var cache;
+                    var changedAttrs = [];
+                    var checks = [
+                        {
+                            _elem: _hostElement,
+                            _attrs: _mutationObserverAttrsHost.concat(':visible')
+                        },
+                        {
+                            _elem: _isTextarea ? _targetElement : undefined,
+                            _attrs: _mutationObserverAttrsTextarea
+                        }
+                    ];
+
+                    each(checks, function (index, check) {
+                        elem = check._elem;
+                        if (elem) {
+                            each(check._attrs, function (index, attr) {
+                                curr = attr.charAt(0) === ':' ? elem.is(attr) : elem.attr(attr);
+                                cache = _updateAutoCache[attr];
+
+                                if (checkCache(curr, cache)) {
+                                    changedAttrs.push(attr);
+                                }
+
+                                _updateAutoCache[attr] = curr;
+                            });
+                        }
+                    });
+
+                    updateViewportAttrsFromTarget(changedAttrs);
+
+                    return changedAttrs[LEXICON.l] > 0;
+                }
+
+                /**
+                 * Checks is a CSS Property of a child element is affecting the scroll size of the content.
+                 * @param propertyName The CSS property name.
+                 * @returns {boolean} True if the property is affecting the content scroll size, false otherwise.
+                 */
+                function isSizeAffectingCSSProperty(propertyName) {
+                    if (!_initialized)
+                        return true;
+                    var flexGrow = 'flex-grow';
+                    var flexShrink = 'flex-shrink';
+                    var flexBasis = 'flex-basis';
+                    var affectingPropsX = [
+                        _strWidth,
+                        _strMinMinus + _strWidth,
+                        _strMaxMinus + _strWidth,
+                        _strMarginMinus + _strLeft,
+                        _strMarginMinus + _strRight,
+                        _strLeft,
+                        _strRight,
+                        'font-weight',
+                        'word-spacing',
+                        flexGrow,
+                        flexShrink,
+                        flexBasis
+                    ];
+                    var affectingPropsXContentBox = [
+                        _strPaddingMinus + _strLeft,
+                        _strPaddingMinus + _strRight,
+                        _strBorderMinus + _strLeft + _strWidth,
+                        _strBorderMinus + _strRight + _strWidth
+                    ];
+                    var affectingPropsY = [
+                        _strHeight,
+                        _strMinMinus + _strHeight,
+                        _strMaxMinus + _strHeight,
+                        _strMarginMinus + _strTop,
+                        _strMarginMinus + _strBottom,
+                        _strTop,
+                        _strBottom,
+                        'line-height',
+                        flexGrow,
+                        flexShrink,
+                        flexBasis
+                    ];
+                    var affectingPropsYContentBox = [
+                        _strPaddingMinus + _strTop,
+                        _strPaddingMinus + _strBottom,
+                        _strBorderMinus + _strTop + _strWidth,
+                        _strBorderMinus + _strBottom + _strWidth
+                    ];
+                    var _strS = 's';
+                    var _strVS = 'v-s';
+                    var checkX = _overflowBehaviorCache.x === _strS || _overflowBehaviorCache.x === _strVS;
+                    var checkY = _overflowBehaviorCache.y === _strS || _overflowBehaviorCache.y === _strVS;
+                    var sizeIsAffected = false;
+                    var checkPropertyName = function (arr, name) {
+                        for (var i = 0; i < arr[LEXICON.l]; i++) {
+                            if (arr[i] === name)
+                                return true;
+                        }
+                        return false;
+                    };
+
+                    if (checkY) {
+                        sizeIsAffected = checkPropertyName(affectingPropsY, propertyName);
+                        if (!sizeIsAffected && !_isBorderBox)
+                            sizeIsAffected = checkPropertyName(affectingPropsYContentBox, propertyName);
+                    }
+                    if (checkX && !sizeIsAffected) {
+                        sizeIsAffected = checkPropertyName(affectingPropsX, propertyName);
+                        if (!sizeIsAffected && !_isBorderBox)
+                            sizeIsAffected = checkPropertyName(affectingPropsXContentBox, propertyName);
+                    }
+                    return sizeIsAffected;
+                }
+
+
+                //==== Update ====//
+
+                /**
+                 * Sets the attribute values of the viewport element to the values from the target element.
+                 * The value of a attribute is only set if the attribute is whitelisted.
+                 * @attrs attrs The array of attributes which shall be set or undefined if all whitelisted shall be set.
+                 */
+                function updateViewportAttrsFromTarget(attrs) {
+                    attrs = attrs || _viewportAttrsFromTarget;
+                    each(attrs, function (index, attr) {
+                        if (COMPATIBILITY.inA(attr, _viewportAttrsFromTarget) > -1) {
+                            var targetAttr = _targetElement.attr(attr);
+                            if (type(targetAttr) == TYPES.s) {
+                                _viewportElement.attr(attr, targetAttr);
+                            }
+                            else {
+                                _viewportElement.removeAttr(attr);
+                            }
+                        }
+                    });
+                }
+
+                /**
+                 * Updates the variables and size of the textarea element, and manages the scroll on new line or new character.
+                 */
+                function textareaUpdate() {
+                    if (!_sleeping) {
+                        var wrapAttrOff = !_textareaAutoWrappingCache;
+                        var minWidth = _viewportSize.w;
+                        var minHeight = _viewportSize.h;
+                        var css = {};
+                        var doMeasure = _widthAutoCache || wrapAttrOff;
+                        var origWidth;
+                        var width;
+                        var origHeight;
+                        var height;
+
+                        //reset min size
+                        css[_strMinMinus + _strWidth] = _strEmpty;
+                        css[_strMinMinus + _strHeight] = _strEmpty;
+
+                        //set width auto
+                        css[_strWidth] = _strAuto;
+                        _targetElement.css(css);
+
+                        //measure width
+                        origWidth = _targetElementNative[LEXICON.oW];
+                        width = doMeasure ? MATH.max(origWidth, _targetElementNative[LEXICON.sW] - 1) : 1;
+                        /*width += (_widthAutoCache ? _marginX + (!_isBorderBox ? wrapAttrOff ? 0 : _paddingX + _borderX : 0) : 0);*/
+
+                        //set measured width
+                        css[_strWidth] = _widthAutoCache ? _strAuto /*width*/ : _strHundredPercent;
+                        css[_strMinMinus + _strWidth] = _strHundredPercent;
+
+                        //set height auto
+                        css[_strHeight] = _strAuto;
+                        _targetElement.css(css);
+
+                        //measure height
+                        origHeight = _targetElementNative[LEXICON.oH];
+                        height = MATH.max(origHeight, _targetElementNative[LEXICON.sH] - 1);
+
+                        //append correct size values
+                        css[_strWidth] = width;
+                        css[_strHeight] = height;
+                        _textareaCoverElement.css(css);
+
+                        //apply min width / min height to prevent textarea collapsing
+                        css[_strMinMinus + _strWidth] = minWidth /*+ (!_isBorderBox && _widthAutoCache ? _paddingX + _borderX : 0)*/;
+                        css[_strMinMinus + _strHeight] = minHeight /*+ (!_isBorderBox && _heightAutoCache ? _paddingY + _borderY : 0)*/;
+                        _targetElement.css(css);
+
+                        return {
+                            _originalWidth: origWidth,
+                            _originalHeight: origHeight,
+                            _dynamicWidth: width,
+                            _dynamicHeight: height
+                        };
+                    }
+                }
+
+                /**
+                 * Updates the plugin and DOM to the current options.
+                 * This method should only be called if a update is 100% required.
+                 * @param updateHints A objects which contains hints for this update:
+                 * {
+                 *   _hostSizeChanged : boolean,
+                 *   _contentSizeChanged : boolean,
+                 *   _force : boolean,                             == preventSwallowing
+                 *   _changedOptions : { },                        == preventSwallowing && preventSleep
+                *  }
+                 */
+                function update(updateHints) {
+                    clearTimeout(_swallowedUpdateTimeout);
+                    updateHints = updateHints || {};
+                    _swallowedUpdateHints._hostSizeChanged |= updateHints._hostSizeChanged;
+                    _swallowedUpdateHints._contentSizeChanged |= updateHints._contentSizeChanged;
+                    _swallowedUpdateHints._force |= updateHints._force;
+
+                    var now = COMPATIBILITY.now();
+                    var hostSizeChanged = !!_swallowedUpdateHints._hostSizeChanged;
+                    var contentSizeChanged = !!_swallowedUpdateHints._contentSizeChanged;
+                    var force = !!_swallowedUpdateHints._force;
+                    var changedOptions = updateHints._changedOptions;
+                    var swallow = _swallowUpdateLag > 0 && _initialized && !_destroyed && !force && !changedOptions && (now - _lastUpdateTime) < _swallowUpdateLag && (!_heightAutoCache && !_widthAutoCache);
+                    var displayIsHidden;
+
+                    if (swallow)
+                        _swallowedUpdateTimeout = setTimeout(update, _swallowUpdateLag);
+
+                    //abort update due to:
+                    //destroyed
+                    //swallowing
+                    //sleeping
+                    //host is hidden or has false display
+                    if (_destroyed || swallow || (_sleeping && !changedOptions) || (_initialized && !force && (displayIsHidden = _hostElement.is(':hidden'))) || _hostElement.css('display') === 'inline')
+                        return;
+
+                    _lastUpdateTime = now;
+                    _swallowedUpdateHints = {};
+
+                    //if scrollbar styling is possible and native scrollbars aren't overlaid the scrollbar styling will be applied which hides the native scrollbars completely.
+                    if (_nativeScrollbarStyling && !(_nativeScrollbarIsOverlaid.x && _nativeScrollbarIsOverlaid.y)) {
+                        //native scrollbars are hidden, so change the values to zero
+                        _nativeScrollbarSize.x = 0;
+                        _nativeScrollbarSize.y = 0;
+                    }
+                    else {
+                        //refresh native scrollbar size (in case of zoom)
+                        _nativeScrollbarSize = extendDeep({}, globals.nativeScrollbarSize);
+                    }
+
+                    // Scrollbar padding is needed for firefox, because firefox hides scrollbar automatically if the size of the div is too small.
+                    // The calculation: [scrollbar size +3 *3]
+                    // (+3 because of possible decoration e.g. borders, margins etc., but only if native scrollbar is NOT a overlaid scrollbar)
+                    // (*3 because (1)increase / (2)decrease -button and (3)resize handle)
+                    _nativeScrollbarMinSize = {
+                        x: (_nativeScrollbarSize.x + (_nativeScrollbarIsOverlaid.x ? 0 : 3)) * 3,
+                        y: (_nativeScrollbarSize.y + (_nativeScrollbarIsOverlaid.y ? 0 : 3)) * 3
+                    };
+
+                    changedOptions = changedOptions || {};
+                    //freezeResizeObserver(_sizeObserverElement, true);
+                    //freezeResizeObserver(_sizeAutoObserverElement, true);
+
+                    var checkCacheAutoForce = function () {
+                        return checkCache.apply(this, [].slice.call(arguments).concat([force]));
+                    };
+
+                    //save current scroll offset
+                    var currScroll = {
+                        x: _viewportElement[_strScrollLeft](),
+                        y: _viewportElement[_strScrollTop]()
+                    };
+
+                    var currentPreparedOptionsScrollbars = _currentPreparedOptions.scrollbars;
+                    var currentPreparedOptionsTextarea = _currentPreparedOptions.textarea;
+
+                    //scrollbars visibility:
+                    var scrollbarsVisibility = currentPreparedOptionsScrollbars.visibility;
+                    var scrollbarsVisibilityChanged = checkCacheAutoForce(scrollbarsVisibility, _scrollbarsVisibilityCache);
+
+                    //scrollbars autoHide:
+                    var scrollbarsAutoHide = currentPreparedOptionsScrollbars.autoHide;
+                    var scrollbarsAutoHideChanged = checkCacheAutoForce(scrollbarsAutoHide, _scrollbarsAutoHideCache);
+
+                    //scrollbars click scrolling
+                    var scrollbarsClickScrolling = currentPreparedOptionsScrollbars.clickScrolling;
+                    var scrollbarsClickScrollingChanged = checkCacheAutoForce(scrollbarsClickScrolling, _scrollbarsClickScrollingCache);
+
+                    //scrollbars drag scrolling
+                    var scrollbarsDragScrolling = currentPreparedOptionsScrollbars.dragScrolling;
+                    var scrollbarsDragScrollingChanged = checkCacheAutoForce(scrollbarsDragScrolling, _scrollbarsDragScrollingCache);
+
+                    //className
+                    var className = _currentPreparedOptions.className;
+                    var classNameChanged = checkCacheAutoForce(className, _classNameCache);
+
+                    //resize
+                    var resize = _currentPreparedOptions.resize;
+                    var resizeChanged = checkCacheAutoForce(resize, _resizeCache) && !_isBody; //body can't be resized since the window itself acts as resize possibility.
+
+                    //paddingAbsolute
+                    var paddingAbsolute = _currentPreparedOptions.paddingAbsolute;
+                    var paddingAbsoluteChanged = checkCacheAutoForce(paddingAbsolute, _paddingAbsoluteCache);
+
+                    //clipAlways
+                    var clipAlways = _currentPreparedOptions.clipAlways;
+                    var clipAlwaysChanged = checkCacheAutoForce(clipAlways, _clipAlwaysCache);
+
+                    //sizeAutoCapable
+                    var sizeAutoCapable = _currentPreparedOptions.sizeAutoCapable && !_isBody; //body can never be size auto, because it shall be always as big as the viewport.
+                    var sizeAutoCapableChanged = checkCacheAutoForce(sizeAutoCapable, _sizeAutoCapableCache);
+
+                    //showNativeScrollbars
+                    var ignoreOverlayScrollbarHiding = _currentPreparedOptions.nativeScrollbarsOverlaid.showNativeScrollbars;
+                    var ignoreOverlayScrollbarHidingChanged = checkCacheAutoForce(ignoreOverlayScrollbarHiding, _ignoreOverlayScrollbarHidingCache);
+
+                    //autoUpdate
+                    var autoUpdate = _currentPreparedOptions.autoUpdate;
+                    var autoUpdateChanged = checkCacheAutoForce(autoUpdate, _autoUpdateCache);
+
+                    //overflowBehavior
+                    var overflowBehavior = _currentPreparedOptions.overflowBehavior;
+                    var overflowBehaviorChanged = checkCacheAutoForce(overflowBehavior, _overflowBehaviorCache, force);
+
+                    //dynWidth:
+                    var textareaDynWidth = currentPreparedOptionsTextarea.dynWidth;
+                    var textareaDynWidthChanged = checkCacheAutoForce(_textareaDynWidthCache, textareaDynWidth);
+
+                    //dynHeight:
+                    var textareaDynHeight = currentPreparedOptionsTextarea.dynHeight;
+                    var textareaDynHeightChanged = checkCacheAutoForce(_textareaDynHeightCache, textareaDynHeight);
+
+                    //scrollbars visibility
+                    _scrollbarsAutoHideNever = scrollbarsAutoHide === 'n';
+                    _scrollbarsAutoHideScroll = scrollbarsAutoHide === 's';
+                    _scrollbarsAutoHideMove = scrollbarsAutoHide === 'm';
+                    _scrollbarsAutoHideLeave = scrollbarsAutoHide === 'l';
+
+                    //scrollbars autoHideDelay
+                    _scrollbarsAutoHideDelay = currentPreparedOptionsScrollbars.autoHideDelay;
+
+                    //old className
+                    _oldClassName = _classNameCache;
+
+                    //resize
+                    _resizeNone = resize === 'n';
+                    _resizeBoth = resize === 'b';
+                    _resizeHorizontal = resize === 'h';
+                    _resizeVertical = resize === 'v';
+
+                    //normalizeRTL
+                    _normalizeRTLCache = _currentPreparedOptions.normalizeRTL;
+
+                    //ignore overlay scrollbar hiding
+                    ignoreOverlayScrollbarHiding = ignoreOverlayScrollbarHiding && (_nativeScrollbarIsOverlaid.x && _nativeScrollbarIsOverlaid.y);
+
+                    //refresh options cache
+                    _scrollbarsVisibilityCache = scrollbarsVisibility;
+                    _scrollbarsAutoHideCache = scrollbarsAutoHide;
+                    _scrollbarsClickScrollingCache = scrollbarsClickScrolling;
+                    _scrollbarsDragScrollingCache = scrollbarsDragScrolling;
+                    _classNameCache = className;
+                    _resizeCache = resize;
+                    _paddingAbsoluteCache = paddingAbsolute;
+                    _clipAlwaysCache = clipAlways;
+                    _sizeAutoCapableCache = sizeAutoCapable;
+                    _ignoreOverlayScrollbarHidingCache = ignoreOverlayScrollbarHiding;
+                    _autoUpdateCache = autoUpdate;
+                    _overflowBehaviorCache = extendDeep({}, overflowBehavior);
+                    _textareaDynWidthCache = textareaDynWidth;
+                    _textareaDynHeightCache = textareaDynHeight;
+                    _hasOverflowCache = _hasOverflowCache || { x: false, y: false };
+
+                    //set correct class name to the host element
+                    if (classNameChanged) {
+                        removeClass(_hostElement, _oldClassName + _strSpace + _classNameThemeNone);
+                        addClass(_hostElement, className !== undefined && className !== null && className.length > 0 ? className : _classNameThemeNone);
+                    }
+
+                    //set correct auto Update
+                    if (autoUpdateChanged) {
+                        if (autoUpdate === true || (autoUpdate === null && _autoUpdateRecommended)) {
+                            disconnectMutationObservers();
+                            autoUpdateLoop.add(_base);
+                        }
+                        else {
+                            autoUpdateLoop.remove(_base);
+                            connectMutationObservers();
+                        }
+                    }
+
+                    //activate or deactivate size auto capability
+                    if (sizeAutoCapableChanged) {
+                        if (sizeAutoCapable) {
+                            if (_contentGlueElement) {
+                                _contentGlueElement.show();
+                            }
+                            else {
+                                _contentGlueElement = FRAMEWORK(generateDiv(_classNameContentGlueElement));
+                                _paddingElement.before(_contentGlueElement);
+                            }
+                            if (_sizeAutoObserverAdded) {
+                                _sizeAutoObserverElement.show();
+                            }
+                            else {
+                                _sizeAutoObserverElement = FRAMEWORK(generateDiv(_classNameSizeAutoObserverElement));
+                                _sizeAutoObserverElementNative = _sizeAutoObserverElement[0];
+
+                                _contentGlueElement.before(_sizeAutoObserverElement);
+                                var oldSize = { w: -1, h: -1 };
+                                setupResizeObserver(_sizeAutoObserverElement, function () {
+                                    var newSize = {
+                                        w: _sizeAutoObserverElementNative[LEXICON.oW],
+                                        h: _sizeAutoObserverElementNative[LEXICON.oH]
+                                    };
+                                    if (checkCache(newSize, oldSize)) {
+                                        if (_initialized && (_heightAutoCache && newSize.h > 0) || (_widthAutoCache && newSize.w > 0)) {
+                                            update();
+                                        }
+                                        else if (_initialized && (!_heightAutoCache && newSize.h === 0) || (!_widthAutoCache && newSize.w === 0)) {
+                                            update();
+                                        }
+                                    }
+                                    oldSize = newSize;
+                                });
+                                _sizeAutoObserverAdded = true;
+                                //fix heightAuto detector bug if height is fixed but contentHeight is 0.
+                                //the probability this bug will ever happen is very very low, thats why its ok if we use calc which isn't supported in IE8.
+                                if (_cssCalc !== null)
+                                    _sizeAutoObserverElement.css(_strHeight, _cssCalc + '(100% + 1px)');
+                            }
+                        }
+                        else {
+                            if (_sizeAutoObserverAdded)
+                                _sizeAutoObserverElement.hide();
+                            if (_contentGlueElement)
+                                _contentGlueElement.hide();
+                        }
+                    }
+
+                    //if force, update all resizeObservers too
+                    if (force) {
+                        _sizeObserverElement.find('*').trigger(_strScroll);
+                        if (_sizeAutoObserverAdded)
+                            _sizeAutoObserverElement.find('*').trigger(_strScroll);
+                    }
+
+                    //display hidden:
+                    displayIsHidden = displayIsHidden === undefined ? _hostElement.is(':hidden') : displayIsHidden;
+
+                    //textarea AutoWrapping:
+                    var textareaAutoWrapping = _isTextarea ? _targetElement.attr('wrap') !== 'off' : false;
+                    var textareaAutoWrappingChanged = checkCacheAutoForce(textareaAutoWrapping, _textareaAutoWrappingCache);
+
+                    //detect direction:
+                    var cssDirection = _hostElement.css('direction');
+                    var cssDirectionChanged = checkCacheAutoForce(cssDirection, _cssDirectionCache);
+
+                    //detect box-sizing:
+                    var boxSizing = _hostElement.css('box-sizing');
+                    var boxSizingChanged = checkCacheAutoForce(boxSizing, _cssBoxSizingCache);
+
+                    //detect padding:
+                    var padding = getTopRightBottomLeftHost(_strPaddingMinus);
+
+                    //width + height auto detecting var:
+                    var sizeAutoObserverElementBCRect;
+                    //exception occurs in IE8 sometimes (unknown exception)
+                    try {
+                        sizeAutoObserverElementBCRect = _sizeAutoObserverAdded ? _sizeAutoObserverElementNative[LEXICON.bCR]() : null;
+                    } catch (ex) {
+                        return;
+                    }
+
+                    _isRTL = cssDirection === 'rtl';
+                    _isBorderBox = (boxSizing === 'border-box');
+                    var isRTLLeft = _isRTL ? _strLeft : _strRight;
+                    var isRTLRight = _isRTL ? _strRight : _strLeft;
+
+                    //detect width auto:
+                    var widthAutoResizeDetection = false;
+                    var widthAutoObserverDetection = (_sizeAutoObserverAdded && (_hostElement.css(_strFloat) !== 'none' /*|| _isTextarea */)) ? (MATH.round(sizeAutoObserverElementBCRect.right - sizeAutoObserverElementBCRect.left) === 0) && (!paddingAbsolute ? (_hostElementNative[LEXICON.cW] - _paddingX) > 0 : true) : false;
+                    if (sizeAutoCapable && !widthAutoObserverDetection) {
+                        var tmpCurrHostWidth = _hostElementNative[LEXICON.oW];
+                        var tmpCurrContentGlueWidth = _contentGlueElement.css(_strWidth);
+                        _contentGlueElement.css(_strWidth, _strAuto);
+
+                        var tmpNewHostWidth = _hostElementNative[LEXICON.oW];
+                        _contentGlueElement.css(_strWidth, tmpCurrContentGlueWidth);
+                        widthAutoResizeDetection = tmpCurrHostWidth !== tmpNewHostWidth;
+                        if (!widthAutoResizeDetection) {
+                            _contentGlueElement.css(_strWidth, tmpCurrHostWidth + 1);
+                            tmpNewHostWidth = _hostElementNative[LEXICON.oW];
+                            _contentGlueElement.css(_strWidth, tmpCurrContentGlueWidth);
+                            widthAutoResizeDetection = tmpCurrHostWidth !== tmpNewHostWidth;
+                        }
+                    }
+                    var widthAuto = (widthAutoObserverDetection || widthAutoResizeDetection) && sizeAutoCapable && !displayIsHidden;
+                    var widthAutoChanged = checkCacheAutoForce(widthAuto, _widthAutoCache);
+                    var wasWidthAuto = !widthAuto && _widthAutoCache;
+
+                    //detect height auto:
+                    var heightAuto = _sizeAutoObserverAdded && sizeAutoCapable && !displayIsHidden ? (MATH.round(sizeAutoObserverElementBCRect.bottom - sizeAutoObserverElementBCRect.top) === 0) /* && (!paddingAbsolute && (_msieVersion > 9 || !_msieVersion) ? true : true) */ : false;
+                    var heightAutoChanged = checkCacheAutoForce(heightAuto, _heightAutoCache);
+                    var wasHeightAuto = !heightAuto && _heightAutoCache;
+
+                    //detect border:
+                    //we need the border only if border box and auto size
+                    var updateBorderX = (widthAuto && _isBorderBox) || !_isBorderBox;
+                    var updateBorderY = (heightAuto && _isBorderBox) || !_isBorderBox;
+                    var border = getTopRightBottomLeftHost(_strBorderMinus, '-' + _strWidth, !updateBorderX, !updateBorderY)
+
+                    //detect margin:
+                    var margin = getTopRightBottomLeftHost(_strMarginMinus);
+
+                    //vars to apply correct css
+                    var contentElementCSS = {};
+                    var contentGlueElementCSS = {};
+
+                    //funcs
+                    var getHostSize = function () {
+                        //has to be clientSize because offsetSize respect borders
+                        return {
+                            w: _hostElementNative[LEXICON.cW],
+                            h: _hostElementNative[LEXICON.cH]
+                        };
+                    };
+                    var getViewportSize = function () {
+                        //viewport size is padding container because it never has padding, margin and a border
+                        //determine zoom rounding error -> sometimes scrollWidth/Height is smaller than clientWidth/Height
+                        //if this happens add the difference to the viewportSize to compensate the rounding error
+                        return {
+                            w: _paddingElementNative[LEXICON.oW] + MATH.max(0, _contentElementNative[LEXICON.cW] - _contentElementNative[LEXICON.sW]),
+                            h: _paddingElementNative[LEXICON.oH] + MATH.max(0, _contentElementNative[LEXICON.cH] - _contentElementNative[LEXICON.sH])
+                        };
+                    };
+
+                    //set info for padding
+                    var paddingAbsoluteX = _paddingX = padding.l + padding.r;
+                    var paddingAbsoluteY = _paddingY = padding.t + padding.b;
+                    paddingAbsoluteX *= paddingAbsolute ? 1 : 0;
+                    paddingAbsoluteY *= paddingAbsolute ? 1 : 0;
+                    padding.c = checkCacheAutoForce(padding, _cssPaddingCache);
+
+                    //set info for border
+                    _borderX = border.l + border.r;
+                    _borderY = border.t + border.b;
+                    border.c = checkCacheAutoForce(border, _cssBorderCache);
+
+                    //set info for margin
+                    _marginX = margin.l + margin.r;
+                    _marginY = margin.t + margin.b;
+                    margin.c = checkCacheAutoForce(margin, _cssMarginCache);
+
+                    //refresh cache
+                    _textareaAutoWrappingCache = textareaAutoWrapping;
+                    _cssDirectionCache = cssDirection;
+                    _cssBoxSizingCache = boxSizing;
+                    _widthAutoCache = widthAuto;
+                    _heightAutoCache = heightAuto;
+                    _cssPaddingCache = padding;
+                    _cssBorderCache = border;
+                    _cssMarginCache = margin;
+
+                    //IEFix direction changed
+                    if (cssDirectionChanged && _sizeAutoObserverAdded)
+                        _sizeAutoObserverElement.css(_strFloat, isRTLRight);
+
+                    //apply padding:
+                    if (padding.c || cssDirectionChanged || paddingAbsoluteChanged || widthAutoChanged || heightAutoChanged || boxSizingChanged || sizeAutoCapableChanged) {
+                        var paddingElementCSS = {};
+                        var textareaCSS = {};
+                        var paddingValues = [padding.t, padding.r, padding.b, padding.l];
+
+                        setTopRightBottomLeft(contentGlueElementCSS, _strMarginMinus, [-padding.t, -padding.r, -padding.b, -padding.l]);
+                        if (paddingAbsolute) {
+                            setTopRightBottomLeft(paddingElementCSS, _strEmpty, paddingValues);
+                            setTopRightBottomLeft(_isTextarea ? textareaCSS : contentElementCSS, _strPaddingMinus);
+                        }
+                        else {
+                            setTopRightBottomLeft(paddingElementCSS, _strEmpty);
+                            setTopRightBottomLeft(_isTextarea ? textareaCSS : contentElementCSS, _strPaddingMinus, paddingValues);
+                        }
+
+                        _paddingElement.css(paddingElementCSS);
+                        _targetElement.css(textareaCSS);
+                    }
+
+                    //viewport size is padding container because it never has padding, margin and a border.
+                    _viewportSize = getViewportSize();
+
+                    //update Textarea
+                    var textareaSize = _isTextarea ? textareaUpdate() : false;
+                    var textareaSizeChanged = _isTextarea && checkCacheAutoForce(textareaSize, _textareaSizeCache);
+                    var textareaDynOrigSize = _isTextarea && textareaSize ? {
+                        w: textareaDynWidth ? textareaSize._dynamicWidth : textareaSize._originalWidth,
+                        h: textareaDynHeight ? textareaSize._dynamicHeight : textareaSize._originalHeight
+                    } : {};
+                    _textareaSizeCache = textareaSize;
+
+                    //fix height auto / width auto in cooperation with current padding & boxSizing behavior:
+                    if (heightAuto && (heightAutoChanged || paddingAbsoluteChanged || boxSizingChanged || padding.c || border.c)) {
+                        contentElementCSS[_strHeight] = _strAuto;
+                    }
+                    else if (heightAutoChanged || paddingAbsoluteChanged) {
+                        contentElementCSS[_strHeight] = _strHundredPercent;
+                    }
+                    if (widthAuto && (widthAutoChanged || paddingAbsoluteChanged || boxSizingChanged || padding.c || border.c || cssDirectionChanged)) {
+                        contentElementCSS[_strWidth] = _strAuto;
+                        contentGlueElementCSS[_strMaxMinus + _strWidth] = _strHundredPercent; //IE Fix
+                    }
+                    else if (widthAutoChanged || paddingAbsoluteChanged) {
+                        contentElementCSS[_strWidth] = _strHundredPercent;
+                        contentElementCSS[_strFloat] = _strEmpty;
+                        contentGlueElementCSS[_strMaxMinus + _strWidth] = _strEmpty; //IE Fix
+                    }
+                    if (widthAuto) {
+                        //textareaDynOrigSize.w || _strAuto :: doesnt works because applied margin will shift width
+                        contentGlueElementCSS[_strWidth] = _strAuto;
+
+                        contentElementCSS[_strWidth] = VENDORS._cssPropertyValue(_strWidth, 'max-content intrinsic') || _strAuto;
+                        contentElementCSS[_strFloat] = isRTLRight;
+                    }
+                    else {
+                        contentGlueElementCSS[_strWidth] = _strEmpty;
+                    }
+                    if (heightAuto) {
+                        //textareaDynOrigSize.h || _contentElementNative[LEXICON.cH] :: use for anti scroll jumping
+                        contentGlueElementCSS[_strHeight] = textareaDynOrigSize.h || _contentElementNative[LEXICON.cH];
+                    }
+                    else {
+                        contentGlueElementCSS[_strHeight] = _strEmpty;
+                    }
+                    if (sizeAutoCapable)
+                        _contentGlueElement.css(contentGlueElementCSS);
+                    _contentElement.css(contentElementCSS);
+
+                    //CHECKPOINT HERE ~
+                    contentElementCSS = {};
+                    contentGlueElementCSS = {};
+
+                    //if [content(host) client / scroll size, or target element direction, or content(host) max-sizes] changed, or force is true
+                    if (hostSizeChanged || contentSizeChanged || textareaSizeChanged || cssDirectionChanged || boxSizingChanged || paddingAbsoluteChanged || widthAutoChanged || widthAuto || heightAutoChanged || heightAuto || ignoreOverlayScrollbarHidingChanged || overflowBehaviorChanged || clipAlwaysChanged || resizeChanged || scrollbarsVisibilityChanged || scrollbarsAutoHideChanged || scrollbarsDragScrollingChanged || scrollbarsClickScrollingChanged || textareaDynWidthChanged || textareaDynHeightChanged || textareaAutoWrappingChanged) {
+                        var strOverflow = 'overflow';
+                        var strOverflowX = strOverflow + '-x';
+                        var strOverflowY = strOverflow + '-y';
+                        var strHidden = 'hidden';
+                        var strVisible = 'visible';
+
+                        //Reset the viewport (very important for natively overlaid scrollbars and zoom change
+                        //don't change the overflow prop as it is very expensive and affects performance !A LOT!
+                        if (!_nativeScrollbarStyling) {
+                            var viewportElementResetCSS = {};
+                            var resetXTmp = _hasOverflowCache.y && _hideOverflowCache.ys && !ignoreOverlayScrollbarHiding ? (_nativeScrollbarIsOverlaid.y ? _viewportElement.css(isRTLLeft) : -_nativeScrollbarSize.y) : 0;
+                            var resetBottomTmp = _hasOverflowCache.x && _hideOverflowCache.xs && !ignoreOverlayScrollbarHiding ? (_nativeScrollbarIsOverlaid.x ? _viewportElement.css(_strBottom) : -_nativeScrollbarSize.x) : 0;
+                            setTopRightBottomLeft(viewportElementResetCSS, _strEmpty);
+                            _viewportElement.css(viewportElementResetCSS);
+                        }
+
+                        //measure several sizes:
+                        var contentMeasureElement = getContentMeasureElement();
+                        //in Firefox content element has to have overflow hidden, else element margins aren't calculated properly, this element prevents this bug, but only if scrollbars aren't overlaid
+                        var contentSize = {
+                            //use clientSize because natively overlaidScrollbars add borders
+                            w: textareaDynOrigSize.w || contentMeasureElement[LEXICON.cW],
+                            h: textareaDynOrigSize.h || contentMeasureElement[LEXICON.cH]
+                        };
+                        var scrollSize = {
+                            w: contentMeasureElement[LEXICON.sW],
+                            h: contentMeasureElement[LEXICON.sH]
+                        };
+
+                        //apply the correct viewport style and measure viewport size
+                        if (!_nativeScrollbarStyling) {
+                            viewportElementResetCSS[_strBottom] = wasHeightAuto ? _strEmpty : resetBottomTmp;
+                            viewportElementResetCSS[isRTLLeft] = wasWidthAuto ? _strEmpty : resetXTmp;
+                            _viewportElement.css(viewportElementResetCSS);
+                        }
+                        _viewportSize = getViewportSize();
+
+                        //measure and correct several sizes
+                        var hostSize = getHostSize();
+                        var hostAbsoluteRectSize = {
+                            w: hostSize.w - _marginX - _borderX - (_isBorderBox ? 0 : _paddingX),
+                            h: hostSize.h - _marginY - _borderY - (_isBorderBox ? 0 : _paddingY)
+                        };
+                        var contentGlueSize = {
+                            //client/scrollSize + AbsolutePadding -> because padding is only applied to the paddingElement if its absolute, so you have to add it manually
+                            //hostSize is clientSize -> so padding should be added manually, right? FALSE! Because content glue is inside hostElement, so we don't have to worry about padding
+                            w: MATH.max((widthAuto ? contentSize.w : scrollSize.w) + paddingAbsoluteX, hostAbsoluteRectSize.w),
+                            h: MATH.max((heightAuto ? contentSize.h : scrollSize.h) + paddingAbsoluteY, hostAbsoluteRectSize.h)
+                        };
+                        contentGlueSize.c = checkCacheAutoForce(contentGlueSize, _contentGlueSizeCache);
+                        _contentGlueSizeCache = contentGlueSize;
+
+                        //apply correct contentGlue size
+                        if (sizeAutoCapable) {
+                            //size contentGlue correctly to make sure the element has correct size if the sizing switches to auto
+                            if (contentGlueSize.c || (heightAuto || widthAuto)) {
+                                contentGlueElementCSS[_strWidth] = contentGlueSize.w;
+                                contentGlueElementCSS[_strHeight] = contentGlueSize.h;
+
+                                //textarea-sizes are already calculated correctly at this point
+                                if (!_isTextarea) {
+                                    contentSize = {
+                                        //use clientSize because natively overlaidScrollbars add borders
+                                        w: contentMeasureElement[LEXICON.cW],
+                                        h: contentMeasureElement[LEXICON.cH]
+                                    };
+                                }
+                            }
+                            var textareaCoverCSS = {};
+                            var setContentGlueElementCSSfunction = function (horizontal) {
+                                var scrollbarVars = getScrollbarVars(horizontal);
+                                var wh = scrollbarVars._w_h;
+                                var strWH = scrollbarVars._width_height;
+                                var autoSize = horizontal ? widthAuto : heightAuto;
+                                var borderSize = horizontal ? _borderX : _borderY;
+                                var paddingSize = horizontal ? _paddingX : _paddingY;
+                                var marginSize = horizontal ? _marginX : _marginY;
+                                var viewportSize = _viewportSize[wh] - borderSize - marginSize - (_isBorderBox ? 0 : paddingSize);
+
+                                //make contentGlue size -1 if element is not auto sized, to make sure that a resize event happens when the element shrinks
+                                if (!autoSize || (!autoSize && border.c))
+                                    contentGlueElementCSS[strWH] = hostAbsoluteRectSize[wh] - 1;
+
+                                //if size is auto and host is smaller than size as min size, make content glue size -1 to make sure size changes will be detected (this is only needed if padding is 0)
+                                if (autoSize && (contentSize[wh] < viewportSize) && (horizontal && _isTextarea ? !textareaAutoWrapping : true)) {
+                                    if (_isTextarea)
+                                        textareaCoverCSS[strWH] = parseToZeroOrNumber(_textareaCoverElement.css(strWH)) - 1;
+                                    contentGlueElementCSS[strWH] -= 1;
+                                }
+
+                                //make sure content glue size is at least 1
+                                if (contentSize[wh] > 0)
+                                    contentGlueElementCSS[strWH] = MATH.max(1, contentGlueElementCSS[strWH]);
+                            };
+                            setContentGlueElementCSSfunction(true);
+                            setContentGlueElementCSSfunction(false);
+
+                            if (_isTextarea)
+                                _textareaCoverElement.css(textareaCoverCSS);
+                            _contentGlueElement.css(contentGlueElementCSS);
+                        }
+                        if (widthAuto)
+                            contentElementCSS[_strWidth] = _strHundredPercent;
+                        if (widthAuto && !_isBorderBox && !_mutationObserversConnected)
+                            contentElementCSS[_strFloat] = 'none';
+
+                        //apply and reset content style
+                        _contentElement.css(contentElementCSS);
+                        contentElementCSS = {};
+
+                        //measure again, but this time all correct sizes:
+                        var contentScrollSize = {
+                            w: contentMeasureElement[LEXICON.sW],
+                            h: contentMeasureElement[LEXICON.sH],
+                        };
+                        contentScrollSize.c = contentSizeChanged = checkCacheAutoForce(contentScrollSize, _contentScrollSizeCache);
+                        _contentScrollSizeCache = contentScrollSize;
+
+                        //refresh viewport size after correct measuring
+                        _viewportSize = getViewportSize();
+
+                        hostSize = getHostSize();
+                        hostSizeChanged = checkCacheAutoForce(hostSize, _hostSizeCache);
+                        _hostSizeCache = hostSize;
+
+                        var hideOverflowForceTextarea = _isTextarea && (_viewportSize.w === 0 || _viewportSize.h === 0);
+                        var previousOverflowAmount = _overflowAmountCache;
+                        var overflowBehaviorIsVS = {};
+                        var overflowBehaviorIsVH = {};
+                        var overflowBehaviorIsS = {};
+                        var overflowAmount = {};
+                        var hasOverflow = {};
+                        var hideOverflow = {};
+                        var canScroll = {};
+                        var viewportRect = _paddingElementNative[LEXICON.bCR]();
+                        var setOverflowVariables = function (horizontal) {
+                            var scrollbarVars = getScrollbarVars(horizontal);
+                            var scrollbarVarsInverted = getScrollbarVars(!horizontal);
+                            var xyI = scrollbarVarsInverted._x_y;
+                            var xy = scrollbarVars._x_y;
+                            var wh = scrollbarVars._w_h;
+                            var widthHeight = scrollbarVars._width_height;
+                            var scrollMax = _strScroll + scrollbarVars._Left_Top + 'Max';
+                            var fractionalOverflowAmount = viewportRect[widthHeight] ? MATH.abs(viewportRect[widthHeight] - _viewportSize[wh]) : 0;
+                            var checkFractionalOverflowAmount = previousOverflowAmount && previousOverflowAmount[xy] > 0 && _viewportElementNative[scrollMax] === 0;
+                            overflowBehaviorIsVS[xy] = overflowBehavior[xy] === 'v-s';
+                            overflowBehaviorIsVH[xy] = overflowBehavior[xy] === 'v-h';
+                            overflowBehaviorIsS[xy] = overflowBehavior[xy] === 's';
+                            overflowAmount[xy] = MATH.max(0, MATH.round((contentScrollSize[wh] - _viewportSize[wh]) * 100) / 100);
+                            overflowAmount[xy] *= (hideOverflowForceTextarea || (checkFractionalOverflowAmount && fractionalOverflowAmount > 0 && fractionalOverflowAmount < 1)) ? 0 : 1;
+                            hasOverflow[xy] = overflowAmount[xy] > 0;
+
+                            //hideOverflow:
+                            //x || y : true === overflow is hidden by "overflow: scroll" OR "overflow: hidden"
+                            //xs || ys : true === overflow is hidden by "overflow: scroll"
+                            hideOverflow[xy] = overflowBehaviorIsVS[xy] || overflowBehaviorIsVH[xy] ? (hasOverflow[xyI] && !overflowBehaviorIsVS[xyI] && !overflowBehaviorIsVH[xyI]) : hasOverflow[xy];
+                            hideOverflow[xy + 's'] = hideOverflow[xy] ? (overflowBehaviorIsS[xy] || overflowBehaviorIsVS[xy]) : false;
+
+                            canScroll[xy] = hasOverflow[xy] && hideOverflow[xy + 's'];
+                        };
+                        setOverflowVariables(true);
+                        setOverflowVariables(false);
+
+                        overflowAmount.c = checkCacheAutoForce(overflowAmount, _overflowAmountCache);
+                        _overflowAmountCache = overflowAmount;
+                        hasOverflow.c = checkCacheAutoForce(hasOverflow, _hasOverflowCache);
+                        _hasOverflowCache = hasOverflow;
+                        hideOverflow.c = checkCacheAutoForce(hideOverflow, _hideOverflowCache);
+                        _hideOverflowCache = hideOverflow;
+
+                        //if native scrollbar is overlay at x OR y axis, prepare DOM
+                        if (_nativeScrollbarIsOverlaid.x || _nativeScrollbarIsOverlaid.y) {
+                            var borderDesign = 'px solid transparent';
+                            var contentArrangeElementCSS = {};
+                            var arrangeContent = {};
+                            var arrangeChanged = force;
+                            var setContentElementCSS;
+
+                            if (hasOverflow.x || hasOverflow.y) {
+                                arrangeContent.w = _nativeScrollbarIsOverlaid.y && hasOverflow.y ? contentScrollSize.w + _overlayScrollbarDummySize.y : _strEmpty;
+                                arrangeContent.h = _nativeScrollbarIsOverlaid.x && hasOverflow.x ? contentScrollSize.h + _overlayScrollbarDummySize.x : _strEmpty;
+                                arrangeChanged = checkCacheAutoForce(arrangeContent, _arrangeContentSizeCache);
+                                _arrangeContentSizeCache = arrangeContent;
+                            }
+
+                            if (hasOverflow.c || hideOverflow.c || contentScrollSize.c || cssDirectionChanged || widthAutoChanged || heightAutoChanged || widthAuto || heightAuto || ignoreOverlayScrollbarHidingChanged) {
+                                contentElementCSS[_strMarginMinus + isRTLRight] = contentElementCSS[_strBorderMinus + isRTLRight] = _strEmpty;
+                                setContentElementCSS = function (horizontal) {
+                                    var scrollbarVars = getScrollbarVars(horizontal);
+                                    var scrollbarVarsInverted = getScrollbarVars(!horizontal);
+                                    var xy = scrollbarVars._x_y;
+                                    var strDirection = horizontal ? _strBottom : isRTLLeft;
+                                    var invertedAutoSize = horizontal ? heightAuto : widthAuto;
+
+                                    if (_nativeScrollbarIsOverlaid[xy] && hasOverflow[xy] && hideOverflow[xy + 's']) {
+                                        contentElementCSS[_strMarginMinus + strDirection] = invertedAutoSize ? (ignoreOverlayScrollbarHiding ? _strEmpty : _overlayScrollbarDummySize[xy]) : _strEmpty;
+                                        contentElementCSS[_strBorderMinus + strDirection] = ((horizontal ? !invertedAutoSize : true) && !ignoreOverlayScrollbarHiding) ? (_overlayScrollbarDummySize[xy] + borderDesign) : _strEmpty;
+                                    }
+                                    else {
+                                        arrangeContent[scrollbarVarsInverted._w_h] =
+                                            contentElementCSS[_strMarginMinus + strDirection] =
+                                            contentElementCSS[_strBorderMinus + strDirection] = _strEmpty;
+                                        arrangeChanged = true;
+                                    }
+                                };
+
+                                if (_nativeScrollbarStyling) {
+                                    addRemoveClass(_viewportElement, _classNameViewportNativeScrollbarsInvisible, !ignoreOverlayScrollbarHiding)
+                                }
+                                else {
+                                    setContentElementCSS(true);
+                                    setContentElementCSS(false);
+                                }
+                            }
+                            if (ignoreOverlayScrollbarHiding) {
+                                arrangeContent.w = arrangeContent.h = _strEmpty;
+                                arrangeChanged = true;
+                            }
+                            if (arrangeChanged && !_nativeScrollbarStyling) {
+                                contentArrangeElementCSS[_strWidth] = hideOverflow.y ? arrangeContent.w : _strEmpty;
+                                contentArrangeElementCSS[_strHeight] = hideOverflow.x ? arrangeContent.h : _strEmpty;
+
+                                if (!_contentArrangeElement) {
+                                    _contentArrangeElement = FRAMEWORK(generateDiv(_classNameContentArrangeElement));
+                                    _viewportElement.prepend(_contentArrangeElement);
+                                }
+                                _contentArrangeElement.css(contentArrangeElementCSS);
+                            }
+                            _contentElement.css(contentElementCSS);
+                        }
+
+                        var viewportElementCSS = {};
+                        var paddingElementCSS = {};
+                        var setViewportCSS;
+                        if (hostSizeChanged || hasOverflow.c || hideOverflow.c || contentScrollSize.c || overflowBehaviorChanged || boxSizingChanged || ignoreOverlayScrollbarHidingChanged || cssDirectionChanged || clipAlwaysChanged || heightAutoChanged) {
+                            viewportElementCSS[isRTLRight] = _strEmpty;
+                            setViewportCSS = function (horizontal) {
+                                var scrollbarVars = getScrollbarVars(horizontal);
+                                var scrollbarVarsInverted = getScrollbarVars(!horizontal);
+                                var xy = scrollbarVars._x_y;
+                                var XY = scrollbarVars._X_Y;
+                                var strDirection = horizontal ? _strBottom : isRTLLeft;
+
+                                var reset = function () {
+                                    viewportElementCSS[strDirection] = _strEmpty;
+                                    _contentBorderSize[scrollbarVarsInverted._w_h] = 0;
+                                };
+                                if (hasOverflow[xy] && hideOverflow[xy + 's']) {
+                                    viewportElementCSS[strOverflow + XY] = _strScroll;
+                                    if (ignoreOverlayScrollbarHiding || _nativeScrollbarStyling) {
+                                        reset();
+                                    }
+                                    else {
+                                        viewportElementCSS[strDirection] = -(_nativeScrollbarIsOverlaid[xy] ? _overlayScrollbarDummySize[xy] : _nativeScrollbarSize[xy]);
+                                        _contentBorderSize[scrollbarVarsInverted._w_h] = _nativeScrollbarIsOverlaid[xy] ? _overlayScrollbarDummySize[scrollbarVarsInverted._x_y] : 0;
+                                    }
+                                } else {
+                                    viewportElementCSS[strOverflow + XY] = _strEmpty;
+                                    reset();
+                                }
+                            };
+                            setViewportCSS(true);
+                            setViewportCSS(false);
+
+                            // if the scroll container is too small and if there is any overflow with no overlay scrollbar (and scrollbar styling isn't possible),
+                            // make viewport element greater in size (Firefox hide Scrollbars fix)
+                            // because firefox starts hiding scrollbars on too small elements
+                            // with this behavior the overflow calculation may be incorrect or the scrollbars would appear suddenly
+                            // https://bugzilla.mozilla.org/show_bug.cgi?id=292284
+                            if (!_nativeScrollbarStyling
+                                && (_viewportSize.h < _nativeScrollbarMinSize.x || _viewportSize.w < _nativeScrollbarMinSize.y)
+                                && ((hasOverflow.x && hideOverflow.x && !_nativeScrollbarIsOverlaid.x) || (hasOverflow.y && hideOverflow.y && !_nativeScrollbarIsOverlaid.y))) {
+                                viewportElementCSS[_strPaddingMinus + _strTop] = _nativeScrollbarMinSize.x;
+                                viewportElementCSS[_strMarginMinus + _strTop] = -_nativeScrollbarMinSize.x;
+
+                                viewportElementCSS[_strPaddingMinus + isRTLRight] = _nativeScrollbarMinSize.y;
+                                viewportElementCSS[_strMarginMinus + isRTLRight] = -_nativeScrollbarMinSize.y;
+                            }
+                            else {
+                                viewportElementCSS[_strPaddingMinus + _strTop] =
+                                    viewportElementCSS[_strMarginMinus + _strTop] =
+                                    viewportElementCSS[_strPaddingMinus + isRTLRight] =
+                                    viewportElementCSS[_strMarginMinus + isRTLRight] = _strEmpty;
+                            }
+                            viewportElementCSS[_strPaddingMinus + isRTLLeft] =
+                                viewportElementCSS[_strMarginMinus + isRTLLeft] = _strEmpty;
+
+                            //if there is any overflow (x OR y axis) and this overflow shall be hidden, make overflow hidden, else overflow visible
+                            if ((hasOverflow.x && hideOverflow.x) || (hasOverflow.y && hideOverflow.y) || hideOverflowForceTextarea) {
+                                //only hide if is Textarea
+                                if (_isTextarea && hideOverflowForceTextarea) {
+                                    paddingElementCSS[strOverflowX] =
+                                        paddingElementCSS[strOverflowY] = strHidden;
+                                }
+                            }
+                            else {
+                                if (!clipAlways || (overflowBehaviorIsVH.x || overflowBehaviorIsVS.x || overflowBehaviorIsVH.y || overflowBehaviorIsVS.y)) {
+                                    //only un-hide if Textarea
+                                    if (_isTextarea) {
+                                        paddingElementCSS[strOverflowX] =
+                                            paddingElementCSS[strOverflowY] = _strEmpty;
+                                    }
+                                    viewportElementCSS[strOverflowX] =
+                                        viewportElementCSS[strOverflowY] = strVisible;
+                                }
+                            }
+
+                            _paddingElement.css(paddingElementCSS);
+                            _viewportElement.css(viewportElementCSS);
+                            viewportElementCSS = {};
+
+                            //force soft redraw in webkit because without the scrollbars will may appear because DOM wont be redrawn under special conditions
+                            if ((hasOverflow.c || boxSizingChanged || widthAutoChanged || heightAutoChanged) && !(_nativeScrollbarIsOverlaid.x && _nativeScrollbarIsOverlaid.y)) {
+                                var elementStyle = _contentElementNative[LEXICON.s];
+                                var dump;
+                                elementStyle.webkitTransform = 'scale(1)';
+                                elementStyle.display = 'run-in';
+                                dump = _contentElementNative[LEXICON.oH];
+                                elementStyle.display = _strEmpty; //|| dump; //use dump to prevent it from deletion if minify
+                                elementStyle.webkitTransform = _strEmpty;
+                            }
+                            /*
+                            //force hard redraw in webkit if native overlaid scrollbars shall appear
+                            if (ignoreOverlayScrollbarHidingChanged && ignoreOverlayScrollbarHiding) {
+                                _hostElement.hide();
+                                var dump = _hostElementNative[LEXICON.oH];
+                                _hostElement.show();
+                            }
+                            */
+                        }
+
+                        //change to direction RTL and width auto Bugfix in Webkit
+                        //without this fix, the DOM still thinks the scrollbar is LTR and thus the content is shifted to the left
+                        contentElementCSS = {};
+                        if (cssDirectionChanged || widthAutoChanged || heightAutoChanged) {
+                            if (_isRTL && widthAuto) {
+                                var floatTmp = _contentElement.css(_strFloat);
+                                var posLeftWithoutFloat = MATH.round(_contentElement.css(_strFloat, _strEmpty).css(_strLeft, _strEmpty).position().left);
+                                _contentElement.css(_strFloat, floatTmp);
+                                var posLeftWithFloat = MATH.round(_contentElement.position().left);
+
+                                if (posLeftWithoutFloat !== posLeftWithFloat)
+                                    contentElementCSS[_strLeft] = posLeftWithoutFloat;
+                            }
+                            else {
+                                contentElementCSS[_strLeft] = _strEmpty;
+                            }
+                        }
+                        _contentElement.css(contentElementCSS);
+
+                        //handle scroll position
+                        if (_isTextarea && contentSizeChanged) {
+                            var textareaInfo = getTextareaInfo();
+                            if (textareaInfo) {
+                                var textareaRowsChanged = _textareaInfoCache === undefined ? true : textareaInfo._rows !== _textareaInfoCache._rows;
+                                var cursorRow = textareaInfo._cursorRow;
+                                var cursorCol = textareaInfo._cursorColumn;
+                                var widestRow = textareaInfo._widestRow;
+                                var lastRow = textareaInfo._rows;
+                                var lastCol = textareaInfo._columns;
+                                var cursorPos = textareaInfo._cursorPosition;
+                                var cursorMax = textareaInfo._cursorMax;
+                                var cursorIsLastPosition = (cursorPos >= cursorMax && _textareaHasFocus);
+                                var textareaScrollAmount = {
+                                    x: (!textareaAutoWrapping && (cursorCol === lastCol && cursorRow === widestRow)) ? _overflowAmountCache.x : -1,
+                                    y: (textareaAutoWrapping ? cursorIsLastPosition || textareaRowsChanged && (previousOverflowAmount ? (currScroll.y === previousOverflowAmount.y) : false) : (cursorIsLastPosition || textareaRowsChanged) && cursorRow === lastRow) ? _overflowAmountCache.y : -1
+                                };
+                                currScroll.x = textareaScrollAmount.x > -1 ? (_isRTL && _normalizeRTLCache && _rtlScrollBehavior.i ? 0 : textareaScrollAmount.x) : currScroll.x; //if inverted, scroll to 0 -> normalized this means to max scroll offset.
+                                currScroll.y = textareaScrollAmount.y > -1 ? textareaScrollAmount.y : currScroll.y;
+                            }
+                            _textareaInfoCache = textareaInfo;
+                        }
+                        if (_isRTL && _rtlScrollBehavior.i && _nativeScrollbarIsOverlaid.y && hasOverflow.x && _normalizeRTLCache)
+                            currScroll.x += _contentBorderSize.w || 0;
+                        if (widthAuto)
+                            _hostElement[_strScrollLeft](0);
+                        if (heightAuto)
+                            _hostElement[_strScrollTop](0);
+                        _viewportElement[_strScrollLeft](currScroll.x)[_strScrollTop](currScroll.y);
+
+                        //scrollbars management:
+                        var scrollbarsVisibilityVisible = scrollbarsVisibility === 'v';
+                        var scrollbarsVisibilityHidden = scrollbarsVisibility === 'h';
+                        var scrollbarsVisibilityAuto = scrollbarsVisibility === 'a';
+                        var refreshScrollbarsVisibility = function (showX, showY) {
+                            showY = showY === undefined ? showX : showY;
+                            refreshScrollbarAppearance(true, showX, canScroll.x)
+                            refreshScrollbarAppearance(false, showY, canScroll.y)
+                        };
+
+                        //manage class name which indicates scrollable overflow
+                        addRemoveClass(_hostElement, _classNameHostOverflow, hideOverflow.x || hideOverflow.y);
+                        addRemoveClass(_hostElement, _classNameHostOverflowX, hideOverflow.x);
+                        addRemoveClass(_hostElement, _classNameHostOverflowY, hideOverflow.y);
+
+                        //add or remove rtl class name for styling purposes except when its body, then the scrollbar stays
+                        if (cssDirectionChanged && !_isBody) {
+                            addRemoveClass(_hostElement, _classNameHostRTL, _isRTL);
+                        }
+
+                        //manage the resize feature (CSS3 resize "polyfill" for this plugin)
+                        if (_isBody)
+                            addClass(_hostElement, _classNameHostResizeDisabled);
+                        if (resizeChanged) {
+                            addRemoveClass(_hostElement, _classNameHostResizeDisabled, _resizeNone);
+                            addRemoveClass(_scrollbarCornerElement, _classNameScrollbarCornerResize, !_resizeNone);
+                            addRemoveClass(_scrollbarCornerElement, _classNameScrollbarCornerResizeB, _resizeBoth);
+                            addRemoveClass(_scrollbarCornerElement, _classNameScrollbarCornerResizeH, _resizeHorizontal);
+                            addRemoveClass(_scrollbarCornerElement, _classNameScrollbarCornerResizeV, _resizeVertical);
+                        }
+
+                        //manage the scrollbars general visibility + the scrollbar interactivity (unusable class name)
+                        if (scrollbarsVisibilityChanged || overflowBehaviorChanged || hideOverflow.c || hasOverflow.c || ignoreOverlayScrollbarHidingChanged) {
+                            if (ignoreOverlayScrollbarHiding) {
+                                if (ignoreOverlayScrollbarHidingChanged) {
+                                    removeClass(_hostElement, _classNameHostScrolling);
+                                    if (ignoreOverlayScrollbarHiding) {
+                                        refreshScrollbarsVisibility(false);
+                                    }
+                                }
+                            }
+                            else if (scrollbarsVisibilityAuto) {
+                                refreshScrollbarsVisibility(canScroll.x, canScroll.y);
+                            }
+                            else if (scrollbarsVisibilityVisible) {
+                                refreshScrollbarsVisibility(true);
+                            }
+                            else if (scrollbarsVisibilityHidden) {
+                                refreshScrollbarsVisibility(false);
+                            }
+                        }
+
+                        //manage the scrollbars auto hide feature (auto hide them after specific actions)
+                        if (scrollbarsAutoHideChanged || ignoreOverlayScrollbarHidingChanged) {
+                            setupHostMouseTouchEvents(!_scrollbarsAutoHideLeave && !_scrollbarsAutoHideMove);
+                            refreshScrollbarsAutoHide(_scrollbarsAutoHideNever, !_scrollbarsAutoHideNever);
+                        }
+
+                        //manage scrollbars handle length & offset - don't remove!
+                        if (hostSizeChanged || overflowAmount.c || heightAutoChanged || widthAutoChanged || resizeChanged || boxSizingChanged || paddingAbsoluteChanged || ignoreOverlayScrollbarHidingChanged || cssDirectionChanged) {
+                            refreshScrollbarHandleLength(true);
+                            refreshScrollbarHandleOffset(true);
+                            refreshScrollbarHandleLength(false);
+                            refreshScrollbarHandleOffset(false);
+                        }
+
+                        //manage interactivity
+                        if (scrollbarsClickScrollingChanged)
+                            refreshScrollbarsInteractive(true, scrollbarsClickScrolling);
+                        if (scrollbarsDragScrollingChanged)
+                            refreshScrollbarsInteractive(false, scrollbarsDragScrolling);
+
+                        //callbacks:
+                        dispatchCallback('onDirectionChanged', {
+                            isRTL: _isRTL,
+                            dir: cssDirection
+                        }, cssDirectionChanged);
+                        dispatchCallback('onHostSizeChanged', {
+                            width: _hostSizeCache.w,
+                            height: _hostSizeCache.h
+                        }, hostSizeChanged);
+                        dispatchCallback('onContentSizeChanged', {
+                            width: _contentScrollSizeCache.w,
+                            height: _contentScrollSizeCache.h
+                        }, contentSizeChanged);
+                        dispatchCallback('onOverflowChanged', {
+                            x: hasOverflow.x,
+                            y: hasOverflow.y,
+                            xScrollable: hideOverflow.xs,
+                            yScrollable: hideOverflow.ys,
+                            clipped: hideOverflow.x || hideOverflow.y
+                        }, hasOverflow.c || hideOverflow.c);
+                        dispatchCallback('onOverflowAmountChanged', {
+                            x: overflowAmount.x,
+                            y: overflowAmount.y
+                        }, overflowAmount.c);
+                    }
+
+                    //fix body min size
+                    if (_isBody && _bodyMinSizeCache && (_hasOverflowCache.c || _bodyMinSizeCache.c)) {
+                        //its possible that no min size was measured until now, because the content arrange element was just added now, in this case, measure now the min size.
+                        if (!_bodyMinSizeCache.f)
+                            bodyMinSizeChanged();
+                        if (_nativeScrollbarIsOverlaid.y && _hasOverflowCache.x)
+                            _contentElement.css(_strMinMinus + _strWidth, _bodyMinSizeCache.w + _overlayScrollbarDummySize.y);
+                        if (_nativeScrollbarIsOverlaid.x && _hasOverflowCache.y)
+                            _contentElement.css(_strMinMinus + _strHeight, _bodyMinSizeCache.h + _overlayScrollbarDummySize.x);
+                        _bodyMinSizeCache.c = false;
+                    }
+
+                    if (_initialized && changedOptions.updateOnLoad) {
+                        updateElementsOnLoad();
+                    }
+
+                    //freezeResizeObserver(_sizeObserverElement, false);
+                    //freezeResizeObserver(_sizeAutoObserverElement, false);
+
+                    dispatchCallback('onUpdated', { forced: force });
+                }
+
+                /**
+                 * Updates the found elements of which the load event shall be handled.
+                 */
+                function updateElementsOnLoad() {
+                    if (!_isTextarea) {
+                        eachUpdateOnLoad(function (i, updateOnLoadSelector) {
+                            _contentElement.find(updateOnLoadSelector).each(function (i, el) {
+                                // if element doesn't have a updateOnLoadCallback applied
+                                if (COMPATIBILITY.inA(el, _updateOnLoadElms) < 0) {
+                                    _updateOnLoadElms.push(el);
+                                    FRAMEWORK(el)
+                                        .off(_updateOnLoadEventName, updateOnLoadCallback)
+                                        .on(_updateOnLoadEventName, updateOnLoadCallback);
+                                }
+                            });
+                        });
+                    }
+                }
+
+                //==== Options ====//
+
+                /**
+                 * Sets new options but doesn't call the update method.
+                 * @param newOptions The object which contains the new options.
+                 * @returns {*} A object which contains the changed options.
+                 */
+                function setOptions(newOptions) {
+                    var validatedOpts = _pluginsOptions._validate(newOptions, _pluginsOptions._template, true, _currentOptions)
+
+                    _currentOptions = extendDeep({}, _currentOptions, validatedOpts._default);
+                    _currentPreparedOptions = extendDeep({}, _currentPreparedOptions, validatedOpts._prepared);
+
+                    return validatedOpts._prepared;
+                }
+
+
+                //==== Structure ====//
+
+                /**
+                 * Builds or destroys the wrapper and helper DOM elements.
+                 * @param destroy Indicates whether the DOM shall be build or destroyed.
+                 */
+                /**
+                 * Builds or destroys the wrapper and helper DOM elements.
+                 * @param destroy Indicates whether the DOM shall be build or destroyed.
+                 */
+                function setupStructureDOM(destroy) {
+                    var strParent = 'parent';
+                    var classNameResizeObserverHost = 'os-resize-observer-host';
+                    var classNameTextareaElementFull = _classNameTextareaElement + _strSpace + _classNameTextInherit;
+                    var textareaClass = _isTextarea ? _strSpace + _classNameTextInherit : _strEmpty;
+                    var adoptAttrs = _currentPreparedOptions.textarea.inheritedAttrs;
+                    var adoptAttrsMap = {};
+                    var applyAdoptedAttrs = function () {
+                        var applyAdoptedAttrsElm = destroy ? _targetElement : _hostElement;
+                        each(adoptAttrsMap, function (key, value) {
+                            if (type(value) == TYPES.s) {
+                                if (key == LEXICON.c)
+                                    applyAdoptedAttrsElm.addClass(value);
+                                else
+                                    applyAdoptedAttrsElm.attr(key, value);
+                            }
+                        });
+                    };
+                    var hostElementClassNames = [
+                        _classNameHostElement,
+                        _classNameHostElementForeign,
+                        _classNameHostTextareaElement,
+                        _classNameHostResizeDisabled,
+                        _classNameHostRTL,
+                        _classNameHostScrollbarHorizontalHidden,
+                        _classNameHostScrollbarVerticalHidden,
+                        _classNameHostTransition,
+                        _classNameHostScrolling,
+                        _classNameHostOverflow,
+                        _classNameHostOverflowX,
+                        _classNameHostOverflowY,
+                        _classNameThemeNone,
+                        _classNameTextareaElement,
+                        _classNameTextInherit,
+                        _classNameCache].join(_strSpace);
+                    var hostElementCSS = {};
+
+                    //get host element as first element, because that's the most upper element and required for the other elements
+                    _hostElement = _hostElement || (_isTextarea ? (_domExists ? _targetElement[strParent]()[strParent]()[strParent]()[strParent]() : FRAMEWORK(generateDiv(_classNameHostTextareaElement))) : _targetElement);
+                    _contentElement = _contentElement || selectOrGenerateDivByClass(_classNameContentElement + textareaClass);
+                    _viewportElement = _viewportElement || selectOrGenerateDivByClass(_classNameViewportElement + textareaClass);
+                    _paddingElement = _paddingElement || selectOrGenerateDivByClass(_classNamePaddingElement + textareaClass);
+                    _sizeObserverElement = _sizeObserverElement || selectOrGenerateDivByClass(classNameResizeObserverHost);
+                    _textareaCoverElement = _textareaCoverElement || (_isTextarea ? selectOrGenerateDivByClass(_classNameTextareaCoverElement) : undefined);
+
+                    //add this class to workaround class changing issues with UI frameworks especially Vue
+                    if (_domExists)
+                        addClass(_hostElement, _classNameHostElementForeign);
+
+                    //on destroy, remove all generated class names from the host element before collecting the adopted attributes
+                    //to prevent adopting generated class names
+                    if (destroy)
+                        removeClass(_hostElement, hostElementClassNames);
+
+                    //collect all adopted attributes
+                    adoptAttrs = type(adoptAttrs) == TYPES.s ? adoptAttrs.split(_strSpace) : adoptAttrs;
+                    if (COMPATIBILITY.isA(adoptAttrs) && _isTextarea) {
+                        each(adoptAttrs, function (i, v) {
+                            if (type(v) == TYPES.s) {
+                                adoptAttrsMap[v] = destroy ? _hostElement.attr(v) : _targetElement.attr(v);
+                            }
+                        });
+                    }
+
+                    if (!destroy) {
+                        if (_isTextarea) {
+                            if (!_currentPreparedOptions.sizeAutoCapable) {
+                                hostElementCSS[_strWidth] = _targetElement.css(_strWidth);
+                                hostElementCSS[_strHeight] = _targetElement.css(_strHeight);
+                            }
+
+                            if (!_domExists)
+                                _targetElement.addClass(_classNameTextInherit).wrap(_hostElement);
+
+                            //jQuery clones elements in wrap functions, so we have to select them again
+                            _hostElement = _targetElement[strParent]().css(hostElementCSS);
+                        }
+
+                        if (!_domExists) {
+                            //add the correct class to the target element
+                            addClass(_targetElement, _isTextarea ? classNameTextareaElementFull : _classNameHostElement);
+
+                            //wrap the content into the generated elements to create the required DOM
+                            _hostElement.wrapInner(_contentElement)
+                                .wrapInner(_viewportElement)
+                                .wrapInner(_paddingElement)
+                                .prepend(_sizeObserverElement);
+
+                            //jQuery clones elements in wrap functions, so we have to select them again
+                            _contentElement = findFirst(_hostElement, _strDot + _classNameContentElement);
+                            _viewportElement = findFirst(_hostElement, _strDot + _classNameViewportElement);
+                            _paddingElement = findFirst(_hostElement, _strDot + _classNamePaddingElement);
+
+                            if (_isTextarea) {
+                                _contentElement.prepend(_textareaCoverElement);
+                                applyAdoptedAttrs();
+                            }
+                        }
+
+                        if (_nativeScrollbarStyling)
+                            addClass(_viewportElement, _classNameViewportNativeScrollbarsInvisible);
+                        if (_nativeScrollbarIsOverlaid.x && _nativeScrollbarIsOverlaid.y)
+                            addClass(_viewportElement, _classNameViewportNativeScrollbarsOverlaid);
+                        if (_isBody)
+                            addClass(_htmlElement, _classNameHTMLElement);
+
+                        _sizeObserverElementNative = _sizeObserverElement[0];
+                        _hostElementNative = _hostElement[0];
+                        _paddingElementNative = _paddingElement[0];
+                        _viewportElementNative = _viewportElement[0];
+                        _contentElementNative = _contentElement[0];
+
+                        updateViewportAttrsFromTarget();
+                    }
+                    else {
+                        if (_domExists && _initialized) {
+                            //clear size observer
+                            _sizeObserverElement.children().remove();
+
+                            //remove the style property and classes from already generated elements
+                            each([_paddingElement, _viewportElement, _contentElement, _textareaCoverElement], function (i, elm) {
+                                if (elm) {
+                                    removeClass(elm.removeAttr(LEXICON.s), _classNamesDynamicDestroy);
+                                }
+                            });
+
+                            //add classes to the host element which was removed previously to match the expected DOM
+                            addClass(_hostElement, _isTextarea ? _classNameHostTextareaElement : _classNameHostElement);
+                        }
+                        else {
+                            //remove size observer
+                            remove(_sizeObserverElement);
+
+                            //unwrap the content to restore DOM
+                            _contentElement.contents()
+                                .unwrap()
+                                .unwrap()
+                                .unwrap();
+
+                            if (_isTextarea) {
+                                _targetElement.unwrap();
+                                remove(_hostElement);
+                                remove(_textareaCoverElement);
+                                applyAdoptedAttrs();
+                            }
+                        }
+
+                        if (_isTextarea)
+                            _targetElement.removeAttr(LEXICON.s);
+
+                        if (_isBody)
+                            removeClass(_htmlElement, _classNameHTMLElement);
+                    }
+                }
+
+                /**
+                 * Adds or removes all wrapper elements interactivity events.
+                 * @param destroy Indicates whether the Events shall be added or removed.
+                 */
+                function setupStructureEvents() {
+                    var textareaKeyDownRestrictedKeyCodes = [
+                        112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 123,    //F1 to F12
+                        33, 34,                                                   //page up, page down
+                        37, 38, 39, 40,                                           //left, up, right, down arrows
+                        16, 17, 18, 19, 20, 144                                   //Shift, Ctrl, Alt, Pause, CapsLock, NumLock
+                    ];
+                    var textareaKeyDownKeyCodesList = [];
+                    var textareaUpdateIntervalID;
+                    var scrollStopTimeoutId;
+                    var scrollStopDelay = 175;
+                    var strFocus = 'focus';
+
+                    function updateTextarea(doClearInterval) {
+                        textareaUpdate();
+                        _base.update(_strAuto);
+                        if (doClearInterval && _autoUpdateRecommended)
+                            clearInterval(textareaUpdateIntervalID);
+                    }
+                    function textareaOnScroll(event) {
+                        _targetElement[_strScrollLeft](_rtlScrollBehavior.i && _normalizeRTLCache ? 9999999 : 0);
+                        _targetElement[_strScrollTop](0);
+                        COMPATIBILITY.prvD(event);
+                        COMPATIBILITY.stpP(event);
+                        return false;
+                    }
+                    function textareaOnDrop(event) {
+                        setTimeout(function () {
+                            if (!_destroyed)
+                                updateTextarea();
+                        }, 50);
+                    }
+                    function textareaOnFocus() {
+                        _textareaHasFocus = true;
+                        addClass(_hostElement, strFocus);
+                    }
+                    function textareaOnFocusout() {
+                        _textareaHasFocus = false;
+                        textareaKeyDownKeyCodesList = [];
+                        removeClass(_hostElement, strFocus);
+                        updateTextarea(true);
+                    }
+                    function textareaOnKeyDown(event) {
+                        var keyCode = event.keyCode;
+
+                        if (inArray(keyCode, textareaKeyDownRestrictedKeyCodes) < 0) {
+                            if (!textareaKeyDownKeyCodesList[LEXICON.l]) {
+                                updateTextarea();
+                                textareaUpdateIntervalID = setInterval(updateTextarea, 1000 / 60);
+                            }
+                            if (inArray(keyCode, textareaKeyDownKeyCodesList) < 0)
+                                textareaKeyDownKeyCodesList.push(keyCode);
+                        }
+                    }
+                    function textareaOnKeyUp(event) {
+                        var keyCode = event.keyCode;
+                        var index = inArray(keyCode, textareaKeyDownKeyCodesList);
+
+                        if (inArray(keyCode, textareaKeyDownRestrictedKeyCodes) < 0) {
+                            if (index > -1)
+                                textareaKeyDownKeyCodesList.splice(index, 1);
+                            if (!textareaKeyDownKeyCodesList[LEXICON.l])
+                                updateTextarea(true);
+                        }
+                    }
+                    function contentOnTransitionEnd(event) {
+                        if (_autoUpdateCache === true)
+                            return;
+                        event = event.originalEvent || event;
+                        if (isSizeAffectingCSSProperty(event.propertyName))
+                            _base.update(_strAuto);
+                    }
+                    function viewportOnScroll(event) {
+                        if (!_sleeping) {
+                            if (scrollStopTimeoutId !== undefined)
+                                clearTimeout(scrollStopTimeoutId);
+                            else {
+                                if (_scrollbarsAutoHideScroll || _scrollbarsAutoHideMove)
+                                    refreshScrollbarsAutoHide(true);
+
+                                if (!nativeOverlayScrollbarsAreActive())
+                                    addClass(_hostElement, _classNameHostScrolling);
+
+                                dispatchCallback('onScrollStart', event);
+                            }
+
+                            //if a scrollbars handle gets dragged, the mousemove event is responsible for refreshing the handle offset
+                            //because if CSS scroll-snap is used, the handle offset gets only refreshed on every snap point
+                            //this looks laggy & clunky, it looks much better if the offset refreshes with the mousemove
+                            if (!_scrollbarsHandlesDefineScrollPos) {
+                                refreshScrollbarHandleOffset(true);
+                                refreshScrollbarHandleOffset(false);
+                            }
+                            dispatchCallback('onScroll', event);
+
+                            scrollStopTimeoutId = setTimeout(function () {
+                                if (!_destroyed) {
+                                    //OnScrollStop:
+                                    clearTimeout(scrollStopTimeoutId);
+                                    scrollStopTimeoutId = undefined;
+
+                                    if (_scrollbarsAutoHideScroll || _scrollbarsAutoHideMove)
+                                        refreshScrollbarsAutoHide(false);
+
+                                    if (!nativeOverlayScrollbarsAreActive())
+                                        removeClass(_hostElement, _classNameHostScrolling);
+
+                                    dispatchCallback('onScrollStop', event);
+                                }
+                            }, scrollStopDelay);
+                        }
+                    }
+
+
+                    if (_isTextarea) {
+                        if (_msieVersion > 9 || !_autoUpdateRecommended) {
+                            addDestroyEventListener(_targetElement, 'input', updateTextarea);
+                        }
+                        else {
+                            addDestroyEventListener(_targetElement,
+                                [_strKeyDownEvent, _strKeyUpEvent],
+                                [textareaOnKeyDown, textareaOnKeyUp]);
+                        }
+
+                        addDestroyEventListener(_targetElement,
+                            [_strScroll, 'drop', strFocus, strFocus + 'out'],
+                            [textareaOnScroll, textareaOnDrop, textareaOnFocus, textareaOnFocusout]);
+                    }
+                    else {
+                        addDestroyEventListener(_contentElement, _strTransitionEndEvent, contentOnTransitionEnd);
+                    }
+                    addDestroyEventListener(_viewportElement, _strScroll, viewportOnScroll, true);
+                }
+
+
+                //==== Scrollbars ====//
+
+                /**
+                 * Builds or destroys all scrollbar DOM elements (scrollbar, track, handle)
+                 * @param destroy Indicates whether the DOM shall be build or destroyed.
+                 */
+                function setupScrollbarsDOM(destroy) {
+                    var selectOrGenerateScrollbarDOM = function (isHorizontal) {
+                        var scrollbarClassName = isHorizontal ? _classNameScrollbarHorizontal : _classNameScrollbarVertical;
+                        var scrollbar = selectOrGenerateDivByClass(_classNameScrollbar + _strSpace + scrollbarClassName, true);
+                        var track = selectOrGenerateDivByClass(_classNameScrollbarTrack, scrollbar);
+                        var handle = selectOrGenerateDivByClass(_classNameScrollbarHandle, scrollbar);
+
+                        if (!_domExists && !destroy) {
+                            scrollbar.append(track);
+                            track.append(handle);
+                        }
+
+                        return {
+                            _scrollbar: scrollbar,
+                            _track: track,
+                            _handle: handle
+                        };
+                    };
+                    function resetScrollbarDOM(isHorizontal) {
+                        var scrollbarVars = getScrollbarVars(isHorizontal);
+                        var scrollbar = scrollbarVars._scrollbar;
+                        var track = scrollbarVars._track;
+                        var handle = scrollbarVars._handle;
+
+                        if (_domExists && _initialized) {
+                            each([scrollbar, track, handle], function (i, elm) {
+                                removeClass(elm.removeAttr(LEXICON.s), _classNamesDynamicDestroy);
+                            });
+                        }
+                        else {
+                            remove(scrollbar || selectOrGenerateScrollbarDOM(isHorizontal)._scrollbar);
+                        }
+                    }
+                    var horizontalElements;
+                    var verticalElements;
+
+                    if (!destroy) {
+                        horizontalElements = selectOrGenerateScrollbarDOM(true);
+                        verticalElements = selectOrGenerateScrollbarDOM();
+
+                        _scrollbarHorizontalElement = horizontalElements._scrollbar;
+                        _scrollbarHorizontalTrackElement = horizontalElements._track;
+                        _scrollbarHorizontalHandleElement = horizontalElements._handle;
+                        _scrollbarVerticalElement = verticalElements._scrollbar;
+                        _scrollbarVerticalTrackElement = verticalElements._track;
+                        _scrollbarVerticalHandleElement = verticalElements._handle;
+
+                        if (!_domExists) {
+                            _paddingElement.after(_scrollbarVerticalElement);
+                            _paddingElement.after(_scrollbarHorizontalElement);
+                        }
+                    }
+                    else {
+                        resetScrollbarDOM(true);
+                        resetScrollbarDOM();
+                    }
+                }
+
+                /**
+                 * Initializes all scrollbar interactivity events. (track and handle dragging, clicking, scrolling)
+                 * @param isHorizontal True if the target scrollbar is the horizontal scrollbar, false if the target scrollbar is the vertical scrollbar.
+                 */
+                function setupScrollbarEvents(isHorizontal) {
+                    var scrollbarVars = getScrollbarVars(isHorizontal);
+                    var scrollbarVarsInfo = scrollbarVars._info;
+                    var insideIFrame = _windowElementNative.top !== _windowElementNative;
+                    var xy = scrollbarVars._x_y;
+                    var XY = scrollbarVars._X_Y;
+                    var scroll = _strScroll + scrollbarVars._Left_Top;
+                    var strActive = 'active';
+                    var strSnapHandle = 'snapHandle';
+                    var strClickEvent = 'click';
+                    var scrollDurationFactor = 1;
+                    var increaseDecreaseScrollAmountKeyCodes = [16, 17]; //shift, ctrl
+                    var trackTimeout;
+                    var mouseDownScroll;
+                    var mouseDownOffset;
+                    var mouseDownInvertedScale;
+
+                    function getPointerPosition(event) {
+                        return _msieVersion && insideIFrame ? event['screen' + XY] : COMPATIBILITY.page(event)[xy]; //use screen coordinates in EDGE & IE because the page values are incorrect in frames.
+                    }
+                    function getPreparedScrollbarsOption(name) {
+                        return _currentPreparedOptions.scrollbars[name];
+                    }
+                    function increaseTrackScrollAmount() {
+                        scrollDurationFactor = 0.5;
+                    }
+                    function decreaseTrackScrollAmount() {
+                        scrollDurationFactor = 1;
+                    }
+                    function stopClickEventPropagation(event) {
+                        COMPATIBILITY.stpP(event);
+                    }
+                    function documentKeyDown(event) {
+                        if (inArray(event.keyCode, increaseDecreaseScrollAmountKeyCodes) > -1)
+                            increaseTrackScrollAmount();
+                    }
+                    function documentKeyUp(event) {
+                        if (inArray(event.keyCode, increaseDecreaseScrollAmountKeyCodes) > -1)
+                            decreaseTrackScrollAmount();
+                    }
+                    function onMouseTouchDownContinue(event) {
+                        var originalEvent = event.originalEvent || event;
+                        var isTouchEvent = originalEvent.touches !== undefined;
+                        return _sleeping || _destroyed || nativeOverlayScrollbarsAreActive() || !_scrollbarsDragScrollingCache || (isTouchEvent && !getPreparedScrollbarsOption('touchSupport')) ? false : COMPATIBILITY.mBtn(event) === 1 || isTouchEvent;
+                    }
+                    function documentDragMove(event) {
+                        if (onMouseTouchDownContinue(event)) {
+                            var trackLength = scrollbarVarsInfo._trackLength;
+                            var handleLength = scrollbarVarsInfo._handleLength;
+                            var scrollRange = scrollbarVarsInfo._maxScroll;
+                            var scrollRaw = (getPointerPosition(event) - mouseDownOffset) * mouseDownInvertedScale;
+                            var scrollDeltaPercent = scrollRaw / (trackLength - handleLength);
+                            var scrollDelta = (scrollRange * scrollDeltaPercent);
+                            scrollDelta = isFinite(scrollDelta) ? scrollDelta : 0;
+                            if (_isRTL && isHorizontal && !_rtlScrollBehavior.i)
+                                scrollDelta *= -1;
+
+                            _viewportElement[scroll](MATH.round(mouseDownScroll + scrollDelta));
+
+                            if (_scrollbarsHandlesDefineScrollPos)
+                                refreshScrollbarHandleOffset(isHorizontal, mouseDownScroll + scrollDelta);
+
+                            if (!_supportPassiveEvents)
+                                COMPATIBILITY.prvD(event);
+                        }
+                        else
+                            documentMouseTouchUp(event);
+                    }
+                    function documentMouseTouchUp(event) {
+                        event = event || event.originalEvent;
+
+                        setupResponsiveEventListener(_documentElement,
+                            [_strMouseTouchMoveEvent, _strMouseTouchUpEvent, _strKeyDownEvent, _strKeyUpEvent, _strSelectStartEvent],
+                            [documentDragMove, documentMouseTouchUp, documentKeyDown, documentKeyUp, documentOnSelectStart],
+                            true);
+                        COMPATIBILITY.rAF()(function() {
+                            setupResponsiveEventListener(_documentElement, strClickEvent, stopClickEventPropagation, true, { _capture: true });
+                        });
+
+
+                        if (_scrollbarsHandlesDefineScrollPos)
+                            refreshScrollbarHandleOffset(isHorizontal, true);
+
+                        _scrollbarsHandlesDefineScrollPos = false;
+                        removeClass(_bodyElement, _classNameDragging);
+                        removeClass(scrollbarVars._handle, strActive);
+                        removeClass(scrollbarVars._track, strActive);
+                        removeClass(scrollbarVars._scrollbar, strActive);
+
+                        mouseDownScroll = undefined;
+                        mouseDownOffset = undefined;
+                        mouseDownInvertedScale = 1;
+
+                        decreaseTrackScrollAmount();
+
+                        if (trackTimeout !== undefined) {
+                            _base.scrollStop();
+                            clearTimeout(trackTimeout);
+                            trackTimeout = undefined;
+                        }
+
+                        if (event) {
+                            var rect = _hostElementNative[LEXICON.bCR]();
+                            var mouseInsideHost = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+
+                            //if mouse is outside host element
+                            if (!mouseInsideHost)
+                                hostOnMouseLeave();
+
+                            if (_scrollbarsAutoHideScroll || _scrollbarsAutoHideMove)
+                                refreshScrollbarsAutoHide(false);
+                        }
+                    }
+                    function onHandleMouseTouchDown(event) {
+                        if (onMouseTouchDownContinue(event))
+                            onHandleMouseTouchDownAction(event);
+                    }
+                    function onHandleMouseTouchDownAction(event) {
+                        mouseDownScroll = _viewportElement[scroll]();
+                        mouseDownScroll = isNaN(mouseDownScroll) ? 0 : mouseDownScroll;
+                        if (_isRTL && isHorizontal && !_rtlScrollBehavior.n || !_isRTL)
+                            mouseDownScroll = mouseDownScroll < 0 ? 0 : mouseDownScroll;
+
+                        mouseDownInvertedScale = getHostElementInvertedScale()[xy];
+                        mouseDownOffset = getPointerPosition(event);
+
+                        _scrollbarsHandlesDefineScrollPos = !getPreparedScrollbarsOption(strSnapHandle);
+                        addClass(_bodyElement, _classNameDragging);
+                        addClass(scrollbarVars._handle, strActive);
+                        addClass(scrollbarVars._scrollbar, strActive);
+
+                        setupResponsiveEventListener(_documentElement,
+                            [_strMouseTouchMoveEvent, _strMouseTouchUpEvent, _strSelectStartEvent],
+                            [documentDragMove, documentMouseTouchUp, documentOnSelectStart]);
+                        COMPATIBILITY.rAF()(function() {
+                            setupResponsiveEventListener(_documentElement, strClickEvent, stopClickEventPropagation, false, { _capture: true });
+                        });
+
+
+                        if (_msieVersion || !_documentMixed)
+                            COMPATIBILITY.prvD(event);
+                        COMPATIBILITY.stpP(event);
+                    }
+                    function onTrackMouseTouchDown(event) {
+                        if (onMouseTouchDownContinue(event)) {
+                            var handleToViewportRatio = scrollbarVars._info._handleLength / Math.round(MATH.min(1, _viewportSize[scrollbarVars._w_h] / _contentScrollSizeCache[scrollbarVars._w_h]) * scrollbarVars._info._trackLength);
+                            var scrollDistance = MATH.round(_viewportSize[scrollbarVars._w_h] * handleToViewportRatio);
+                            var scrollBaseDuration = 270 * handleToViewportRatio;
+                            var scrollFirstIterationDelay = 400 * handleToViewportRatio;
+                            var trackOffset = scrollbarVars._track.offset()[scrollbarVars._left_top];
+                            var ctrlKey = event.ctrlKey;
+                            var instantScroll = event.shiftKey;
+                            var instantScrollTransition = instantScroll && ctrlKey;
+                            var isFirstIteration = true;
+                            var easing = 'linear';
+                            var decreaseScroll;
+                            var finishedCondition;
+                            var scrollActionFinsished = function (transition) {
+                                if (_scrollbarsHandlesDefineScrollPos)
+                                    refreshScrollbarHandleOffset(isHorizontal, transition);
+                            };
+                            var scrollActionInstantFinished = function () {
+                                scrollActionFinsished();
+                                onHandleMouseTouchDownAction(event);
+                            };
+                            var scrollAction = function () {
+                                if (!_destroyed) {
+                                    var mouseOffset = (mouseDownOffset - trackOffset) * mouseDownInvertedScale;
+                                    var handleOffset = scrollbarVarsInfo._handleOffset;
+                                    var trackLength = scrollbarVarsInfo._trackLength;
+                                    var handleLength = scrollbarVarsInfo._handleLength;
+                                    var scrollRange = scrollbarVarsInfo._maxScroll;
+                                    var currScroll = scrollbarVarsInfo._currentScroll;
+                                    var scrollDuration = scrollBaseDuration * scrollDurationFactor;
+                                    var timeoutDelay = isFirstIteration ? MATH.max(scrollFirstIterationDelay, scrollDuration) : scrollDuration;
+                                    var instantScrollPosition = scrollRange * ((mouseOffset - (handleLength / 2)) / (trackLength - handleLength)); // 100% * positionPercent
+                                    var rtlIsNormal = _isRTL && isHorizontal && ((!_rtlScrollBehavior.i && !_rtlScrollBehavior.n) || _normalizeRTLCache);
+                                    var decreaseScrollCondition = rtlIsNormal ? handleOffset < mouseOffset : handleOffset > mouseOffset;
+                                    var scrollObj = {};
+                                    var animationObj = {
+                                        easing: easing,
+                                        step: function (now) {
+                                            if (_scrollbarsHandlesDefineScrollPos) {
+                                                _viewportElement[scroll](now); //https://github.com/jquery/jquery/issues/4340
+                                                refreshScrollbarHandleOffset(isHorizontal, now);
+                                            }
+                                        }
+                                    };
+                                    instantScrollPosition = isFinite(instantScrollPosition) ? instantScrollPosition : 0;
+                                    instantScrollPosition = _isRTL && isHorizontal && !_rtlScrollBehavior.i ? (scrollRange - instantScrollPosition) : instantScrollPosition;
+
+                                    //_base.scrollStop();
+
+                                    if (instantScroll) {
+                                        _viewportElement[scroll](instantScrollPosition); //scroll instantly to new position
+                                        if (instantScrollTransition) {
+                                            //get the scroll position after instant scroll (in case CSS Snap Points are used) to get the correct snapped scroll position
+                                            //and the animation stops at the correct point
+                                            instantScrollPosition = _viewportElement[scroll]();
+                                            //scroll back to the position before instant scrolling so animation can be performed
+                                            _viewportElement[scroll](currScroll);
+
+                                            instantScrollPosition = rtlIsNormal && _rtlScrollBehavior.i ? (scrollRange - instantScrollPosition) : instantScrollPosition;
+                                            instantScrollPosition = rtlIsNormal && _rtlScrollBehavior.n ? -instantScrollPosition : instantScrollPosition;
+
+                                            scrollObj[xy] = instantScrollPosition;
+                                            _base.scroll(scrollObj, extendDeep(animationObj, {
+                                                duration: 130,
+                                                complete: scrollActionInstantFinished
+                                            }));
+                                        }
+                                        else
+                                            scrollActionInstantFinished();
+                                    }
+                                    else {
+                                        decreaseScroll = isFirstIteration ? decreaseScrollCondition : decreaseScroll;
+                                        finishedCondition = rtlIsNormal
+                                            ? (decreaseScroll ? handleOffset + handleLength >= mouseOffset : handleOffset <= mouseOffset)
+                                            : (decreaseScroll ? handleOffset <= mouseOffset : handleOffset + handleLength >= mouseOffset);
+
+                                        if (finishedCondition) {
+                                            clearTimeout(trackTimeout);
+                                            _base.scrollStop();
+                                            trackTimeout = undefined;
+                                            scrollActionFinsished(true);
+                                        }
+                                        else {
+                                            trackTimeout = setTimeout(scrollAction, timeoutDelay);
+
+                                            scrollObj[xy] = (decreaseScroll ? '-=' : '+=') + scrollDistance;
+                                            _base.scroll(scrollObj, extendDeep(animationObj, {
+                                                duration: scrollDuration
+                                            }));
+                                        }
+                                        isFirstIteration = false;
+                                    }
+                                }
+                            };
+                            if (ctrlKey)
+                                increaseTrackScrollAmount();
+
+                            mouseDownInvertedScale = getHostElementInvertedScale()[xy];
+                            mouseDownOffset = COMPATIBILITY.page(event)[xy];
+
+                            _scrollbarsHandlesDefineScrollPos = !getPreparedScrollbarsOption(strSnapHandle);
+                            addClass(_bodyElement, _classNameDragging);
+                            addClass(scrollbarVars._track, strActive);
+                            addClass(scrollbarVars._scrollbar, strActive);
+
+                            setupResponsiveEventListener(_documentElement,
+                                [_strMouseTouchUpEvent, _strKeyDownEvent, _strKeyUpEvent, _strSelectStartEvent],
+                                [documentMouseTouchUp, documentKeyDown, documentKeyUp, documentOnSelectStart]);
+
+                            scrollAction();
+                            COMPATIBILITY.prvD(event);
+                            COMPATIBILITY.stpP(event);
+                        }
+                    }
+                    function onTrackMouseTouchEnter(event) {
+                        //make sure both scrollbars will stay visible if one scrollbar is hovered if autoHide is "scroll" or "move".
+                        _scrollbarsHandleHovered = true;
+                        if (_scrollbarsAutoHideScroll || _scrollbarsAutoHideMove)
+                            refreshScrollbarsAutoHide(true);
+                    }
+                    function onTrackMouseTouchLeave(event) {
+                        _scrollbarsHandleHovered = false;
+                        if (_scrollbarsAutoHideScroll || _scrollbarsAutoHideMove)
+                            refreshScrollbarsAutoHide(false);
+                    }
+                    function onScrollbarMouseTouchDown(event) {
+                        COMPATIBILITY.stpP(event);
+                    }
+
+                    addDestroyEventListener(scrollbarVars._handle,
+                        _strMouseTouchDownEvent,
+                        onHandleMouseTouchDown);
+                    addDestroyEventListener(scrollbarVars._track,
+                        [_strMouseTouchDownEvent, _strMouseEnter, _strMouseLeave],
+                        [onTrackMouseTouchDown, onTrackMouseTouchEnter, onTrackMouseTouchLeave]);
+                    addDestroyEventListener(scrollbarVars._scrollbar,
+                        _strMouseTouchDownEvent,
+                        onScrollbarMouseTouchDown);
+
+                    if (_supportTransition) {
+                        addDestroyEventListener(scrollbarVars._scrollbar, _strTransitionEndEvent, function (event) {
+                            if (event.target !== scrollbarVars._scrollbar[0])
+                                return;
+                            refreshScrollbarHandleLength(isHorizontal);
+                            refreshScrollbarHandleOffset(isHorizontal);
+                        });
+                    }
+                }
+
+                /**
+                 * Shows or hides the given scrollbar and applied a class name which indicates if the scrollbar is scrollable or not.
+                 * @param isHorizontal True if the horizontal scrollbar is the target, false if the vertical scrollbar is the target.
+                 * @param shallBeVisible True if the scrollbar shall be shown, false if hidden.
+                 * @param canScroll True if the scrollbar is scrollable, false otherwise.
+                 */
+                function refreshScrollbarAppearance(isHorizontal, shallBeVisible, canScroll) {
+                    var scrollbarHiddenClassName = isHorizontal ? _classNameHostScrollbarHorizontalHidden : _classNameHostScrollbarVerticalHidden;
+                    var scrollbarElement = isHorizontal ? _scrollbarHorizontalElement : _scrollbarVerticalElement;
+
+                    addRemoveClass(_hostElement, scrollbarHiddenClassName, !shallBeVisible);
+                    addRemoveClass(scrollbarElement, _classNameScrollbarUnusable, !canScroll);
+                }
+
+                /**
+                 * Autoshows / autohides both scrollbars with.
+                 * @param shallBeVisible True if the scrollbars shall be autoshown (only the case if they are hidden by a autohide), false if the shall be auto hidden.
+                 * @param delayfree True if the scrollbars shall be hidden without a delay, false or undefined otherwise.
+                 */
+                function refreshScrollbarsAutoHide(shallBeVisible, delayfree) {
+                    clearTimeout(_scrollbarsAutoHideTimeoutId);
+                    if (shallBeVisible) {
+                        //if(_hasOverflowCache.x && _hideOverflowCache.xs)
+                        removeClass(_scrollbarHorizontalElement, _classNameScrollbarAutoHidden);
+                        //if(_hasOverflowCache.y && _hideOverflowCache.ys)
+                        removeClass(_scrollbarVerticalElement, _classNameScrollbarAutoHidden);
+                    }
+                    else {
+                        var anyActive;
+                        var strActive = 'active';
+                        var hide = function () {
+                            if (!_scrollbarsHandleHovered && !_destroyed) {
+                                anyActive = _scrollbarHorizontalHandleElement.hasClass(strActive) || _scrollbarVerticalHandleElement.hasClass(strActive);
+                                if (!anyActive && (_scrollbarsAutoHideScroll || _scrollbarsAutoHideMove || _scrollbarsAutoHideLeave))
+                                    addClass(_scrollbarHorizontalElement, _classNameScrollbarAutoHidden);
+                                if (!anyActive && (_scrollbarsAutoHideScroll || _scrollbarsAutoHideMove || _scrollbarsAutoHideLeave))
+                                    addClass(_scrollbarVerticalElement, _classNameScrollbarAutoHidden);
+                            }
+                        };
+                        if (_scrollbarsAutoHideDelay > 0 && delayfree !== true)
+                            _scrollbarsAutoHideTimeoutId = setTimeout(hide, _scrollbarsAutoHideDelay);
+                        else
+                            hide();
+                    }
+                }
+
+                /**
+                 * Refreshes the handle length of the given scrollbar.
+                 * @param isHorizontal True if the horizontal scrollbar handle shall be refreshed, false if the vertical one shall be refreshed.
+                 */
+                function refreshScrollbarHandleLength(isHorizontal) {
+                    var handleCSS = {};
+                    var scrollbarVars = getScrollbarVars(isHorizontal);
+                    var scrollbarVarsInfo = scrollbarVars._info;
+                    var digit = 1000000;
+                    //get and apply intended handle length
+                    var handleRatio = MATH.min(1, _viewportSize[scrollbarVars._w_h] / _contentScrollSizeCache[scrollbarVars._w_h]);
+                    handleCSS[scrollbarVars._width_height] = (MATH.floor(handleRatio * 100 * digit) / digit) + '%'; //the last * digit / digit is for flooring to the 4th digit
+
+                    if (!nativeOverlayScrollbarsAreActive())
+                        scrollbarVars._handle.css(handleCSS);
+
+                    //measure the handle length to respect min & max length
+                    scrollbarVarsInfo._handleLength = scrollbarVars._handle[0]['offset' + scrollbarVars._Width_Height];
+                    scrollbarVarsInfo._handleLengthRatio = handleRatio;
+                }
+
+                /**
+                 * Refreshes the handle offset of the given scrollbar.
+                 * @param isHorizontal True if the horizontal scrollbar handle shall be refreshed, false if the vertical one shall be refreshed.
+                 * @param scrollOrTransition The scroll position of the given scrollbar axis to which the handle shall be moved or a boolean which indicates whether a transition shall be applied. If undefined or boolean if the current scroll-offset is taken. (if isHorizontal ? scrollLeft : scrollTop)
+                 */
+                function refreshScrollbarHandleOffset(isHorizontal, scrollOrTransition) {
+                    var transition = type(scrollOrTransition) == TYPES.b;
+                    var transitionDuration = 250;
+                    var isRTLisHorizontal = _isRTL && isHorizontal;
+                    var scrollbarVars = getScrollbarVars(isHorizontal);
+                    var scrollbarVarsInfo = scrollbarVars._info;
+                    var strTranslateBrace = 'translate(';
+                    var strTransform = VENDORS._cssProperty('transform');
+                    var strTransition = VENDORS._cssProperty('transition');
+                    var nativeScroll = isHorizontal ? _viewportElement[_strScrollLeft]() : _viewportElement[_strScrollTop]();
+                    var currentScroll = scrollOrTransition === undefined || transition ? nativeScroll : scrollOrTransition;
+
+                    //measure the handle length to respect min & max length
+                    var handleLength = scrollbarVarsInfo._handleLength;
+                    var trackLength = scrollbarVars._track[0]['offset' + scrollbarVars._Width_Height];
+                    var handleTrackDiff = trackLength - handleLength;
+                    var handleCSS = {};
+                    var transformOffset;
+                    var translateValue;
+
+                    //DONT use the variable '_contentScrollSizeCache[scrollbarVars._w_h]' instead of '_viewportElement[0]['scroll' + scrollbarVars._Width_Height]'
+                    // because its a bit behind during the small delay when content size updates
+                    //(delay = mutationObserverContentLag, if its 0 then this var could be used)
+                    var maxScroll = (_viewportElementNative[_strScroll + scrollbarVars._Width_Height] - _viewportElementNative['client' + scrollbarVars._Width_Height]) * (_rtlScrollBehavior.n && isRTLisHorizontal ? -1 : 1); //* -1 if rtl scroll max is negative
+                    var getScrollRatio = function (base) {
+                        return isNaN(base / maxScroll) ? 0 : MATH.max(0, MATH.min(1, base / maxScroll));
+                    };
+                    var getHandleOffset = function (scrollRatio) {
+                        var offset = handleTrackDiff * scrollRatio;
+                        offset = isNaN(offset) ? 0 : offset;
+                        offset = (isRTLisHorizontal && !_rtlScrollBehavior.i) ? (trackLength - handleLength - offset) : offset;
+                        offset = MATH.max(0, offset);
+                        return offset;
+                    };
+                    var scrollRatio = getScrollRatio(nativeScroll);
+                    var unsnappedScrollRatio = getScrollRatio(currentScroll);
+                    var handleOffset = getHandleOffset(unsnappedScrollRatio);
+                    var snappedHandleOffset = getHandleOffset(scrollRatio);
+
+                    scrollbarVarsInfo._maxScroll = maxScroll;
+                    scrollbarVarsInfo._currentScroll = nativeScroll;
+                    scrollbarVarsInfo._currentScrollRatio = scrollRatio;
+
+                    if (_supportTransform) {
+                        transformOffset = isRTLisHorizontal ? -(trackLength - handleLength - handleOffset) : handleOffset; //in px
+                        //transformOffset = (transformOffset / trackLength * 100) * (trackLength / handleLength); //in %
+                        translateValue = isHorizontal ? strTranslateBrace + transformOffset + 'px, 0)' : strTranslateBrace + '0, ' + transformOffset + 'px)';
+
+                        handleCSS[strTransform] = translateValue;
+
+                        //apply or clear up transition
+                        if (_supportTransition)
+                            handleCSS[strTransition] = transition && MATH.abs(handleOffset - scrollbarVarsInfo._handleOffset) > 1 ? getCSSTransitionString(scrollbarVars._handle) + ', ' + (strTransform + _strSpace + transitionDuration + 'ms') : _strEmpty;
+                    }
+                    else
+                        handleCSS[scrollbarVars._left_top] = handleOffset;
+
+
+                    //only apply css if offset has changed and overflow exists.
+                    if (!nativeOverlayScrollbarsAreActive()) {
+                        scrollbarVars._handle.css(handleCSS);
+
+                        //clear up transition
+                        if (_supportTransform && _supportTransition && transition) {
+                            scrollbarVars._handle.one(_strTransitionEndEvent, function () {
+                                if (!_destroyed)
+                                    scrollbarVars._handle.css(strTransition, _strEmpty);
+                            });
+                        }
+                    }
+
+                    scrollbarVarsInfo._handleOffset = handleOffset;
+                    scrollbarVarsInfo._snappedHandleOffset = snappedHandleOffset;
+                    scrollbarVarsInfo._trackLength = trackLength;
+                }
+
+                /**
+                 * Refreshes the interactivity of the given scrollbar element.
+                 * @param isTrack True if the track element is the target, false if the handle element is the target.
+                 * @param value True for interactivity false for no interactivity.
+                 */
+                function refreshScrollbarsInteractive(isTrack, value) {
+                    var action = value ? 'removeClass' : 'addClass';
+                    var element1 = isTrack ? _scrollbarHorizontalTrackElement : _scrollbarHorizontalHandleElement;
+                    var element2 = isTrack ? _scrollbarVerticalTrackElement : _scrollbarVerticalHandleElement;
+                    var className = isTrack ? _classNameScrollbarTrackOff : _classNameScrollbarHandleOff;
+
+                    element1[action](className);
+                    element2[action](className);
+                }
+
+                /**
+                 * Returns a object which is used for fast access for specific variables.
+                 * @param isHorizontal True if the horizontal scrollbar vars shall be accessed, false if the vertical scrollbar vars shall be accessed.
+                 * @returns {{wh: string, WH: string, lt: string, _wh: string, _lt: string, t: *, h: *, c: {}, s: *}}
+                 */
+                function getScrollbarVars(isHorizontal) {
+                    return {
+                        _width_height: isHorizontal ? _strWidth : _strHeight,
+                        _Width_Height: isHorizontal ? 'Width' : 'Height',
+                        _left_top: isHorizontal ? _strLeft : _strTop,
+                        _Left_Top: isHorizontal ? 'Left' : 'Top',
+                        _x_y: isHorizontal ? _strX : _strY,
+                        _X_Y: isHorizontal ? 'X' : 'Y',
+                        _w_h: isHorizontal ? 'w' : 'h',
+                        _l_t: isHorizontal ? 'l' : 't',
+                        _track: isHorizontal ? _scrollbarHorizontalTrackElement : _scrollbarVerticalTrackElement,
+                        _handle: isHorizontal ? _scrollbarHorizontalHandleElement : _scrollbarVerticalHandleElement,
+                        _scrollbar: isHorizontal ? _scrollbarHorizontalElement : _scrollbarVerticalElement,
+                        _info: isHorizontal ? _scrollHorizontalInfo : _scrollVerticalInfo
+                    };
+                }
+
+
+                //==== Scrollbar Corner ====//
+
+                /**
+                 * Builds or destroys the scrollbar corner DOM element.
+                 * @param destroy Indicates whether the DOM shall be build or destroyed.
+                 */
+                function setupScrollbarCornerDOM(destroy) {
+                    _scrollbarCornerElement = _scrollbarCornerElement || selectOrGenerateDivByClass(_classNameScrollbarCorner, true);
+
+                    if (!destroy) {
+                        if (!_domExists) {
+                            _hostElement.append(_scrollbarCornerElement);
+                        }
+                    }
+                    else {
+                        if (_domExists && _initialized) {
+                            removeClass(_scrollbarCornerElement.removeAttr(LEXICON.s), _classNamesDynamicDestroy);
+                        }
+                        else {
+                            remove(_scrollbarCornerElement);
+                        }
+                    }
+                }
+
+                /**
+                 * Initializes all scrollbar corner interactivity events.
+                 */
+                function setupScrollbarCornerEvents() {
+                    var insideIFrame = _windowElementNative.top !== _windowElementNative;
+                    var mouseDownPosition = {};
+                    var mouseDownSize = {};
+                    var mouseDownInvertedScale = {};
+                    var reconnectMutationObserver;
+
+                    function documentDragMove(event) {
+                        if (onMouseTouchDownContinue(event)) {
+                            var pageOffset = getCoordinates(event);
+                            var hostElementCSS = {};
+                            if (_resizeHorizontal || _resizeBoth)
+                                hostElementCSS[_strWidth] = (mouseDownSize.w + (pageOffset.x - mouseDownPosition.x) * mouseDownInvertedScale.x);
+                            if (_resizeVertical || _resizeBoth)
+                                hostElementCSS[_strHeight] = (mouseDownSize.h + (pageOffset.y - mouseDownPosition.y) * mouseDownInvertedScale.y);
+                            _hostElement.css(hostElementCSS);
+                            COMPATIBILITY.stpP(event);
+                        }
+                        else {
+                            documentMouseTouchUp(event);
+                        }
+                    }
+                    function documentMouseTouchUp(event) {
+                        var eventIsTrusted = event !== undefined;
+
+                        setupResponsiveEventListener(_documentElement,
+                            [_strSelectStartEvent, _strMouseTouchMoveEvent, _strMouseTouchUpEvent],
+                            [documentOnSelectStart, documentDragMove, documentMouseTouchUp],
+                            true);
+
+                        removeClass(_bodyElement, _classNameDragging);
+                        if (_scrollbarCornerElement.releaseCapture)
+                            _scrollbarCornerElement.releaseCapture();
+
+                        if (eventIsTrusted) {
+                            if (reconnectMutationObserver)
+                                connectMutationObservers();
+                            _base.update(_strAuto);
+                        }
+                        reconnectMutationObserver = false;
+                    }
+                    function onMouseTouchDownContinue(event) {
+                        var originalEvent = event.originalEvent || event;
+                        var isTouchEvent = originalEvent.touches !== undefined;
+                        return _sleeping || _destroyed ? false : COMPATIBILITY.mBtn(event) === 1 || isTouchEvent;
+                    }
+                    function getCoordinates(event) {
+                        return _msieVersion && insideIFrame ? { x: event.screenX, y: event.screenY } : COMPATIBILITY.page(event);
+                    }
+
+                    addDestroyEventListener(_scrollbarCornerElement, _strMouseTouchDownEvent, function (event) {
+                        if (onMouseTouchDownContinue(event) && !_resizeNone) {
+                            if (_mutationObserversConnected) {
+                                reconnectMutationObserver = true;
+                                disconnectMutationObservers();
+                            }
+
+                            mouseDownPosition = getCoordinates(event);
+
+                            mouseDownSize.w = _hostElementNative[LEXICON.oW] - (!_isBorderBox ? _paddingX : 0);
+                            mouseDownSize.h = _hostElementNative[LEXICON.oH] - (!_isBorderBox ? _paddingY : 0);
+                            mouseDownInvertedScale = getHostElementInvertedScale();
+
+                            setupResponsiveEventListener(_documentElement,
+                                [_strSelectStartEvent, _strMouseTouchMoveEvent, _strMouseTouchUpEvent],
+                                [documentOnSelectStart, documentDragMove, documentMouseTouchUp]);
+
+                            addClass(_bodyElement, _classNameDragging);
+                            if (_scrollbarCornerElement.setCapture)
+                                _scrollbarCornerElement.setCapture();
+
+                            COMPATIBILITY.prvD(event);
+                            COMPATIBILITY.stpP(event);
+                        }
+                    });
+                }
+
+
+                //==== Utils ====//
+
+                /**
+                 * Calls the callback with the given name. The Context of this callback is always _base (this).
+                 * @param name The name of the target which shall be called.
+                 * @param args The args with which the callback shall be called.
+                 * @param dependent Boolean which decides whether the callback shall be fired, undefined is like a "true" value.
+                 */
+                function dispatchCallback(name, args, dependent) {
+                    if (dependent === false)
+                        return;
+                    if (_initialized) {
+                        var callback = _currentPreparedOptions.callbacks[name];
+                        var extensionOnName = name;
+                        var ext;
+
+                        if (extensionOnName.substr(0, 2) === 'on')
+                            extensionOnName = extensionOnName.substr(2, 1).toLowerCase() + extensionOnName.substr(3);
+
+                        if (type(callback) == TYPES.f)
+                            callback.call(_base, args);
+
+                        each(_extensions, function () {
+                            ext = this;
+                            if (type(ext.on) == TYPES.f)
+                                ext.on(extensionOnName, args);
+                        });
+                    }
+                    else if (!_destroyed)
+                        _callbacksInitQeueue.push({ n: name, a: args });
+                }
+
+                /**
+                 * Sets the "top, right, bottom, left" properties, with a given prefix, of the given css object.
+                 * @param targetCSSObject The css object to which the values shall be applied.
+                 * @param prefix The prefix of the "top, right, bottom, left" css properties. (example: 'padding-' is a valid prefix)
+                 * @param values A array of values which shall be applied to the "top, right, bottom, left" -properties. The array order is [top, right, bottom, left].
+                 * If this argument is undefined the value '' (empty string) will be applied to all properties.
+                 */
+                function setTopRightBottomLeft(targetCSSObject, prefix, values) {
+                    prefix = prefix || _strEmpty;
+                    values = values || [_strEmpty, _strEmpty, _strEmpty, _strEmpty];
+
+                    targetCSSObject[prefix + _strTop] = values[0];
+                    targetCSSObject[prefix + _strRight] = values[1];
+                    targetCSSObject[prefix + _strBottom] = values[2];
+                    targetCSSObject[prefix + _strLeft] = values[3];
+                }
+
+                /**
+                 * Gets the "top, right, bottom, left" CSS properties of the CSS property with the given prefix from the host element.
+                 * @param prefix The prefix of the "top, right, bottom, left" css properties. (example: 'padding-' is a valid prefix)
+                 * @param suffix The suffix of the "top, right, bottom, left" css properties. (example: 'border-' is a valid prefix with '-width' is a valid suffix)
+                 * @param zeroX True if the x axis shall be 0.
+                 * @param zeroY True if the y axis shall be 0.
+                 * @returns {{}} The object which contains the numbers of the read CSS properties.
+                 */
+                function getTopRightBottomLeftHost(prefix, suffix, zeroX, zeroY) {
+                    suffix = suffix || _strEmpty;
+                    prefix = prefix || _strEmpty;
+                    return {
+                        t: zeroY ? 0 : parseToZeroOrNumber(_hostElement.css(prefix + _strTop + suffix)),
+                        r: zeroX ? 0 : parseToZeroOrNumber(_hostElement.css(prefix + _strRight + suffix)),
+                        b: zeroY ? 0 : parseToZeroOrNumber(_hostElement.css(prefix + _strBottom + suffix)),
+                        l: zeroX ? 0 : parseToZeroOrNumber(_hostElement.css(prefix + _strLeft + suffix))
+                    };
+                }
+
+                /**
+                 * Returns the computed CSS transition string from the given element.
+                 * @param element The element from which the transition string shall be returned.
+                 * @returns {string} The CSS transition string from the given element.
+                 */
+                function getCSSTransitionString(element) {
+                    var transitionStr = VENDORS._cssProperty('transition');
+                    var assembledValue = element.css(transitionStr);
+                    if (assembledValue)
+                        return assembledValue;
+                    var regExpString = '\\s*(' + '([^,(]+(\\(.+?\\))?)+' + ')[\\s,]*';
+                    var regExpMain = new RegExp(regExpString);
+                    var regExpValidate = new RegExp('^(' + regExpString + ')+$');
+                    var properties = 'property duration timing-function delay'.split(' ');
+                    var result = [];
+                    var strResult;
+                    var valueArray;
+                    var i = 0;
+                    var j;
+                    var splitCssStyleByComma = function (str) {
+                        strResult = [];
+                        if (!str.match(regExpValidate))
+                            return str;
+                        while (str.match(regExpMain)) {
+                            strResult.push(RegExp.$1);
+                            str = str.replace(regExpMain, _strEmpty);
+                        }
+
+                        return strResult;
+                    };
+                    for (; i < properties[LEXICON.l]; i++) {
+                        valueArray = splitCssStyleByComma(element.css(transitionStr + '-' + properties[i]));
+                        for (j = 0; j < valueArray[LEXICON.l]; j++)
+                            result[j] = (result[j] ? result[j] + _strSpace : _strEmpty) + valueArray[j];
+                    }
+                    return result.join(', ');
+                }
+
+                /**
+                 * Generates a Regular Expression which matches with a string which starts with 'os-host'.
+                 * @param {boolean} withCurrClassNameOption The Regular Expression also matches if the string is the current ClassName option (multiple values splitted by space possible).
+                 * @param {boolean} withOldClassNameOption The Regular Expression also matches if the string is the old ClassName option (multiple values splitted by space possible).
+                 */
+                function createHostClassNameRegExp(withCurrClassNameOption, withOldClassNameOption) {
+                    var i;
+                    var split;
+                    var appendix;
+                    var appendClasses = function (classes, condition) {
+                        appendix = '';
+                        if (condition && typeof classes == TYPES.s) {
+                            split = classes.split(_strSpace);
+                            for (i = 0; i < split[LEXICON.l]; i++)
+                                appendix += '|' + split[i] + '$';
+                            // split[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') for escaping regex characters
+                        }
+                        return appendix;
+                    };
+
+                    return new RegExp(
+                        '(^' + _classNameHostElement + '([-_].+|)$)' +
+                        appendClasses(_classNameCache, withCurrClassNameOption) +
+                        appendClasses(_oldClassName, withOldClassNameOption), 'g');
+                }
+
+                /**
+                 * Calculates the host-elements inverted scale. (invertedScale = 1 / scale)
+                 * @returns {{x: number, y: number}} The scale of the host-element.
+                 */
+                function getHostElementInvertedScale() {
+                    var rect = _paddingElementNative[LEXICON.bCR]();
+                    return {
+                        x: _supportTransform ? 1 / (MATH.round(rect.width) / _paddingElementNative[LEXICON.oW]) || 1 : 1,
+                        y: _supportTransform ? 1 / (MATH.round(rect.height) / _paddingElementNative[LEXICON.oH]) || 1 : 1
+                    };
+                }
+
+                /**
+                 * Checks whether the given object is a HTMLElement.
+                 * @param o The object which shall be checked.
+                 * @returns {boolean} True the given object is a HTMLElement, false otherwise.
+                 */
+                function isHTMLElement(o) {
+                    var strOwnerDocument = 'ownerDocument';
+                    var strHTMLElement = 'HTMLElement';
+                    var wnd = o && o[strOwnerDocument] ? (o[strOwnerDocument].parentWindow || window) : window;
+                    return (
+                        typeof wnd[strHTMLElement] == TYPES.o ? o instanceof wnd[strHTMLElement] : //DOM2
+                            o && typeof o == TYPES.o && o !== null && o.nodeType === 1 && typeof o.nodeName == TYPES.s
+                    );
+                }
+
+                /**
+                 * Compares 2 arrays and returns the differences between them as a array.
+                 * @param a1 The first array which shall be compared.
+                 * @param a2 The second array which shall be compared.
+                 * @returns {Array} The differences between the two arrays.
+                 */
+                function getArrayDifferences(a1, a2) {
+                    var a = [];
+                    var diff = [];
+                    var i;
+                    var k;
+                    for (i = 0; i < a1.length; i++)
+                        a[a1[i]] = true;
+                    for (i = 0; i < a2.length; i++) {
+                        if (a[a2[i]])
+                            delete a[a2[i]];
+                        else
+                            a[a2[i]] = true;
+                    }
+                    for (k in a)
+                        diff.push(k);
+                    return diff;
+                }
+
+                /**
+                 * Returns Zero or the number to which the value can be parsed.
+                 * @param value The value which shall be parsed.
+                 * @param toFloat Indicates whether the number shall be parsed to a float.
+                 */
+                function parseToZeroOrNumber(value, toFloat) {
+                    var num = toFloat ? parseFloat(value) : parseInt(value, 10);
+                    return isNaN(num) ? 0 : num;
+                }
+
+                /**
+                 * Gets several information of the textarea and returns them as a object or undefined if the browser doesn't support it.
+                 * @returns {{cursorRow: Number, cursorCol, rows: Number, cols: number, wRow: number, pos: number, max : number}} or undefined if not supported.
+                 */
+                function getTextareaInfo() {
+                    //read needed values
+                    var textareaCursorPosition = _targetElementNative.selectionStart;
+                    if (textareaCursorPosition === undefined)
+                        return;
+
+                    var textareaValue = _targetElement.val();
+                    var textareaLength = textareaValue[LEXICON.l];
+                    var textareaRowSplit = textareaValue.split('\n');
+                    var textareaLastRow = textareaRowSplit[LEXICON.l];
+                    var textareaCurrentCursorRowSplit = textareaValue.substr(0, textareaCursorPosition).split('\n');
+                    var widestRow = 0;
+                    var textareaLastCol = 0;
+                    var cursorRow = textareaCurrentCursorRowSplit[LEXICON.l];
+                    var cursorCol = textareaCurrentCursorRowSplit[textareaCurrentCursorRowSplit[LEXICON.l] - 1][LEXICON.l];
+                    var rowCols;
+                    var i;
+
+                    //get widest Row and the last column of the textarea
+                    for (i = 0; i < textareaRowSplit[LEXICON.l]; i++) {
+                        rowCols = textareaRowSplit[i][LEXICON.l];
+                        if (rowCols > textareaLastCol) {
+                            widestRow = i + 1;
+                            textareaLastCol = rowCols;
+                        }
+                    }
+
+                    return {
+                        _cursorRow: cursorRow, //cursorRow
+                        _cursorColumn: cursorCol, //cursorCol
+                        _rows: textareaLastRow, //rows
+                        _columns: textareaLastCol, //cols
+                        _widestRow: widestRow, //wRow
+                        _cursorPosition: textareaCursorPosition, //pos
+                        _cursorMax: textareaLength //max
+                    };
+                }
+
+                /**
+                 * Determines whether native overlay scrollbars are active.
+                 * @returns {boolean} True if native overlay scrollbars are active, false otherwise.
+                 */
+                function nativeOverlayScrollbarsAreActive() {
+                    return (_ignoreOverlayScrollbarHidingCache && (_nativeScrollbarIsOverlaid.x && _nativeScrollbarIsOverlaid.y));
+                }
+
+                /**
+                 * Gets the element which is used to measure the content size.
+                 * @returns {*} TextareaCover if target element is textarea else the ContentElement.
+                 */
+                function getContentMeasureElement() {
+                    return _isTextarea ? _textareaCoverElement[0] : _contentElementNative;
+                }
+
+                /**
+                 * Generates a string which represents a HTML div with the given classes or attributes.
+                 * @param classesOrAttrs The class of the div as string or a object which represents the attributes of the div. (The class attribute can also be written as "className".)
+                 * @param content The content of the div as string.
+                 * @returns {string} The concated string which represents a HTML div and its content.
+                 */
+                function generateDiv(classesOrAttrs, content) {
+                    return '<div ' + (classesOrAttrs ? type(classesOrAttrs) == TYPES.s ?
+                        'class="' + classesOrAttrs + '"' :
+                        (function () {
+                            var key;
+                            var attrs = _strEmpty;
+                            if (FRAMEWORK.isPlainObject(classesOrAttrs)) {
+                                for (key in classesOrAttrs)
+                                    attrs += (key === 'c' ? 'class' : key) + '="' + classesOrAttrs[key] + '" ';
+                            }
+                            return attrs;
+                        })() :
+                        _strEmpty) +
+                        '>' +
+                        (content || _strEmpty) +
+                        '</div>';
+                }
+
+                /**
+                 * Selects or generates a div with the given class attribute.
+                 * @param className The class names (divided by spaces) of the div which shall be selected or generated.
+                 * @param selectParentOrOnlyChildren The parent element from which of the element shall be selected. (if undefined or boolean its hostElement)
+                 * If its a boolean it decides whether only the children of the host element shall be selected.
+                 * @returns {*} The generated or selected element.
+                 */
+                function selectOrGenerateDivByClass(className, selectParentOrOnlyChildren) {
+                    var onlyChildren = type(selectParentOrOnlyChildren) == TYPES.b;
+                    var selectParent = onlyChildren ? _hostElement : (selectParentOrOnlyChildren || _hostElement);
+
+                    return (_domExists && !selectParent[LEXICON.l])
+                        ? null
+                        : _domExists
+                            ? selectParent[onlyChildren ? 'children' : 'find'](_strDot + className.replace(/\s/g, _strDot)).eq(0)
+                            : FRAMEWORK(generateDiv(className))
+                }
+
+                /**
+                 * Gets the value of the given property from the given object.
+                 * @param obj The object from which the property value shall be got.
+                 * @param path The property of which the value shall be got.
+                 * @returns {*} Returns the value of the searched property or undefined of the property wasn't found.
+                 */
+                function getObjectPropVal(obj, path) {
+                    var splits = path.split(_strDot);
+                    var i = 0;
+                    var val;
+                    for (; i < splits.length; i++) {
+                        if (!obj[LEXICON.hOP](splits[i]))
+                            return;
+                        val = obj[splits[i]];
+                        if (i < splits.length && type(val) == TYPES.o)
+                            obj = val;
+                    }
+                    return val;
+                }
+
+                /**
+                 * Sets the value of the given property from the given object.
+                 * @param obj The object from which the property value shall be set.
+                 * @param path The property of which the value shall be set.
+                 * @param val The value of the property which shall be set.
+                 */
+                function setObjectPropVal(obj, path, val) {
+                    var splits = path.split(_strDot);
+                    var splitsLength = splits.length;
+                    var i = 0;
+                    var extendObj = {};
+                    var extendObjRoot = extendObj;
+                    for (; i < splitsLength; i++)
+                        extendObj = extendObj[splits[i]] = i + 1 < splitsLength ? {} : val;
+                    FRAMEWORK.extend(obj, extendObjRoot, true);
+                }
+
+                /**
+                 * Runs a action for each selector inside the updateOnLoad option.
+                 * @param {Function} action The action for each updateOnLoad selector, the arguments the function takes is the index and the value (the selector).
+                 */
+                function eachUpdateOnLoad(action) {
+                    var updateOnLoad = _currentPreparedOptions.updateOnLoad;
+                    updateOnLoad = type(updateOnLoad) == TYPES.s ? updateOnLoad.split(_strSpace) : updateOnLoad;
+
+                    if (COMPATIBILITY.isA(updateOnLoad) && !_destroyed) {
+                        each(updateOnLoad, action);
+                    }
+                }
+
+
+                //==== Utils Cache ====//
+
+                /**
+                 * Compares two values or objects and returns true if they aren't equal.
+                 * @param current The first value or object which shall be compared.
+                 * @param cache The second value or object which shall be compared.
+                 * @param force If true the returned value is always true.
+                 * @returns {boolean} True if both values or objects aren't equal or force is true, false otherwise.
+                 */
+                function checkCache(current, cache, force) {
+                    if (force)
+                        return force;
+                    if (type(current) == TYPES.o && type(cache) == TYPES.o) {
+                        for (var prop in current) {
+                            if (prop !== 'c') {
+                                if (current[LEXICON.hOP](prop) && cache[LEXICON.hOP](prop)) {
+                                    if (checkCache(current[prop], cache[prop]))
+                                        return true;
+                                }
+                                else {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        return current !== cache;
+                    }
+                    return false;
+                }
+
+
+                //==== Shortcuts ====//
+
+                /**
+                 * jQuery extend method shortcut with a appended "true" as first argument.
+                 */
+                function extendDeep() {
+                    return FRAMEWORK.extend.apply(this, [true].concat([].slice.call(arguments)));
+                }
+
+                /**
+                 * jQuery addClass method shortcut.
+                 */
+                function addClass(el, classes) {
+                    return _frameworkProto.addClass.call(el, classes);
+                }
+
+                /**
+                 * jQuery removeClass method shortcut.
+                 */
+                function removeClass(el, classes) {
+                    return _frameworkProto.removeClass.call(el, classes);
+                }
+
+                /**
+                 * Adds or removes the given classes dependent on the boolean value. True for add, false for remove.
+                 */
+                function addRemoveClass(el, classes, doAdd) {
+                    return doAdd ? addClass(el, classes) : removeClass(el, classes);
+                }
+
+                /**
+                 * jQuery remove method shortcut.
+                 */
+                function remove(el) {
+                    return _frameworkProto.remove.call(el);
+                }
+
+                /**
+                 * Finds the first child element with the given selector of the given element.
+                 * @param el The root element from which the selector shall be valid.
+                 * @param selector The selector of the searched element.
+                 * @returns {*} The first element which is a child of the given element and matches the givens selector.
+                 */
+                function findFirst(el, selector) {
+                    return _frameworkProto.find.call(el, selector).eq(0);
+                }
+
+
+                //==== API ====//
+
+                /**
+                 * Puts the instance to sleep. It wont respond to any changes in the DOM and won't update. Scrollbar Interactivity is also disabled as well as the resize handle.
+                 * This behavior can be reset by calling the update method.
+                 */
+                _base.sleep = function () {
+                    _sleeping = true;
+                };
+
+                /**
+                 * Updates the plugin and DOM to the current options.
+                 * This method should only be called if a update is 100% required.
+                 * @param force True if every property shall be updated and the cache shall be ignored.
+                 * !INTERNAL USAGE! : force can be a string "auto", "sync" or "zoom" too
+                 * if "auto" then before a real update the content size and host element attributes gets checked, and if they changed only then the update method will be called.
+                 * if "sync" then the async update process (MutationObserver or UpdateLoop) gets synchronized and a corresponding update takes place if one was needed due to pending changes.
+                 * if "zoom" then a update takes place where it's assumed that content and host size changed
+                 * @returns {boolean|undefined}
+                 * If force is "sync" then a boolean is returned which indicates whether a update was needed due to pending changes.
+                 * If force is "auto" then a boolean is returned whether a update was needed due to attribute or size changes.
+                 * undefined otherwise.
+                 */
+                _base.update = function (force) {
+                    if (_destroyed)
+                        return;
+
+                    var attrsChanged;
+                    var contentSizeC;
+                    var isString = type(force) == TYPES.s;
+                    var doUpdateAuto;
+                    var mutHost;
+                    var mutContent;
+
+                    if (isString) {
+                        if (force === _strAuto) {
+                            attrsChanged = meaningfulAttrsChanged();
+                            contentSizeC = updateAutoContentSizeChanged();
+                            doUpdateAuto = attrsChanged || contentSizeC;
+                            if (doUpdateAuto) {
+                                update({
+                                    _contentSizeChanged: contentSizeC,
+                                    _changedOptions: _initialized ? undefined : _currentPreparedOptions
+                                });
+                            }
+                        }
+                        else if (force === _strSync) {
+                            if (_mutationObserversConnected) {
+                                mutHost = _mutationObserverHostCallback(_mutationObserverHost.takeRecords());
+                                mutContent = _mutationObserverContentCallback(_mutationObserverContent.takeRecords());
+                            }
+                            else {
+                                mutHost = _base.update(_strAuto);
+                            }
+                        }
+                        else if (force === 'zoom') {
+                            update({
+                                _hostSizeChanged: true,
+                                _contentSizeChanged: true
+                            });
+                        }
+                    }
+                    else {
+                        force = _sleeping || force;
+                        _sleeping = false;
+                        if (!_base.update(_strSync) || force)
+                            update({ _force: force });
+                    }
+
+                    updateElementsOnLoad();
+
+                    return doUpdateAuto || mutHost || mutContent;
+                };
+
+                /**
+                 Gets or sets the current options. The update method will be called automatically if new options were set.
+                 * @param newOptions If new options are given, then the new options will be set, if new options aren't given (undefined or a not a plain object) then the current options will be returned.
+                 * @param value If new options is a property path string, then this value will be used to set the option to which the property path string leads.
+                 * @returns {*}
+                 */
+                _base.options = function (newOptions, value) {
+                    var option = {};
+                    var changedOps;
+
+                    //return current options if newOptions are undefined or empty
+                    if (FRAMEWORK.isEmptyObject(newOptions) || !FRAMEWORK.isPlainObject(newOptions)) {
+                        if (type(newOptions) == TYPES.s) {
+                            if (arguments.length > 1) {
+                                setObjectPropVal(option, newOptions, value);
+                                changedOps = setOptions(option);
+                            }
+                            else
+                                return getObjectPropVal(_currentOptions, newOptions);
+                        }
+                        else
+                            return _currentOptions;
+                    }
+                    else {
+                        changedOps = setOptions(newOptions);
+                    }
+
+                    if (!FRAMEWORK.isEmptyObject(changedOps)) {
+                        update({ _changedOptions: changedOps });
+                    }
+                };
+
+                /**
+                 * Restore the DOM, disconnects all observers, remove all resize observers and put the instance to sleep.
+                 */
+                _base.destroy = function () {
+                    if (_destroyed)
+                        return;
+
+                    //remove this instance from auto update loop
+                    autoUpdateLoop.remove(_base);
+
+                    //disconnect all mutation observers
+                    disconnectMutationObservers();
+
+                    //remove all resize observers
+                    setupResizeObserver(_sizeObserverElement);
+                    setupResizeObserver(_sizeAutoObserverElement);
+
+                    //remove all extensions
+                    for (var extName in _extensions)
+                        _base.removeExt(extName);
+
+                    //remove all 'destroy' events
+                    while (_destroyEvents[LEXICON.l] > 0)
+                        _destroyEvents.pop()();
+
+                    //remove all events from host element
+                    setupHostMouseTouchEvents(true);
+
+                    //remove all helper / detection elements
+                    if (_contentGlueElement)
+                        remove(_contentGlueElement);
+                    if (_contentArrangeElement)
+                        remove(_contentArrangeElement);
+                    if (_sizeAutoObserverAdded)
+                        remove(_sizeAutoObserverElement);
+
+                    //remove all generated DOM
+                    setupScrollbarsDOM(true);
+                    setupScrollbarCornerDOM(true);
+                    setupStructureDOM(true);
+
+                    //remove all generated image load events
+                    for (var i = 0; i < _updateOnLoadElms[LEXICON.l]; i++)
+                        FRAMEWORK(_updateOnLoadElms[i]).off(_updateOnLoadEventName, updateOnLoadCallback);
+                    _updateOnLoadElms = undefined;
+
+                    _destroyed = true;
+                    _sleeping = true;
+
+                    //remove this instance from the instances list
+                    INSTANCES(pluginTargetElement, 0);
+                    dispatchCallback('onDestroyed');
+
+                    //remove all properties and methods
+                    //for (var property in _base)
+                    //    delete _base[property];
+                    //_base = undefined;
+                };
+
+                /**
+                 * Scrolls to a given position or element.
+                 * @param coordinates
+                 * 1. Can be "coordinates" which looks like:
+                 *    { x : ?, y : ? } OR          Object with x and y properties
+                 *    { left : ?, top : ? } OR     Object with left and top properties
+                 *    { l : ?, t : ? } OR          Object with l and t properties
+                 *    [ ?, ? ] OR                  Array where the first two element are the coordinates (first is x, second is y)
+                 *    ?                            A single value which stays for both axis
+                 *    A value can be a number, a string or a calculation.
+                 *
+                 *    Operators:
+                 *    [NONE]  The current scroll will be overwritten by the value.
+                 *    '+='    The value will be added to the current scroll offset
+                 *    '-='    The value will be subtracted from the current scroll offset
+                 *    '*='    The current scroll wil be multiplicated by the value.
+                 *    '/='    The current scroll wil be divided by the value.
+                 *
+                 *    Units:
+                 *    [NONE]  The value is the final scroll amount.                   final = (value * 1)
+                 *    'px'    Same as none
+                 *    '%'     The value is dependent on the current scroll value.     final = ((currentScrollValue / 100) * value)
+                 *    'vw'    The value is multiplicated by the viewport width.       final = (value * viewportWidth)
+                 *    'vh'    The value is multiplicated by the viewport height.      final = (value * viewportHeight)
+                 *
+                 *    example final values:
+                 *    200, '200px', '50%', '1vw', '1vh', '+=200', '/=1vw', '*=2px', '-=5vh', '+=33%', '+= 50% - 2px', '-= 1vw - 50%'
+                 *
+                 * 2. Can be a HTML or jQuery element:
+                 *    The final scroll offset is the offset (without margin) of the given HTML / jQuery element.
+                 *
+                 * 3. Can be a object with a HTML or jQuery element with additional settings:
+                 *    {
+                 *      el : [HTMLElement, jQuery element],             MUST be specified, else this object isn't valid.
+                 *      scroll : [string, array, object],               Default value is 'always'.
+                 *      block : [string, array, object],                Default value is 'begin'.
+                 *      margin : [number, boolean, array, object]       Default value is false.
+                 *    }
+                 *
+                 *    Possible scroll settings are:
+                 *    'always'      Scrolls always.
+                 *    'ifneeded'    Scrolls only if the element isnt fully in view.
+                 *    'never'       Scrolls never.
+                 *
+                 *    Possible block settings are:
+                 *    'begin'   Both axis shall be docked to the "begin" edge. - The element will be docked to the top and left edge of the viewport.
+                 *    'end'     Both axis shall be docked to the "end" edge. - The element will be docked to the bottom and right edge of the viewport. (If direction is RTL to the bottom and left edge.)
+                 *    'center'  Both axis shall be docked to "center". - The element will be centered in the viewport.
+                 *    'nearest' The element will be docked to the nearest edge(s).
+                 *
+                 *    Possible margin settings are: -- The actual margin of the element wont be affect, this option affects only the final scroll offset.
+                 *    [BOOLEAN]                                         If true the css margin of the element will be used, if false no margin will be used.
+                 *    [NUMBER]                                          The margin will be used for all edges.
+                 *
+                 * @param duration The duration of the scroll animation, OR a jQuery animation configuration object.
+                 * @param easing The animation easing.
+                 * @param complete The animation complete callback.
+                 * @returns {{
+                 *   position: {x: number, y: number},
+                 *   ratio: {x: number, y: number},
+                 *   max: {x: number, y: number},
+                 *   handleOffset: {x: number, y: number},
+                 *   handleLength: {x: number, y: number},
+                 *   handleLengthRatio: {x: number, y: number}, t
+                 *   rackLength: {x: number, y: number},
+                 *   isRTL: boolean,
+                 *   isRTLNormalized: boolean
+                 *  }}
+                 */
+                _base.scroll = function (coordinates, duration, easing, complete) {
+                    if (arguments.length === 0 || coordinates === undefined) {
+                        var infoX = _scrollHorizontalInfo;
+                        var infoY = _scrollVerticalInfo;
+                        var normalizeInvert = _normalizeRTLCache && _isRTL && _rtlScrollBehavior.i;
+                        var normalizeNegate = _normalizeRTLCache && _isRTL && _rtlScrollBehavior.n;
+                        var scrollX = infoX._currentScroll;
+                        var scrollXRatio = infoX._currentScrollRatio;
+                        var maxScrollX = infoX._maxScroll;
+                        scrollXRatio = normalizeInvert ? 1 - scrollXRatio : scrollXRatio;
+                        scrollX = normalizeInvert ? maxScrollX - scrollX : scrollX;
+                        scrollX *= normalizeNegate ? -1 : 1;
+                        maxScrollX *= normalizeNegate ? -1 : 1;
+
+                        return {
+                            position: {
+                                x: scrollX,
+                                y: infoY._currentScroll
+                            },
+                            ratio: {
+                                x: scrollXRatio,
+                                y: infoY._currentScrollRatio
+                            },
+                            max: {
+                                x: maxScrollX,
+                                y: infoY._maxScroll
+                            },
+                            handleOffset: {
+                                x: infoX._handleOffset,
+                                y: infoY._handleOffset
+                            },
+                            handleLength: {
+                                x: infoX._handleLength,
+                                y: infoY._handleLength
+                            },
+                            handleLengthRatio: {
+                                x: infoX._handleLengthRatio,
+                                y: infoY._handleLengthRatio
+                            },
+                            trackLength: {
+                                x: infoX._trackLength,
+                                y: infoY._trackLength
+                            },
+                            snappedHandleOffset: {
+                                x: infoX._snappedHandleOffset,
+                                y: infoY._snappedHandleOffset
+                            },
+                            isRTL: _isRTL,
+                            isRTLNormalized: _normalizeRTLCache
+                        };
+                    }
+
+                    _base.update(_strSync);
+
+                    var normalizeRTL = _normalizeRTLCache;
+                    var coordinatesXAxisProps = [_strX, _strLeft, 'l'];
+                    var coordinatesYAxisProps = [_strY, _strTop, 't'];
+                    var coordinatesOperators = ['+=', '-=', '*=', '/='];
+                    var durationIsObject = type(duration) == TYPES.o;
+                    var completeCallback = durationIsObject ? duration.complete : complete;
+                    var i;
+                    var finalScroll = {};
+                    var specialEasing = {};
+                    var doScrollLeft;
+                    var doScrollTop;
+                    var animationOptions;
+                    var strEnd = 'end';
+                    var strBegin = 'begin';
+                    var strCenter = 'center';
+                    var strNearest = 'nearest';
+                    var strAlways = 'always';
+                    var strNever = 'never';
+                    var strIfNeeded = 'ifneeded';
+                    var strLength = LEXICON.l;
+                    var settingsAxis;
+                    var settingsScroll;
+                    var settingsBlock;
+                    var settingsMargin;
+                    var finalElement;
+                    var elementObjSettingsAxisValues = [_strX, _strY, 'xy', 'yx'];
+                    var elementObjSettingsBlockValues = [strBegin, strEnd, strCenter, strNearest];
+                    var elementObjSettingsScrollValues = [strAlways, strNever, strIfNeeded];
+                    var coordinatesIsElementObj = coordinates[LEXICON.hOP]('el');
+                    var possibleElement = coordinatesIsElementObj ? coordinates.el : coordinates;
+                    var possibleElementIsJQuery = possibleElement instanceof FRAMEWORK || JQUERY ? possibleElement instanceof JQUERY : false;
+                    var possibleElementIsHTMLElement = possibleElementIsJQuery ? false : isHTMLElement(possibleElement);
+                    var updateScrollbarInfos = function () {
+                        if (doScrollLeft)
+                            refreshScrollbarHandleOffset(true);
+                        if (doScrollTop)
+                            refreshScrollbarHandleOffset(false);
+                    };
+                    var proxyCompleteCallback = type(completeCallback) != TYPES.f ? undefined : function () {
+                        updateScrollbarInfos();
+                        completeCallback();
+                    };
+                    function checkSettingsStringValue(currValue, allowedValues) {
+                        for (i = 0; i < allowedValues[strLength]; i++) {
+                            if (currValue === allowedValues[i])
+                                return true;
+                        }
+                        return false;
+                    }
+                    function getRawScroll(isX, coordinates) {
+                        var coordinateProps = isX ? coordinatesXAxisProps : coordinatesYAxisProps;
+                        coordinates = type(coordinates) == TYPES.s || type(coordinates) == TYPES.n ? [coordinates, coordinates] : coordinates;
+
+                        if (COMPATIBILITY.isA(coordinates))
+                            return isX ? coordinates[0] : coordinates[1];
+                        else if (type(coordinates) == TYPES.o) {
+                            //decides RTL normalization "hack" with .n
+                            //normalizeRTL = type(coordinates.n) == TYPES.b ? coordinates.n : normalizeRTL;
+                            for (i = 0; i < coordinateProps[strLength]; i++)
+                                if (coordinateProps[i] in coordinates)
+                                    return coordinates[coordinateProps[i]];
+                        }
+                    }
+                    function getFinalScroll(isX, rawScroll) {
+                        var isString = type(rawScroll) == TYPES.s;
+                        var operator;
+                        var amount;
+                        var scrollInfo = isX ? _scrollHorizontalInfo : _scrollVerticalInfo;
+                        var currScroll = scrollInfo._currentScroll;
+                        var maxScroll = scrollInfo._maxScroll;
+                        var mult = ' * ';
+                        var finalValue;
+                        var isRTLisX = _isRTL && isX;
+                        var normalizeShortcuts = isRTLisX && _rtlScrollBehavior.n && !normalizeRTL;
+                        var strReplace = 'replace';
+                        var evalFunc = eval;
+                        var possibleOperator;
+                        if (isString) {
+                            //check operator
+                            if (rawScroll[strLength] > 2) {
+                                possibleOperator = rawScroll.substr(0, 2);
+                                if (inArray(possibleOperator, coordinatesOperators) > -1)
+                                    operator = possibleOperator;
+                            }
+
+                            //calculate units and shortcuts
+                            rawScroll = operator ? rawScroll.substr(2) : rawScroll;
+                            rawScroll = rawScroll
+                            [strReplace](/min/g, 0) //'min' = 0%
+                            [strReplace](/</g, 0)   //'<'   = 0%
+                            [strReplace](/max/g, (normalizeShortcuts ? '-' : _strEmpty) + _strHundredPercent)    //'max' = 100%
+                            [strReplace](/>/g, (normalizeShortcuts ? '-' : _strEmpty) + _strHundredPercent)      //'>'   = 100%
+                            [strReplace](/px/g, _strEmpty)
+                            [strReplace](/%/g, mult + (maxScroll * (isRTLisX && _rtlScrollBehavior.n ? -1 : 1) / 100.0))
+                            [strReplace](/vw/g, mult + _viewportSize.w)
+                            [strReplace](/vh/g, mult + _viewportSize.h);
+                            amount = parseToZeroOrNumber(isNaN(rawScroll) ? parseToZeroOrNumber(evalFunc(rawScroll), true).toFixed() : rawScroll);
+                        }
+                        else {
+                            amount = rawScroll;
+                        }
+
+                        if (amount !== undefined && !isNaN(amount) && type(amount) == TYPES.n) {
+                            var normalizeIsRTLisX = normalizeRTL && isRTLisX;
+                            var operatorCurrScroll = currScroll * (normalizeIsRTLisX && _rtlScrollBehavior.n ? -1 : 1);
+                            var invert = normalizeIsRTLisX && _rtlScrollBehavior.i;
+                            var negate = normalizeIsRTLisX && _rtlScrollBehavior.n;
+                            operatorCurrScroll = invert ? (maxScroll - operatorCurrScroll) : operatorCurrScroll;
+                            switch (operator) {
+                                case '+=':
+                                    finalValue = operatorCurrScroll + amount;
+                                    break;
+                                case '-=':
+                                    finalValue = operatorCurrScroll - amount;
+                                    break;
+                                case '*=':
+                                    finalValue = operatorCurrScroll * amount;
+                                    break;
+                                case '/=':
+                                    finalValue = operatorCurrScroll / amount;
+                                    break;
+                                default:
+                                    finalValue = amount;
+                                    break;
+                            }
+                            finalValue = invert ? maxScroll - finalValue : finalValue;
+                            finalValue *= negate ? -1 : 1;
+                            finalValue = isRTLisX && _rtlScrollBehavior.n ? MATH.min(0, MATH.max(maxScroll, finalValue)) : MATH.max(0, MATH.min(maxScroll, finalValue));
+                        }
+                        return finalValue === currScroll ? undefined : finalValue;
+                    }
+                    function getPerAxisValue(value, valueInternalType, defaultValue, allowedValues) {
+                        var resultDefault = [defaultValue, defaultValue];
+                        var valueType = type(value);
+                        var valueArrLength;
+                        var valueArrItem;
+
+                        //value can be [ string, or array of two strings ]
+                        if (valueType == valueInternalType) {
+                            value = [value, value];
+                        }
+                        else if (valueType == TYPES.a) {
+                            valueArrLength = value[strLength];
+                            if (valueArrLength > 2 || valueArrLength < 1)
+                                value = resultDefault;
+                            else {
+                                if (valueArrLength === 1)
+                                    value[1] = defaultValue;
+                                for (i = 0; i < valueArrLength; i++) {
+                                    valueArrItem = value[i];
+                                    if (type(valueArrItem) != valueInternalType || !checkSettingsStringValue(valueArrItem, allowedValues)) {
+                                        value = resultDefault;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else if (valueType == TYPES.o)
+                            value = [value[_strX] || defaultValue, value[_strY] || defaultValue];
+                        else
+                            value = resultDefault;
+                        return { x: value[0], y: value[1] };
+                    }
+                    function generateMargin(marginTopRightBottomLeftArray) {
+                        var result = [];
+                        var currValue;
+                        var currValueType;
+                        var valueDirections = [_strTop, _strRight, _strBottom, _strLeft];
+                        for (i = 0; i < marginTopRightBottomLeftArray[strLength]; i++) {
+                            if (i === valueDirections[strLength])
+                                break;
+                            currValue = marginTopRightBottomLeftArray[i];
+                            currValueType = type(currValue);
+                            if (currValueType == TYPES.b)
+                                result.push(currValue ? parseToZeroOrNumber(finalElement.css(_strMarginMinus + valueDirections[i])) : 0);
+                            else
+                                result.push(currValueType == TYPES.n ? currValue : 0);
+                        }
+                        return result;
+                    }
+
+                    if (possibleElementIsJQuery || possibleElementIsHTMLElement) {
+                        //get settings
+                        var margin = coordinatesIsElementObj ? coordinates.margin : 0;
+                        var axis = coordinatesIsElementObj ? coordinates.axis : 0;
+                        var scroll = coordinatesIsElementObj ? coordinates.scroll : 0;
+                        var block = coordinatesIsElementObj ? coordinates.block : 0;
+                        var marginDefault = [0, 0, 0, 0];
+                        var marginType = type(margin);
+                        var marginLength;
+                        finalElement = possibleElementIsJQuery ? possibleElement : FRAMEWORK(possibleElement);
+
+                        if (finalElement[strLength] > 0) {
+                            //margin can be [ boolean, number, array of 2, array of 4, object ]
+                            if (marginType == TYPES.n || marginType == TYPES.b)
+                                margin = generateMargin([margin, margin, margin, margin]);
+                            else if (marginType == TYPES.a) {
+                                marginLength = margin[strLength];
+                                if (marginLength === 2)
+                                    margin = generateMargin([margin[0], margin[1], margin[0], margin[1]]);
+                                else if (marginLength >= 4)
+                                    margin = generateMargin(margin);
+                                else
+                                    margin = marginDefault;
+                            }
+                            else if (marginType == TYPES.o)
+                                margin = generateMargin([margin[_strTop], margin[_strRight], margin[_strBottom], margin[_strLeft]]);
+                            else
+                                margin = marginDefault;
+
+                            //block = type(block) === TYPES.b ? block ? [ strNearest, strBegin ] : [ strNearest, strEnd ] : block;
+                            settingsAxis = checkSettingsStringValue(axis, elementObjSettingsAxisValues) ? axis : 'xy';
+                            settingsScroll = getPerAxisValue(scroll, TYPES.s, strAlways, elementObjSettingsScrollValues);
+                            settingsBlock = getPerAxisValue(block, TYPES.s, strBegin, elementObjSettingsBlockValues);
+                            settingsMargin = margin;
+
+                            var viewportScroll = {
+                                l: _scrollHorizontalInfo._currentScroll,
+                                t: _scrollVerticalInfo._currentScroll
+                            };
+                            // use padding element instead of viewport element because padding element has never padding, margin or position applied.
+                            var viewportOffset = _paddingElement.offset();
+
+                            //get coordinates
+                            var elementOffset = finalElement.offset();
+                            var doNotScroll = {
+                                x: settingsScroll.x == strNever || settingsAxis == _strY,
+                                y: settingsScroll.y == strNever || settingsAxis == _strX
+                            };
+                            elementOffset[_strTop] -= settingsMargin[0];
+                            elementOffset[_strLeft] -= settingsMargin[3];
+                            var elementScrollCoordinates = {
+                                x: MATH.round(elementOffset[_strLeft] - viewportOffset[_strLeft] + viewportScroll.l),
+                                y: MATH.round(elementOffset[_strTop] - viewportOffset[_strTop] + viewportScroll.t)
+                            };
+                            if (_isRTL) {
+                                if (!_rtlScrollBehavior.n && !_rtlScrollBehavior.i)
+                                    elementScrollCoordinates.x = MATH.round(viewportOffset[_strLeft] - elementOffset[_strLeft] + viewportScroll.l);
+                                if (_rtlScrollBehavior.n && normalizeRTL)
+                                    elementScrollCoordinates.x *= -1;
+                                if (_rtlScrollBehavior.i && normalizeRTL)
+                                    elementScrollCoordinates.x = MATH.round(viewportOffset[_strLeft] - elementOffset[_strLeft] + (_scrollHorizontalInfo._maxScroll - viewportScroll.l));
+                            }
+
+                            //measuring is required
+                            if (settingsBlock.x != strBegin || settingsBlock.y != strBegin || settingsScroll.x == strIfNeeded || settingsScroll.y == strIfNeeded || _isRTL) {
+                                var measuringElm = finalElement[0];
+                                var rawElementSize = _supportTransform ? measuringElm[LEXICON.bCR]() : {
+                                    width: measuringElm[LEXICON.oW],
+                                    height: measuringElm[LEXICON.oH]
+                                };
+                                var elementSize = {
+                                    w: rawElementSize[_strWidth] + settingsMargin[3] + settingsMargin[1],
+                                    h: rawElementSize[_strHeight] + settingsMargin[0] + settingsMargin[2]
+                                };
+                                var finalizeBlock = function (isX) {
+                                    var vars = getScrollbarVars(isX);
+                                    var wh = vars._w_h;
+                                    var lt = vars._left_top;
+                                    var xy = vars._x_y;
+                                    var blockIsEnd = settingsBlock[xy] == (isX ? _isRTL ? strBegin : strEnd : strEnd);
+                                    var blockIsCenter = settingsBlock[xy] == strCenter;
+                                    var blockIsNearest = settingsBlock[xy] == strNearest;
+                                    var scrollNever = settingsScroll[xy] == strNever;
+                                    var scrollIfNeeded = settingsScroll[xy] == strIfNeeded;
+                                    var vpSize = _viewportSize[wh];
+                                    var vpOffset = viewportOffset[lt];
+                                    var elSize = elementSize[wh];
+                                    var elOffset = elementOffset[lt];
+                                    var divide = blockIsCenter ? 2 : 1;
+                                    var elementCenterOffset = elOffset + (elSize / 2);
+                                    var viewportCenterOffset = vpOffset + (vpSize / 2);
+                                    var isInView =
+                                        elSize <= vpSize
+                                        && elOffset >= vpOffset
+                                        && elOffset + elSize <= vpOffset + vpSize;
+
+                                    if (scrollNever)
+                                        doNotScroll[xy] = true;
+                                    else if (!doNotScroll[xy]) {
+                                        if (blockIsNearest || scrollIfNeeded) {
+                                            doNotScroll[xy] = scrollIfNeeded ? isInView : false;
+                                            blockIsEnd = elSize < vpSize ? elementCenterOffset > viewportCenterOffset : elementCenterOffset < viewportCenterOffset;
+                                        }
+                                        elementScrollCoordinates[xy] -= blockIsEnd || blockIsCenter ? ((vpSize / divide) - (elSize / divide)) * (isX && _isRTL && normalizeRTL ? -1 : 1) : 0;
+                                    }
+                                };
+                                finalizeBlock(true);
+                                finalizeBlock(false);
+                            }
+
+                            if (doNotScroll.y)
+                                delete elementScrollCoordinates.y;
+                            if (doNotScroll.x)
+                                delete elementScrollCoordinates.x;
+
+                            coordinates = elementScrollCoordinates;
+                        }
+                    }
+
+                    finalScroll[_strScrollLeft] = getFinalScroll(true, getRawScroll(true, coordinates));
+                    finalScroll[_strScrollTop] = getFinalScroll(false, getRawScroll(false, coordinates));
+                    doScrollLeft = finalScroll[_strScrollLeft] !== undefined;
+                    doScrollTop = finalScroll[_strScrollTop] !== undefined;
+
+                    if ((doScrollLeft || doScrollTop) && (duration > 0 || durationIsObject)) {
+                        if (durationIsObject) {
+                            duration.complete = proxyCompleteCallback;
+                            _viewportElement.animate(finalScroll, duration);
+                        }
+                        else {
+                            animationOptions = {
+                                duration: duration,
+                                complete: proxyCompleteCallback
+                            };
+                            if (COMPATIBILITY.isA(easing) || FRAMEWORK.isPlainObject(easing)) {
+                                specialEasing[_strScrollLeft] = easing[0] || easing.x;
+                                specialEasing[_strScrollTop] = easing[1] || easing.y;
+                                animationOptions.specialEasing = specialEasing;
+                            }
+                            else {
+                                animationOptions.easing = easing;
+                            }
+                            _viewportElement.animate(finalScroll, animationOptions);
+                        }
+                    }
+                    else {
+                        if (doScrollLeft)
+                            _viewportElement[_strScrollLeft](finalScroll[_strScrollLeft]);
+                        if (doScrollTop)
+                            _viewportElement[_strScrollTop](finalScroll[_strScrollTop]);
+                        updateScrollbarInfos();
+                    }
+                };
+
+                /**
+                 * Stops all scroll animations.
+                 * @returns {*} The current OverlayScrollbars instance (for chaining).
+                 */
+                _base.scrollStop = function (param1, param2, param3) {
+                    _viewportElement.stop(param1, param2, param3);
+                    return _base;
+                };
+
+                /**
+                 * Returns all relevant elements.
+                 * @param elementName The name of the element which shall be returned.
+                 * @returns {{target: *, host: *, padding: *, viewport: *, content: *, scrollbarHorizontal: {scrollbar: *, track: *, handle: *}, scrollbarVertical: {scrollbar: *, track: *, handle: *}, scrollbarCorner: *} | *}
+                 */
+                _base.getElements = function (elementName) {
+                    var obj = {
+                        target: _targetElementNative,
+                        host: _hostElementNative,
+                        padding: _paddingElementNative,
+                        viewport: _viewportElementNative,
+                        content: _contentElementNative,
+                        scrollbarHorizontal: {
+                            scrollbar: _scrollbarHorizontalElement[0],
+                            track: _scrollbarHorizontalTrackElement[0],
+                            handle: _scrollbarHorizontalHandleElement[0]
+                        },
+                        scrollbarVertical: {
+                            scrollbar: _scrollbarVerticalElement[0],
+                            track: _scrollbarVerticalTrackElement[0],
+                            handle: _scrollbarVerticalHandleElement[0]
+                        },
+                        scrollbarCorner: _scrollbarCornerElement[0]
+                    };
+                    return type(elementName) == TYPES.s ? getObjectPropVal(obj, elementName) : obj;
+                };
+
+                /**
+                 * Returns a object which describes the current state of this instance.
+                 * @param stateProperty A specific property from the state object which shall be returned.
+                 * @returns {{widthAuto, heightAuto, overflowAmount, hideOverflow, hasOverflow, contentScrollSize, viewportSize, hostSize, autoUpdate} | *}
+                 */
+                _base.getState = function (stateProperty) {
+                    function prepare(obj) {
+                        if (!FRAMEWORK.isPlainObject(obj))
+                            return obj;
+                        var extended = extendDeep({}, obj);
+                        var changePropertyName = function (from, to) {
+                            if (extended[LEXICON.hOP](from)) {
+                                extended[to] = extended[from];
+                                delete extended[from];
+                            }
+                        };
+                        changePropertyName('w', _strWidth); //change w to width
+                        changePropertyName('h', _strHeight); //change h to height
+                        delete extended.c; //delete c (the 'changed' prop)
+                        return extended;
+                    };
+                    var obj = {
+                        destroyed: !!prepare(_destroyed),
+                        sleeping: !!prepare(_sleeping),
+                        autoUpdate: prepare(!_mutationObserversConnected),
+                        widthAuto: prepare(_widthAutoCache),
+                        heightAuto: prepare(_heightAutoCache),
+                        padding: prepare(_cssPaddingCache),
+                        overflowAmount: prepare(_overflowAmountCache),
+                        hideOverflow: prepare(_hideOverflowCache),
+                        hasOverflow: prepare(_hasOverflowCache),
+                        contentScrollSize: prepare(_contentScrollSizeCache),
+                        viewportSize: prepare(_viewportSize),
+                        hostSize: prepare(_hostSizeCache),
+                        documentMixed: prepare(_documentMixed)
+                    };
+                    return type(stateProperty) == TYPES.s ? getObjectPropVal(obj, stateProperty) : obj;
+                };
+
+                /**
+                 * Gets all or specific extension instance.
+                 * @param extName The name of the extension from which the instance shall be got.
+                 * @returns {{}} The instance of the extension with the given name or undefined if the instance couldn't be found.
+                 */
+                _base.ext = function (extName) {
+                    var result;
+                    var privateMethods = _extensionsPrivateMethods.split(' ');
+                    var i = 0;
+                    if (type(extName) == TYPES.s) {
+                        if (_extensions[LEXICON.hOP](extName)) {
+                            result = extendDeep({}, _extensions[extName]);
+                            for (; i < privateMethods.length; i++)
+                                delete result[privateMethods[i]];
+                        }
+                    }
+                    else {
+                        result = {};
+                        for (i in _extensions)
+                            result[i] = extendDeep({}, _base.ext(i));
+                    }
+                    return result;
+                };
+
+                /**
+                 * Adds a extension to this instance.
+                 * @param extName The name of the extension which shall be added.
+                 * @param extensionOptions The extension options which shall be used.
+                 * @returns {{}} The instance of the added extension or undefined if the extension couldn't be added properly.
+                 */
+                _base.addExt = function (extName, extensionOptions) {
+                    var registeredExtensionObj = _plugin.extension(extName);
+                    var instance;
+                    var instanceAdded;
+                    var instanceContract;
+                    var contractResult;
+                    var contractFulfilled = true;
+                    if (registeredExtensionObj) {
+                        if (!_extensions[LEXICON.hOP](extName)) {
+                            instance = registeredExtensionObj.extensionFactory.call(_base,
+                                extendDeep({}, registeredExtensionObj.defaultOptions),
+                                FRAMEWORK,
+                                COMPATIBILITY);
+
+                            if (instance) {
+                                instanceContract = instance.contract;
+                                if (type(instanceContract) == TYPES.f) {
+                                    contractResult = instanceContract(window);
+                                    contractFulfilled = type(contractResult) == TYPES.b ? contractResult : contractFulfilled;
+                                }
+                                if (contractFulfilled) {
+                                    _extensions[extName] = instance;
+                                    instanceAdded = instance.added;
+                                    if (type(instanceAdded) == TYPES.f)
+                                        instanceAdded(extensionOptions);
+
+                                    return _base.ext(extName);
+                                }
+                            }
+                        }
+                        else
+                            return _base.ext(extName);
+                    }
+                    else
+                        console.warn("A extension with the name \"" + extName + "\" isn't registered.");
+                };
+
+                /**
+                 * Removes a extension from this instance.
+                 * @param extName The name of the extension which shall be removed.
+                 * @returns {boolean} True if the extension was removed, false otherwise e.g. if the extension wasn't added before.
+                 */
+                _base.removeExt = function (extName) {
+                    var instance = _extensions[extName];
+                    var instanceRemoved;
+                    if (instance) {
+                        delete _extensions[extName];
+
+                        instanceRemoved = instance.removed;
+                        if (type(instanceRemoved) == TYPES.f)
+                            instanceRemoved();
+
+                        return true;
+                    }
+                    return false;
+                };
+
+                /**
+                 * Constructs the plugin.
+                 * @param targetElement The element to which the plugin shall be applied.
+                 * @param options The initial options of the plugin.
+                 * @param extensions The extension(s) which shall be added right after the initialization.
+                 * @returns {boolean} True if the plugin was successfully initialized, false otherwise.
+                 */
+                function construct(targetElement, options, extensions) {
+                    _defaultOptions = globals.defaultOptions;
+                    _nativeScrollbarStyling = globals.nativeScrollbarStyling;
+                    _nativeScrollbarSize = extendDeep({}, globals.nativeScrollbarSize);
+                    _nativeScrollbarIsOverlaid = extendDeep({}, globals.nativeScrollbarIsOverlaid);
+                    _overlayScrollbarDummySize = extendDeep({}, globals.overlayScrollbarDummySize);
+                    _rtlScrollBehavior = extendDeep({}, globals.rtlScrollBehavior);
+
+                    //parse & set options but don't update
+                    setOptions(extendDeep({}, _defaultOptions, options));
+
+                    _cssCalc = globals.cssCalc;
+                    _msieVersion = globals.msie;
+                    _autoUpdateRecommended = globals.autoUpdateRecommended;
+                    _supportTransition = globals.supportTransition;
+                    _supportTransform = globals.supportTransform;
+                    _supportPassiveEvents = globals.supportPassiveEvents;
+                    _supportResizeObserver = globals.supportResizeObserver;
+                    _supportMutationObserver = globals.supportMutationObserver;
+                    _restrictedMeasuring = globals.restrictedMeasuring;
+                    _documentElement = FRAMEWORK(targetElement.ownerDocument);
+                    _documentElementNative = _documentElement[0];
+                    _windowElement = FRAMEWORK(_documentElementNative.defaultView || _documentElementNative.parentWindow);
+                    _windowElementNative = _windowElement[0];
+                    _htmlElement = findFirst(_documentElement, 'html');
+                    _bodyElement = findFirst(_htmlElement, 'body');
+                    _targetElement = FRAMEWORK(targetElement);
+                    _targetElementNative = _targetElement[0];
+                    _isTextarea = _targetElement.is('textarea');
+                    _isBody = _targetElement.is('body');
+                    _documentMixed = _documentElementNative !== document;
+
+                    /* On a div Element The if checks only whether:
+                     * - the targetElement has the class "os-host"
+                     * - the targetElement has a a child with the class "os-padding"
+                     *
+                     * If that's the case, its assumed the DOM has already the following structure:
+                     * (The ".os-host" element is the targetElement)
+                     *
+                     *  <div class="os-host">
+                     *      <div class="os-resize-observer-host"></div>
+                     *      <div class="os-padding">
+                     *          <div class="os-viewport">
+                     *              <div class="os-content"></div>
+                     *          </div>
+                     *      </div>
+                     *      <div class="os-scrollbar os-scrollbar-horizontal ">
+                     *          <div class="os-scrollbar-track">
+                     *              <div class="os-scrollbar-handle"></div>
+                     *          </div>
+                     *      </div>
+                     *      <div class="os-scrollbar os-scrollbar-vertical">
+                     *          <div class="os-scrollbar-track">
+                     *              <div class="os-scrollbar-handle"></div>
+                     *          </div>
+                     *      </div>
+                     *      <div class="os-scrollbar-corner"></div>
+                     *  </div>
+                     *
+                     * =====================================================================================
+                     *
+                     * On a Textarea Element The if checks only whether:
+                     * - the targetElement has the class "os-textarea"
+                     * - the targetElement is inside a element with the class "os-content"
+                     *
+                     * If that's the case, its assumed the DOM has already the following structure:
+                     * (The ".os-textarea" (textarea) element is the targetElement)
+                     *
+                     *  <div class="os-host-textarea">
+                     *      <div class="os-resize-observer-host"></div>
+                     *      <div class="os-padding os-text-inherit">
+                     *          <div class="os-viewport os-text-inherit">
+                     *              <div class="os-content os-text-inherit">
+                     *                  <div class="os-textarea-cover"></div>
+                     *                  <textarea class="os-textarea os-text-inherit"></textarea>
+                     *              </div>
+                     *          </div>
+                     *      </div>
+                     *      <div class="os-scrollbar os-scrollbar-horizontal ">
+                     *          <div class="os-scrollbar-track">
+                     *              <div class="os-scrollbar-handle"></div>
+                     *          </div>
+                     *      </div>
+                     *      <div class="os-scrollbar os-scrollbar-vertical">
+                     *          <div class="os-scrollbar-track">
+                     *              <div class="os-scrollbar-handle"></div>
+                     *          </div>
+                     *      </div>
+                     *      <div class="os-scrollbar-corner"></div>
+                     *  </div>
+                     */
+                    _domExists = _isTextarea
+                        ? _targetElement.hasClass(_classNameTextareaElement) && _targetElement.parent().hasClass(_classNameContentElement)
+                        : _targetElement.hasClass(_classNameHostElement) && _targetElement.children(_strDot + _classNamePaddingElement)[LEXICON.l];
+
+                    var initBodyScroll;
+                    var bodyMouseTouchDownListener;
+
+                    //check if the plugin hasn't to be initialized
+                    if (_nativeScrollbarIsOverlaid.x && _nativeScrollbarIsOverlaid.y && !_currentPreparedOptions.nativeScrollbarsOverlaid.initialize) {
+                        dispatchCallback('onInitializationWithdrawn');
+                        if (_domExists) {
+                            setupStructureDOM(true);
+                            setupScrollbarsDOM(true);
+                            setupScrollbarCornerDOM(true);
+                        }
+
+                        _destroyed = true;
+                        _sleeping = true;
+
+                        return _base;
+                    }
+
+                    if (_isBody) {
+                        initBodyScroll = {};
+                        initBodyScroll.l = MATH.max(_targetElement[_strScrollLeft](), _htmlElement[_strScrollLeft](), _windowElement[_strScrollLeft]());
+                        initBodyScroll.t = MATH.max(_targetElement[_strScrollTop](), _htmlElement[_strScrollTop](), _windowElement[_strScrollTop]());
+
+                        bodyMouseTouchDownListener = function () {
+                            _viewportElement.removeAttr(LEXICON.ti);
+                            setupResponsiveEventListener(_viewportElement, _strMouseTouchDownEvent, bodyMouseTouchDownListener, true, true);
+                        }
+                    }
+
+                    //build OverlayScrollbars DOM
+                    setupStructureDOM();
+                    setupScrollbarsDOM();
+                    setupScrollbarCornerDOM();
+
+                    //create OverlayScrollbars events
+                    setupStructureEvents();
+                    setupScrollbarEvents(true);
+                    setupScrollbarEvents(false);
+                    setupScrollbarCornerEvents();
+
+                    //create mutation observers
+                    createMutationObservers();
+
+                    //build resize observer for the host element
+                    setupResizeObserver(_sizeObserverElement, hostOnResized);
+
+                    if (_isBody) {
+                        //apply the body scroll to handle it right in the update method
+                        _viewportElement[_strScrollLeft](initBodyScroll.l)[_strScrollTop](initBodyScroll.t);
+
+                        //set the focus on the viewport element so you dont have to click on the page to use keyboard keys (up / down / space) for scrolling
+                        if (document.activeElement == targetElement && _viewportElementNative.focus) {
+                            //set a tabindex to make the viewportElement focusable
+                            _viewportElement.attr(LEXICON.ti, '-1');
+                            _viewportElementNative.focus();
+
+                            /* the tabindex has to be removed due to;
+                             * If you set the tabindex attribute on an <div>, then its child content cannot be scrolled with the arrow keys unless you set tabindex on the content, too
+                             * https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex
+                             */
+                            setupResponsiveEventListener(_viewportElement, _strMouseTouchDownEvent, bodyMouseTouchDownListener, false, true);
+                        }
+                    }
+
+                    //update for the first time & initialize cache
+                    _base.update(_strAuto);
+
+                    //the plugin is initialized now!
+                    _initialized = true;
+                    dispatchCallback('onInitialized');
+
+                    //call all callbacks which would fire before the initialized was complete
+                    each(_callbacksInitQeueue, function (index, value) { dispatchCallback(value.n, value.a); });
+                    _callbacksInitQeueue = [];
+
+                    //add extensions
+                    if (type(extensions) == TYPES.s)
+                        extensions = [extensions];
+                    if (COMPATIBILITY.isA(extensions))
+                        each(extensions, function (index, value) { _base.addExt(value); });
+                    else if (FRAMEWORK.isPlainObject(extensions))
+                        each(extensions, function (key, value) { _base.addExt(key, value); });
+
+                    //add the transition class for transitions AFTER the first update & AFTER the applied extensions (for preventing unwanted transitions)
+                    setTimeout(function () {
+                        if (_supportTransition && !_destroyed)
+                            addClass(_hostElement, _classNameHostTransition);
+                    }, 333);
+
+                    return _base;
+                }
+
+                if (_plugin.valid(construct(pluginTargetElement, options, extensions))) {
+                    INSTANCES(pluginTargetElement, _base);
+                }
+
+                return _base;
+            }
+
+            /**
+             * Initializes a new OverlayScrollbarsInstance object or changes options if already initialized or returns the current instance.
+             * @param pluginTargetElements The elements to which the Plugin shall be initialized.
+             * @param options The custom options with which the plugin shall be initialized.
+             * @param extensions The extension(s) which shall be added right after initialization.
+             * @returns {*}
+             */
+            _plugin = window[PLUGINNAME] = function (pluginTargetElements, options, extensions) {
+                if (arguments[LEXICON.l] === 0)
+                    return this;
+
+                var arr = [];
+                var optsIsPlainObj = FRAMEWORK.isPlainObject(options);
+                var inst;
+                var result;
+
+                //pluginTargetElements is null or undefined
+                if (!pluginTargetElements)
+                    return optsIsPlainObj || !options ? result : arr;
+
+                /*
+                   pluginTargetElements will be converted to:
+                   1. A jQueryElement Array
+                   2. A HTMLElement Array
+                   3. A Array with a single HTML Element
+                   so pluginTargetElements is always a array.
+                */
+                pluginTargetElements = pluginTargetElements[LEXICON.l] != undefined ? pluginTargetElements : [pluginTargetElements[0] || pluginTargetElements];
+                initOverlayScrollbarsStatics();
+
+                if (pluginTargetElements[LEXICON.l] > 0) {
+                    if (optsIsPlainObj) {
+                        FRAMEWORK.each(pluginTargetElements, function (i, v) {
+                            inst = v;
+                            if (inst !== undefined)
+                                arr.push(OverlayScrollbarsInstance(inst, options, extensions, _pluginsGlobals, _pluginsAutoUpdateLoop));
+                        });
+                    }
+                    else {
+                        FRAMEWORK.each(pluginTargetElements, function (i, v) {
+                            inst = INSTANCES(v);
+                            if ((options === '!' && _plugin.valid(inst)) || (COMPATIBILITY.type(options) == TYPES.f && options(v, inst)))
+                                arr.push(inst);
+                            else if (options === undefined)
+                                arr.push(inst);
+                        });
+                    }
+                    result = arr[LEXICON.l] === 1 ? arr[0] : arr;
+                }
+                return result;
+            };
+
+            /**
+             * Returns a object which contains global information about the plugin and each instance of it.
+             * The returned object is just a copy, that means that changes to the returned object won't have any effect to the original object.
+             */
+            _plugin.globals = function () {
+                initOverlayScrollbarsStatics();
+                var globals = FRAMEWORK.extend(true, {}, _pluginsGlobals);
+                delete globals['msie'];
+                return globals;
+            };
+
+            /**
+             * Gets or Sets the default options for each new plugin initialization.
+             * @param newDefaultOptions The object with which the default options shall be extended.
+             */
+            _plugin.defaultOptions = function (newDefaultOptions) {
+                initOverlayScrollbarsStatics();
+                var currDefaultOptions = _pluginsGlobals.defaultOptions;
+                if (newDefaultOptions === undefined)
+                    return FRAMEWORK.extend(true, {}, currDefaultOptions);
+
+                //set the new default options
+                _pluginsGlobals.defaultOptions = FRAMEWORK.extend(true, {}, currDefaultOptions, _pluginsOptions._validate(newDefaultOptions, _pluginsOptions._template, true, currDefaultOptions)._default);
+            };
+
+            /**
+             * Checks whether the passed instance is a non-destroyed OverlayScrollbars instance.
+             * @param osInstance The potential OverlayScrollbars instance which shall be checked.
+             * @returns {boolean} True if the passed value is a non-destroyed OverlayScrollbars instance, false otherwise.
+             */
+            _plugin.valid = function (osInstance) {
+                return osInstance instanceof _plugin && !osInstance.getState().destroyed;
+            };
+
+            /**
+             * Registers, Unregisters or returns a extension.
+             * Register: Pass the name and the extension. (defaultOptions is optional)
+             * Unregister: Pass the name and anything except a function as extension parameter.
+             * Get extension: Pass the name of the extension which shall be got.
+             * Get all extensions: Pass no arguments.
+             * @param extensionName The name of the extension which shall be registered, unregistered or returned.
+             * @param extension A function which generates the instance of the extension or anything other to remove a already registered extension.
+             * @param defaultOptions The default options which shall be used for the registered extension.
+             */
+            _plugin.extension = function (extensionName, extension, defaultOptions) {
+                var extNameTypeString = COMPATIBILITY.type(extensionName) == TYPES.s;
+                var argLen = arguments[LEXICON.l];
+                var i = 0;
+                if (argLen < 1 || !extNameTypeString) {
+                    //return a copy of all extension objects
+                    return FRAMEWORK.extend(true, { length: _pluginsExtensions[LEXICON.l] }, _pluginsExtensions);
+                }
+                else if (extNameTypeString) {
+                    if (COMPATIBILITY.type(extension) == TYPES.f) {
+                        //register extension
+                        _pluginsExtensions.push({
+                            name: extensionName,
+                            extensionFactory: extension,
+                            defaultOptions: defaultOptions
+                        });
+                    }
+                    else {
+                        for (; i < _pluginsExtensions[LEXICON.l]; i++) {
+                            if (_pluginsExtensions[i].name === extensionName) {
+                                if (argLen > 1)
+                                    _pluginsExtensions.splice(i, 1); //remove extension
+                                else
+                                    return FRAMEWORK.extend(true, {}, _pluginsExtensions[i]); //return extension with the given name
+                            }
+                        }
+                    }
+                }
+            };
+
+            return _plugin;
+        })();
+
+        if (JQUERY && JQUERY.fn) {
+            /**
+             * The jQuery initialization interface.
+             * @param options The initial options for the construction of the plugin. To initialize the plugin, this option has to be a object! If it isn't a object, the instance(s) are returned and the plugin wont be initialized.
+             * @param extensions The extension(s) which shall be added right after initialization.
+             * @returns {*} After initialization it returns the jQuery element array, else it returns the instance(s) of the elements which are selected.
+             */
+            JQUERY.fn.overlayScrollbars = function (options, extensions) {
+                var _elements = this;
+                if (JQUERY.isPlainObject(options)) {
+                    JQUERY.each(_elements, function () { PLUGIN(this, options, extensions); });
+                    return _elements;
+                }
+                else
+                    return PLUGIN(_elements, options);
+            };
+        }
+        return PLUGIN;
+    }
+));
+
+/***/ }),
+
 /***/ "./node_modules/popper.js/dist/esm/popper.js":
 /*!***************************************************!*\
   !*** ./node_modules/popper.js/dist/esm/popper.js ***!
@@ -39183,17 +43927,6 @@ module.exports = function(module) {
 
 /***/ }),
 
-/***/ "./resources/css/app.css":
-/*!*******************************!*\
-  !*** ./resources/css/app.css ***!
-  \*******************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-
 /***/ "./resources/js/app.js":
 /*!*****************************!*\
   !*** ./resources/js/app.js ***!
@@ -39202,8 +43935,6 @@ module.exports = function(module) {
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
-
-__webpack_require__(/*! alpinejs */ "./node_modules/alpinejs/dist/alpine.js");
 
 /***/ }),
 
@@ -39226,6 +43957,10 @@ try {
   window.$ = window.jQuery = __webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jquery.js");
 
   __webpack_require__(/*! bootstrap */ "./node_modules/bootstrap/dist/js/bootstrap.js");
+
+  __webpack_require__(/*! overlayscrollbars */ "./node_modules/overlayscrollbars/js/OverlayScrollbars.js");
+
+  __webpack_require__(/*! ../../vendor/almasaeed2010/adminlte/dist/js/adminlte */ "./vendor/almasaeed2010/adminlte/dist/js/adminlte.js");
 } catch (e) {}
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests
@@ -39252,15 +43987,1944 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 /***/ }),
 
-/***/ 0:
+/***/ "./resources/sass/app.scss":
+/*!*********************************!*\
+  !*** ./resources/sass/app.scss ***!
+  \*********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
+
+/***/ }),
+
+/***/ "./vendor/almasaeed2010/adminlte/dist/js/adminlte.js":
 /*!***********************************************************!*\
-  !*** multi ./resources/js/app.js ./resources/css/app.css ***!
+  !*** ./vendor/almasaeed2010/adminlte/dist/js/adminlte.js ***!
   \***********************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /home/allison/Documentos/Projetos/nuveto_communication/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /home/allison/Documentos/Projetos/nuveto_communication/resources/css/app.css */"./resources/css/app.css");
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+/*!
+ * AdminLTE v3.0.5 (https://adminlte.io)
+ * Copyright 2014-2020 Colorlib <http://colorlib.com>
+ * Licensed under MIT (https://github.com/ColorlibHQ/AdminLTE/blob/master/LICENSE)
+ */
+(function (global, factory) {
+  ( false ? undefined : _typeof(exports)) === 'object' && typeof module !== 'undefined' ? factory(exports) :  true ? !(__WEBPACK_AMD_DEFINE_ARRAY__ = [exports], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)) : (undefined);
+})(this, function (exports) {
+  'use strict';
+  /**
+   * --------------------------------------------
+   * AdminLTE ControlSidebar.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+  var ControlSidebar = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'ControlSidebar';
+    var DATA_KEY = 'lte.controlsidebar';
+    var EVENT_KEY = "." + DATA_KEY;
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Event = {
+      COLLAPSED: "collapsed" + EVENT_KEY,
+      EXPANDED: "expanded" + EVENT_KEY
+    };
+    var Selector = {
+      CONTROL_SIDEBAR: '.control-sidebar',
+      CONTROL_SIDEBAR_CONTENT: '.control-sidebar-content',
+      DATA_TOGGLE: '[data-widget="control-sidebar"]',
+      CONTENT: '.content-wrapper',
+      HEADER: '.main-header',
+      FOOTER: '.main-footer'
+    };
+    var ClassName = {
+      CONTROL_SIDEBAR_ANIMATE: 'control-sidebar-animate',
+      CONTROL_SIDEBAR_OPEN: 'control-sidebar-open',
+      CONTROL_SIDEBAR_SLIDE: 'control-sidebar-slide-open',
+      LAYOUT_FIXED: 'layout-fixed',
+      NAVBAR_FIXED: 'layout-navbar-fixed',
+      NAVBAR_SM_FIXED: 'layout-sm-navbar-fixed',
+      NAVBAR_MD_FIXED: 'layout-md-navbar-fixed',
+      NAVBAR_LG_FIXED: 'layout-lg-navbar-fixed',
+      NAVBAR_XL_FIXED: 'layout-xl-navbar-fixed',
+      FOOTER_FIXED: 'layout-footer-fixed',
+      FOOTER_SM_FIXED: 'layout-sm-footer-fixed',
+      FOOTER_MD_FIXED: 'layout-md-footer-fixed',
+      FOOTER_LG_FIXED: 'layout-lg-footer-fixed',
+      FOOTER_XL_FIXED: 'layout-xl-footer-fixed'
+    };
+    var Default = {
+      controlsidebarSlide: true,
+      scrollbarTheme: 'os-theme-light',
+      scrollbarAutoHide: 'l'
+    };
+    /**
+     * Class Definition
+     * ====================================================
+     */
+
+    var ControlSidebar = /*#__PURE__*/function () {
+      function ControlSidebar(element, config) {
+        this._element = element;
+        this._config = config;
+
+        this._init();
+      } // Public
+
+
+      var _proto = ControlSidebar.prototype;
+
+      _proto.collapse = function collapse() {
+        // Show the control sidebar
+        if (this._config.controlsidebarSlide) {
+          $('html').addClass(ClassName.CONTROL_SIDEBAR_ANIMATE);
+          $('body').removeClass(ClassName.CONTROL_SIDEBAR_SLIDE).delay(300).queue(function () {
+            $(Selector.CONTROL_SIDEBAR).hide();
+            $('html').removeClass(ClassName.CONTROL_SIDEBAR_ANIMATE);
+            $(this).dequeue();
+          });
+        } else {
+          $('body').removeClass(ClassName.CONTROL_SIDEBAR_OPEN);
+        }
+
+        var collapsedEvent = $.Event(Event.COLLAPSED);
+        $(this._element).trigger(collapsedEvent);
+      };
+
+      _proto.show = function show() {
+        // Collapse the control sidebar
+        if (this._config.controlsidebarSlide) {
+          $('html').addClass(ClassName.CONTROL_SIDEBAR_ANIMATE);
+          $(Selector.CONTROL_SIDEBAR).show().delay(10).queue(function () {
+            $('body').addClass(ClassName.CONTROL_SIDEBAR_SLIDE).delay(300).queue(function () {
+              $('html').removeClass(ClassName.CONTROL_SIDEBAR_ANIMATE);
+              $(this).dequeue();
+            });
+            $(this).dequeue();
+          });
+        } else {
+          $('body').addClass(ClassName.CONTROL_SIDEBAR_OPEN);
+        }
+
+        var expandedEvent = $.Event(Event.EXPANDED);
+        $(this._element).trigger(expandedEvent);
+      };
+
+      _proto.toggle = function toggle() {
+        var shouldClose = $('body').hasClass(ClassName.CONTROL_SIDEBAR_OPEN) || $('body').hasClass(ClassName.CONTROL_SIDEBAR_SLIDE);
+
+        if (shouldClose) {
+          // Close the control sidebar
+          this.collapse();
+        } else {
+          // Open the control sidebar
+          this.show();
+        }
+      } // Private
+      ;
+
+      _proto._init = function _init() {
+        var _this = this;
+
+        this._fixHeight();
+
+        this._fixScrollHeight();
+
+        $(window).resize(function () {
+          _this._fixHeight();
+
+          _this._fixScrollHeight();
+        });
+        $(window).scroll(function () {
+          if ($('body').hasClass(ClassName.CONTROL_SIDEBAR_OPEN) || $('body').hasClass(ClassName.CONTROL_SIDEBAR_SLIDE)) {
+            _this._fixScrollHeight();
+          }
+        });
+      };
+
+      _proto._fixScrollHeight = function _fixScrollHeight() {
+        var heights = {
+          scroll: $(document).height(),
+          window: $(window).height(),
+          header: $(Selector.HEADER).outerHeight(),
+          footer: $(Selector.FOOTER).outerHeight()
+        };
+        var positions = {
+          bottom: Math.abs(heights.window + $(window).scrollTop() - heights.scroll),
+          top: $(window).scrollTop()
+        };
+        var navbarFixed = false;
+        var footerFixed = false;
+
+        if ($('body').hasClass(ClassName.LAYOUT_FIXED)) {
+          if ($('body').hasClass(ClassName.NAVBAR_FIXED) || $('body').hasClass(ClassName.NAVBAR_SM_FIXED) || $('body').hasClass(ClassName.NAVBAR_MD_FIXED) || $('body').hasClass(ClassName.NAVBAR_LG_FIXED) || $('body').hasClass(ClassName.NAVBAR_XL_FIXED)) {
+            if ($(Selector.HEADER).css("position") === "fixed") {
+              navbarFixed = true;
+            }
+          }
+
+          if ($('body').hasClass(ClassName.FOOTER_FIXED) || $('body').hasClass(ClassName.FOOTER_SM_FIXED) || $('body').hasClass(ClassName.FOOTER_MD_FIXED) || $('body').hasClass(ClassName.FOOTER_LG_FIXED) || $('body').hasClass(ClassName.FOOTER_XL_FIXED)) {
+            if ($(Selector.FOOTER).css("position") === "fixed") {
+              footerFixed = true;
+            }
+          }
+
+          if (positions.top === 0 && positions.bottom === 0) {
+            $(Selector.CONTROL_SIDEBAR).css('bottom', heights.footer);
+            $(Selector.CONTROL_SIDEBAR).css('top', heights.header);
+            $(Selector.CONTROL_SIDEBAR + ', ' + Selector.CONTROL_SIDEBAR + ' ' + Selector.CONTROL_SIDEBAR_CONTENT).css('height', heights.window - (heights.header + heights.footer));
+          } else if (positions.bottom <= heights.footer) {
+            if (footerFixed === false) {
+              $(Selector.CONTROL_SIDEBAR).css('bottom', heights.footer - positions.bottom);
+              $(Selector.CONTROL_SIDEBAR + ', ' + Selector.CONTROL_SIDEBAR + ' ' + Selector.CONTROL_SIDEBAR_CONTENT).css('height', heights.window - (heights.footer - positions.bottom));
+            } else {
+              $(Selector.CONTROL_SIDEBAR).css('bottom', heights.footer);
+            }
+          } else if (positions.top <= heights.header) {
+            if (navbarFixed === false) {
+              $(Selector.CONTROL_SIDEBAR).css('top', heights.header - positions.top);
+              $(Selector.CONTROL_SIDEBAR + ', ' + Selector.CONTROL_SIDEBAR + ' ' + Selector.CONTROL_SIDEBAR_CONTENT).css('height', heights.window - (heights.header - positions.top));
+            } else {
+              $(Selector.CONTROL_SIDEBAR).css('top', heights.header);
+            }
+          } else {
+            if (navbarFixed === false) {
+              $(Selector.CONTROL_SIDEBAR).css('top', 0);
+              $(Selector.CONTROL_SIDEBAR + ', ' + Selector.CONTROL_SIDEBAR + ' ' + Selector.CONTROL_SIDEBAR_CONTENT).css('height', heights.window);
+            } else {
+              $(Selector.CONTROL_SIDEBAR).css('top', heights.header);
+            }
+          }
+        }
+      };
+
+      _proto._fixHeight = function _fixHeight() {
+        var heights = {
+          window: $(window).height(),
+          header: $(Selector.HEADER).outerHeight(),
+          footer: $(Selector.FOOTER).outerHeight()
+        };
+
+        if ($('body').hasClass(ClassName.LAYOUT_FIXED)) {
+          var sidebarHeight = heights.window - heights.header;
+
+          if ($('body').hasClass(ClassName.FOOTER_FIXED) || $('body').hasClass(ClassName.FOOTER_SM_FIXED) || $('body').hasClass(ClassName.FOOTER_MD_FIXED) || $('body').hasClass(ClassName.FOOTER_LG_FIXED) || $('body').hasClass(ClassName.FOOTER_XL_FIXED)) {
+            if ($(Selector.FOOTER).css("position") === "fixed") {
+              sidebarHeight = heights.window - heights.header - heights.footer;
+            }
+          }
+
+          $(Selector.CONTROL_SIDEBAR + ' ' + Selector.CONTROL_SIDEBAR_CONTENT).css('height', sidebarHeight);
+
+          if (typeof $.fn.overlayScrollbars !== 'undefined') {
+            $(Selector.CONTROL_SIDEBAR + ' ' + Selector.CONTROL_SIDEBAR_CONTENT).overlayScrollbars({
+              className: this._config.scrollbarTheme,
+              sizeAutoCapable: true,
+              scrollbars: {
+                autoHide: this._config.scrollbarAutoHide,
+                clickScrolling: true
+              }
+            });
+          }
+        }
+      } // Static
+      ;
+
+      ControlSidebar._jQueryInterface = function _jQueryInterface(operation) {
+        return this.each(function () {
+          var data = $(this).data(DATA_KEY);
+
+          var _options = $.extend({}, Default, $(this).data());
+
+          if (!data) {
+            data = new ControlSidebar(this, _options);
+            $(this).data(DATA_KEY, data);
+          }
+
+          if (data[operation] === 'undefined') {
+            throw new Error(operation + " is not a function");
+          }
+
+          data[operation]();
+        });
+      };
+
+      return ControlSidebar;
+    }();
+    /**
+     *
+     * Data Api implementation
+     * ====================================================
+     */
+
+
+    $(document).on('click', Selector.DATA_TOGGLE, function (event) {
+      event.preventDefault();
+
+      ControlSidebar._jQueryInterface.call($(this), 'toggle');
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = ControlSidebar._jQueryInterface;
+    $.fn[NAME].Constructor = ControlSidebar;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return ControlSidebar._jQueryInterface;
+    };
+
+    return ControlSidebar;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE Layout.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var Layout = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'Layout';
+    var DATA_KEY = 'lte.layout';
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Selector = {
+      HEADER: '.main-header',
+      MAIN_SIDEBAR: '.main-sidebar',
+      SIDEBAR: '.main-sidebar .sidebar',
+      CONTENT: '.content-wrapper',
+      BRAND: '.brand-link',
+      CONTENT_HEADER: '.content-header',
+      WRAPPER: '.wrapper',
+      CONTROL_SIDEBAR: '.control-sidebar',
+      CONTROL_SIDEBAR_CONTENT: '.control-sidebar-content',
+      CONTROL_SIDEBAR_BTN: '[data-widget="control-sidebar"]',
+      LAYOUT_FIXED: '.layout-fixed',
+      FOOTER: '.main-footer',
+      PUSHMENU_BTN: '[data-widget="pushmenu"]',
+      LOGIN_BOX: '.login-box',
+      REGISTER_BOX: '.register-box'
+    };
+    var ClassName = {
+      HOLD: 'hold-transition',
+      SIDEBAR: 'main-sidebar',
+      CONTENT_FIXED: 'content-fixed',
+      SIDEBAR_FOCUSED: 'sidebar-focused',
+      LAYOUT_FIXED: 'layout-fixed',
+      NAVBAR_FIXED: 'layout-navbar-fixed',
+      FOOTER_FIXED: 'layout-footer-fixed',
+      LOGIN_PAGE: 'login-page',
+      REGISTER_PAGE: 'register-page',
+      CONTROL_SIDEBAR_SLIDE_OPEN: 'control-sidebar-slide-open',
+      CONTROL_SIDEBAR_OPEN: 'control-sidebar-open'
+    };
+    var Default = {
+      scrollbarTheme: 'os-theme-light',
+      scrollbarAutoHide: 'l',
+      panelAutoHeight: true,
+      loginRegisterAutoHeight: true
+    };
+    /**
+     * Class Definition
+     * ====================================================
+     */
+
+    var Layout = /*#__PURE__*/function () {
+      function Layout(element, config) {
+        this._config = config;
+        this._element = element;
+
+        this._init();
+      } // Public
+
+
+      var _proto = Layout.prototype;
+
+      _proto.fixLayoutHeight = function fixLayoutHeight(extra) {
+        if (extra === void 0) {
+          extra = null;
+        }
+
+        var control_sidebar = 0;
+
+        if ($('body').hasClass(ClassName.CONTROL_SIDEBAR_SLIDE_OPEN) || $('body').hasClass(ClassName.CONTROL_SIDEBAR_OPEN) || extra == 'control_sidebar') {
+          control_sidebar = $(Selector.CONTROL_SIDEBAR_CONTENT).height();
+        }
+
+        var heights = {
+          window: $(window).height(),
+          header: $(Selector.HEADER).length !== 0 ? $(Selector.HEADER).outerHeight() : 0,
+          footer: $(Selector.FOOTER).length !== 0 ? $(Selector.FOOTER).outerHeight() : 0,
+          sidebar: $(Selector.SIDEBAR).length !== 0 ? $(Selector.SIDEBAR).height() : 0,
+          control_sidebar: control_sidebar
+        };
+
+        var max = this._max(heights);
+
+        var offset = this._config.panelAutoHeight;
+
+        if (offset === true) {
+          offset = 0;
+        }
+
+        if (offset !== false) {
+          if (max == heights.control_sidebar) {
+            $(Selector.CONTENT).css('min-height', max + offset);
+          } else if (max == heights.window) {
+            $(Selector.CONTENT).css('min-height', max + offset - heights.header - heights.footer);
+          } else {
+            $(Selector.CONTENT).css('min-height', max + offset - heights.header);
+          }
+
+          if (this._isFooterFixed()) {
+            $(Selector.CONTENT).css('min-height', parseFloat($(Selector.CONTENT).css('min-height')) + heights.footer);
+          }
+        }
+
+        if ($('body').hasClass(ClassName.LAYOUT_FIXED)) {
+          if (offset !== false) {
+            $(Selector.CONTENT).css('min-height', max + offset - heights.header - heights.footer);
+          }
+
+          if (typeof $.fn.overlayScrollbars !== 'undefined') {
+            $(Selector.SIDEBAR).overlayScrollbars({
+              className: this._config.scrollbarTheme,
+              sizeAutoCapable: true,
+              scrollbars: {
+                autoHide: this._config.scrollbarAutoHide,
+                clickScrolling: true
+              }
+            });
+          }
+        }
+      };
+
+      _proto.fixLoginRegisterHeight = function fixLoginRegisterHeight() {
+        if ($(Selector.LOGIN_BOX + ', ' + Selector.REGISTER_BOX).length === 0) {
+          $('body, html').css('height', 'auto');
+        } else if ($(Selector.LOGIN_BOX + ', ' + Selector.REGISTER_BOX).length !== 0) {
+          var box_height = $(Selector.LOGIN_BOX + ', ' + Selector.REGISTER_BOX).height();
+
+          if ($('body').css('min-height') !== box_height) {
+            $('body').css('min-height', box_height);
+          }
+        }
+      } // Private
+      ;
+
+      _proto._init = function _init() {
+        var _this = this; // Activate layout height watcher
+
+
+        this.fixLayoutHeight();
+
+        if (this._config.loginRegisterAutoHeight === true) {
+          this.fixLoginRegisterHeight();
+        } else if (Number.isInteger(this._config.loginRegisterAutoHeight)) {
+          setInterval(this.fixLoginRegisterHeight, this._config.loginRegisterAutoHeight);
+        }
+
+        $(Selector.SIDEBAR).on('collapsed.lte.treeview expanded.lte.treeview', function () {
+          _this.fixLayoutHeight();
+        });
+        $(Selector.PUSHMENU_BTN).on('collapsed.lte.pushmenu shown.lte.pushmenu', function () {
+          _this.fixLayoutHeight();
+        });
+        $(Selector.CONTROL_SIDEBAR_BTN).on('collapsed.lte.controlsidebar', function () {
+          _this.fixLayoutHeight();
+        }).on('expanded.lte.controlsidebar', function () {
+          _this.fixLayoutHeight('control_sidebar');
+        });
+        $(window).resize(function () {
+          _this.fixLayoutHeight();
+        });
+        setTimeout(function () {
+          $('body.hold-transition').removeClass('hold-transition');
+        }, 50);
+      };
+
+      _proto._max = function _max(numbers) {
+        // Calculate the maximum number in a list
+        var max = 0;
+        Object.keys(numbers).forEach(function (key) {
+          if (numbers[key] > max) {
+            max = numbers[key];
+          }
+        });
+        return max;
+      };
+
+      _proto._isFooterFixed = function _isFooterFixed() {
+        return $('.main-footer').css('position') === 'fixed';
+      } // Static
+      ;
+
+      Layout._jQueryInterface = function _jQueryInterface(config) {
+        if (config === void 0) {
+          config = '';
+        }
+
+        return this.each(function () {
+          var data = $(this).data(DATA_KEY);
+
+          var _options = $.extend({}, Default, $(this).data());
+
+          if (!data) {
+            data = new Layout($(this), _options);
+            $(this).data(DATA_KEY, data);
+          }
+
+          if (config === 'init' || config === '') {
+            data['_init']();
+          } else if (config === 'fixLayoutHeight' || config === 'fixLoginRegisterHeight') {
+            data[config]();
+          }
+        });
+      };
+
+      return Layout;
+    }();
+    /**
+     * Data API
+     * ====================================================
+     */
+
+
+    $(window).on('load', function () {
+      Layout._jQueryInterface.call($('body'));
+    });
+    $(Selector.SIDEBAR + ' a').on('focusin', function () {
+      $(Selector.MAIN_SIDEBAR).addClass(ClassName.SIDEBAR_FOCUSED);
+    });
+    $(Selector.SIDEBAR + ' a').on('focusout', function () {
+      $(Selector.MAIN_SIDEBAR).removeClass(ClassName.SIDEBAR_FOCUSED);
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = Layout._jQueryInterface;
+    $.fn[NAME].Constructor = Layout;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return Layout._jQueryInterface;
+    };
+
+    return Layout;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE PushMenu.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var PushMenu = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'PushMenu';
+    var DATA_KEY = 'lte.pushmenu';
+    var EVENT_KEY = "." + DATA_KEY;
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Event = {
+      COLLAPSED: "collapsed" + EVENT_KEY,
+      SHOWN: "shown" + EVENT_KEY
+    };
+    var Default = {
+      autoCollapseSize: 992,
+      enableRemember: false,
+      noTransitionAfterReload: true
+    };
+    var Selector = {
+      TOGGLE_BUTTON: '[data-widget="pushmenu"]',
+      SIDEBAR_MINI: '.sidebar-mini',
+      SIDEBAR_COLLAPSED: '.sidebar-collapse',
+      BODY: 'body',
+      OVERLAY: '#sidebar-overlay',
+      WRAPPER: '.wrapper'
+    };
+    var ClassName = {
+      COLLAPSED: 'sidebar-collapse',
+      OPEN: 'sidebar-open',
+      CLOSED: 'sidebar-closed'
+    };
+    /**
+     * Class Definition
+     * ====================================================
+     */
+
+    var PushMenu = /*#__PURE__*/function () {
+      function PushMenu(element, options) {
+        this._element = element;
+        this._options = $.extend({}, Default, options);
+
+        if (!$(Selector.OVERLAY).length) {
+          this._addOverlay();
+        }
+
+        this._init();
+      } // Public
+
+
+      var _proto = PushMenu.prototype;
+
+      _proto.expand = function expand() {
+        if (this._options.autoCollapseSize) {
+          if ($(window).width() <= this._options.autoCollapseSize) {
+            $(Selector.BODY).addClass(ClassName.OPEN);
+          }
+        }
+
+        $(Selector.BODY).removeClass(ClassName.COLLAPSED).removeClass(ClassName.CLOSED);
+
+        if (this._options.enableRemember) {
+          localStorage.setItem("remember" + EVENT_KEY, ClassName.OPEN);
+        }
+
+        var shownEvent = $.Event(Event.SHOWN);
+        $(this._element).trigger(shownEvent);
+      };
+
+      _proto.collapse = function collapse() {
+        if (this._options.autoCollapseSize) {
+          if ($(window).width() <= this._options.autoCollapseSize) {
+            $(Selector.BODY).removeClass(ClassName.OPEN).addClass(ClassName.CLOSED);
+          }
+        }
+
+        $(Selector.BODY).addClass(ClassName.COLLAPSED);
+
+        if (this._options.enableRemember) {
+          localStorage.setItem("remember" + EVENT_KEY, ClassName.COLLAPSED);
+        }
+
+        var collapsedEvent = $.Event(Event.COLLAPSED);
+        $(this._element).trigger(collapsedEvent);
+      };
+
+      _proto.toggle = function toggle() {
+        if (!$(Selector.BODY).hasClass(ClassName.COLLAPSED)) {
+          this.collapse();
+        } else {
+          this.expand();
+        }
+      };
+
+      _proto.autoCollapse = function autoCollapse(resize) {
+        if (resize === void 0) {
+          resize = false;
+        }
+
+        if (this._options.autoCollapseSize) {
+          if ($(window).width() <= this._options.autoCollapseSize) {
+            if (!$(Selector.BODY).hasClass(ClassName.OPEN)) {
+              this.collapse();
+            }
+          } else if (resize == true) {
+            if ($(Selector.BODY).hasClass(ClassName.OPEN)) {
+              $(Selector.BODY).removeClass(ClassName.OPEN);
+            } else if ($(Selector.BODY).hasClass(ClassName.CLOSED)) {
+              this.expand();
+            }
+          }
+        }
+      };
+
+      _proto.remember = function remember() {
+        if (this._options.enableRemember) {
+          var toggleState = localStorage.getItem("remember" + EVENT_KEY);
+
+          if (toggleState == ClassName.COLLAPSED) {
+            if (this._options.noTransitionAfterReload) {
+              $("body").addClass('hold-transition').addClass(ClassName.COLLAPSED).delay(50).queue(function () {
+                $(this).removeClass('hold-transition');
+                $(this).dequeue();
+              });
+            } else {
+              $("body").addClass(ClassName.COLLAPSED);
+            }
+          } else {
+            if (this._options.noTransitionAfterReload) {
+              $("body").addClass('hold-transition').removeClass(ClassName.COLLAPSED).delay(50).queue(function () {
+                $(this).removeClass('hold-transition');
+                $(this).dequeue();
+              });
+            } else {
+              $("body").removeClass(ClassName.COLLAPSED);
+            }
+          }
+        }
+      } // Private
+      ;
+
+      _proto._init = function _init() {
+        var _this = this;
+
+        this.remember();
+        this.autoCollapse();
+        $(window).resize(function () {
+          _this.autoCollapse(true);
+        });
+      };
+
+      _proto._addOverlay = function _addOverlay() {
+        var _this2 = this;
+
+        var overlay = $('<div />', {
+          id: 'sidebar-overlay'
+        });
+        overlay.on('click', function () {
+          _this2.collapse();
+        });
+        $(Selector.WRAPPER).append(overlay);
+      } // Static
+      ;
+
+      PushMenu._jQueryInterface = function _jQueryInterface(operation) {
+        return this.each(function () {
+          var data = $(this).data(DATA_KEY);
+
+          var _options = $.extend({}, Default, $(this).data());
+
+          if (!data) {
+            data = new PushMenu(this, _options);
+            $(this).data(DATA_KEY, data);
+          }
+
+          if (typeof operation === 'string' && operation.match(/collapse|expand|toggle/)) {
+            data[operation]();
+          }
+        });
+      };
+
+      return PushMenu;
+    }();
+    /**
+     * Data API
+     * ====================================================
+     */
+
+
+    $(document).on('click', Selector.TOGGLE_BUTTON, function (event) {
+      event.preventDefault();
+      var button = event.currentTarget;
+
+      if ($(button).data('widget') !== 'pushmenu') {
+        button = $(button).closest(Selector.TOGGLE_BUTTON);
+      }
+
+      PushMenu._jQueryInterface.call($(button), 'toggle');
+    });
+    $(window).on('load', function () {
+      PushMenu._jQueryInterface.call($(Selector.TOGGLE_BUTTON));
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = PushMenu._jQueryInterface;
+    $.fn[NAME].Constructor = PushMenu;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return PushMenu._jQueryInterface;
+    };
+
+    return PushMenu;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE Treeview.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var Treeview = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'Treeview';
+    var DATA_KEY = 'lte.treeview';
+    var EVENT_KEY = "." + DATA_KEY;
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Event = {
+      SELECTED: "selected" + EVENT_KEY,
+      EXPANDED: "expanded" + EVENT_KEY,
+      COLLAPSED: "collapsed" + EVENT_KEY,
+      LOAD_DATA_API: "load" + EVENT_KEY
+    };
+    var Selector = {
+      LI: '.nav-item',
+      LINK: '.nav-link',
+      TREEVIEW_MENU: '.nav-treeview',
+      OPEN: '.menu-open',
+      DATA_WIDGET: '[data-widget="treeview"]'
+    };
+    var ClassName = {
+      LI: 'nav-item',
+      LINK: 'nav-link',
+      TREEVIEW_MENU: 'nav-treeview',
+      OPEN: 'menu-open',
+      SIDEBAR_COLLAPSED: 'sidebar-collapse'
+    };
+    var Default = {
+      trigger: Selector.DATA_WIDGET + " " + Selector.LINK,
+      animationSpeed: 300,
+      accordion: true,
+      expandSidebar: false,
+      sidebarButtonSelector: '[data-widget="pushmenu"]'
+    };
+    /**
+     * Class Definition
+     * ====================================================
+     */
+
+    var Treeview = /*#__PURE__*/function () {
+      function Treeview(element, config) {
+        this._config = config;
+        this._element = element;
+      } // Public
+
+
+      var _proto = Treeview.prototype;
+
+      _proto.init = function init() {
+        this._setupListeners();
+      };
+
+      _proto.expand = function expand(treeviewMenu, parentLi) {
+        var _this = this;
+
+        var expandedEvent = $.Event(Event.EXPANDED);
+
+        if (this._config.accordion) {
+          var openMenuLi = parentLi.siblings(Selector.OPEN).first();
+          var openTreeview = openMenuLi.find(Selector.TREEVIEW_MENU).first();
+          this.collapse(openTreeview, openMenuLi);
+        }
+
+        treeviewMenu.stop().slideDown(this._config.animationSpeed, function () {
+          parentLi.addClass(ClassName.OPEN);
+          $(_this._element).trigger(expandedEvent);
+        });
+
+        if (this._config.expandSidebar) {
+          this._expandSidebar();
+        }
+      };
+
+      _proto.collapse = function collapse(treeviewMenu, parentLi) {
+        var _this2 = this;
+
+        var collapsedEvent = $.Event(Event.COLLAPSED);
+        treeviewMenu.stop().slideUp(this._config.animationSpeed, function () {
+          parentLi.removeClass(ClassName.OPEN);
+          $(_this2._element).trigger(collapsedEvent);
+          treeviewMenu.find(Selector.OPEN + " > " + Selector.TREEVIEW_MENU).slideUp();
+          treeviewMenu.find(Selector.OPEN).removeClass(ClassName.OPEN);
+        });
+      };
+
+      _proto.toggle = function toggle(event) {
+        var $relativeTarget = $(event.currentTarget);
+        var $parent = $relativeTarget.parent();
+        var treeviewMenu = $parent.find('> ' + Selector.TREEVIEW_MENU);
+
+        if (!treeviewMenu.is(Selector.TREEVIEW_MENU)) {
+          if (!$parent.is(Selector.LI)) {
+            treeviewMenu = $parent.parent().find('> ' + Selector.TREEVIEW_MENU);
+          }
+
+          if (!treeviewMenu.is(Selector.TREEVIEW_MENU)) {
+            return;
+          }
+        }
+
+        event.preventDefault();
+        var parentLi = $relativeTarget.parents(Selector.LI).first();
+        var isOpen = parentLi.hasClass(ClassName.OPEN);
+
+        if (isOpen) {
+          this.collapse($(treeviewMenu), parentLi);
+        } else {
+          this.expand($(treeviewMenu), parentLi);
+        }
+      } // Private
+      ;
+
+      _proto._setupListeners = function _setupListeners() {
+        var _this3 = this;
+
+        $(document).on('click', this._config.trigger, function (event) {
+          _this3.toggle(event);
+        });
+      };
+
+      _proto._expandSidebar = function _expandSidebar() {
+        if ($('body').hasClass(ClassName.SIDEBAR_COLLAPSED)) {
+          $(this._config.sidebarButtonSelector).PushMenu('expand');
+        }
+      } // Static
+      ;
+
+      Treeview._jQueryInterface = function _jQueryInterface(config) {
+        return this.each(function () {
+          var data = $(this).data(DATA_KEY);
+
+          var _options = $.extend({}, Default, $(this).data());
+
+          if (!data) {
+            data = new Treeview($(this), _options);
+            $(this).data(DATA_KEY, data);
+          }
+
+          if (config === 'init') {
+            data[config]();
+          }
+        });
+      };
+
+      return Treeview;
+    }();
+    /**
+     * Data API
+     * ====================================================
+     */
+
+
+    $(window).on(Event.LOAD_DATA_API, function () {
+      $(Selector.DATA_WIDGET).each(function () {
+        Treeview._jQueryInterface.call($(this), 'init');
+      });
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = Treeview._jQueryInterface;
+    $.fn[NAME].Constructor = Treeview;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return Treeview._jQueryInterface;
+    };
+
+    return Treeview;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE DirectChat.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var DirectChat = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'DirectChat';
+    var DATA_KEY = 'lte.directchat';
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Event = {
+      TOGGLED: "toggled{EVENT_KEY}"
+    };
+    var Selector = {
+      DATA_TOGGLE: '[data-widget="chat-pane-toggle"]',
+      DIRECT_CHAT: '.direct-chat'
+    };
+    var ClassName = {
+      DIRECT_CHAT_OPEN: 'direct-chat-contacts-open'
+    };
+    /**
+     * Class Definition
+     * ====================================================
+     */
+
+    var DirectChat = /*#__PURE__*/function () {
+      function DirectChat(element, config) {
+        this._element = element;
+      }
+
+      var _proto = DirectChat.prototype;
+
+      _proto.toggle = function toggle() {
+        $(this._element).parents(Selector.DIRECT_CHAT).first().toggleClass(ClassName.DIRECT_CHAT_OPEN);
+        var toggledEvent = $.Event(Event.TOGGLED);
+        $(this._element).trigger(toggledEvent);
+      } // Static
+      ;
+
+      DirectChat._jQueryInterface = function _jQueryInterface(config) {
+        return this.each(function () {
+          var data = $(this).data(DATA_KEY);
+
+          if (!data) {
+            data = new DirectChat($(this));
+            $(this).data(DATA_KEY, data);
+          }
+
+          data[config]();
+        });
+      };
+
+      return DirectChat;
+    }();
+    /**
+     *
+     * Data Api implementation
+     * ====================================================
+     */
+
+
+    $(document).on('click', Selector.DATA_TOGGLE, function (event) {
+      if (event) event.preventDefault();
+
+      DirectChat._jQueryInterface.call($(this), 'toggle');
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = DirectChat._jQueryInterface;
+    $.fn[NAME].Constructor = DirectChat;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return DirectChat._jQueryInterface;
+    };
+
+    return DirectChat;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE TodoList.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var TodoList = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'TodoList';
+    var DATA_KEY = 'lte.todolist';
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Selector = {
+      DATA_TOGGLE: '[data-widget="todo-list"]'
+    };
+    var ClassName = {
+      TODO_LIST_DONE: 'done'
+    };
+    var Default = {
+      onCheck: function onCheck(item) {
+        return item;
+      },
+      onUnCheck: function onUnCheck(item) {
+        return item;
+      }
+    };
+    /**
+     * Class Definition
+     * ====================================================
+     */
+
+    var TodoList = /*#__PURE__*/function () {
+      function TodoList(element, config) {
+        this._config = config;
+        this._element = element;
+
+        this._init();
+      } // Public
+
+
+      var _proto = TodoList.prototype;
+
+      _proto.toggle = function toggle(item) {
+        item.parents('li').toggleClass(ClassName.TODO_LIST_DONE);
+
+        if (!$(item).prop('checked')) {
+          this.unCheck($(item));
+          return;
+        }
+
+        this.check(item);
+      };
+
+      _proto.check = function check(item) {
+        this._config.onCheck.call(item);
+      };
+
+      _proto.unCheck = function unCheck(item) {
+        this._config.onUnCheck.call(item);
+      } // Private
+      ;
+
+      _proto._init = function _init() {
+        var that = this;
+        $(Selector.DATA_TOGGLE).find('input:checkbox:checked').parents('li').toggleClass(ClassName.TODO_LIST_DONE);
+        $(Selector.DATA_TOGGLE).on('change', 'input:checkbox', function (event) {
+          that.toggle($(event.target));
+        });
+      } // Static
+      ;
+
+      TodoList._jQueryInterface = function _jQueryInterface(config) {
+        return this.each(function () {
+          var data = $(this).data(DATA_KEY);
+
+          var _options = $.extend({}, Default, $(this).data());
+
+          if (!data) {
+            data = new TodoList($(this), _options);
+            $(this).data(DATA_KEY, data);
+          }
+
+          if (config === 'init') {
+            data[config]();
+          }
+        });
+      };
+
+      return TodoList;
+    }();
+    /**
+     * Data API
+     * ====================================================
+     */
+
+
+    $(window).on('load', function () {
+      TodoList._jQueryInterface.call($(Selector.DATA_TOGGLE));
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = TodoList._jQueryInterface;
+    $.fn[NAME].Constructor = TodoList;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return TodoList._jQueryInterface;
+    };
+
+    return TodoList;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE CardWidget.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var CardWidget = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'CardWidget';
+    var DATA_KEY = 'lte.cardwidget';
+    var EVENT_KEY = "." + DATA_KEY;
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Event = {
+      EXPANDED: "expanded" + EVENT_KEY,
+      COLLAPSED: "collapsed" + EVENT_KEY,
+      MAXIMIZED: "maximized" + EVENT_KEY,
+      MINIMIZED: "minimized" + EVENT_KEY,
+      REMOVED: "removed" + EVENT_KEY
+    };
+    var ClassName = {
+      CARD: 'card',
+      COLLAPSED: 'collapsed-card',
+      COLLAPSING: 'collapsing-card',
+      EXPANDING: 'expanding-card',
+      WAS_COLLAPSED: 'was-collapsed',
+      MAXIMIZED: 'maximized-card'
+    };
+    var Selector = {
+      DATA_REMOVE: '[data-card-widget="remove"]',
+      DATA_COLLAPSE: '[data-card-widget="collapse"]',
+      DATA_MAXIMIZE: '[data-card-widget="maximize"]',
+      CARD: "." + ClassName.CARD,
+      CARD_HEADER: '.card-header',
+      CARD_BODY: '.card-body',
+      CARD_FOOTER: '.card-footer',
+      COLLAPSED: "." + ClassName.COLLAPSED
+    };
+    var Default = {
+      animationSpeed: 'normal',
+      collapseTrigger: Selector.DATA_COLLAPSE,
+      removeTrigger: Selector.DATA_REMOVE,
+      maximizeTrigger: Selector.DATA_MAXIMIZE,
+      collapseIcon: 'fa-minus',
+      expandIcon: 'fa-plus',
+      maximizeIcon: 'fa-expand',
+      minimizeIcon: 'fa-compress'
+    };
+
+    var CardWidget = /*#__PURE__*/function () {
+      function CardWidget(element, settings) {
+        this._element = element;
+        this._parent = element.parents(Selector.CARD).first();
+
+        if (element.hasClass(ClassName.CARD)) {
+          this._parent = element;
+        }
+
+        this._settings = $.extend({}, Default, settings);
+      }
+
+      var _proto = CardWidget.prototype;
+
+      _proto.collapse = function collapse() {
+        var _this = this;
+
+        this._parent.addClass(ClassName.COLLAPSING).children(Selector.CARD_BODY + ", " + Selector.CARD_FOOTER).slideUp(this._settings.animationSpeed, function () {
+          _this._parent.addClass(ClassName.COLLAPSED).removeClass(ClassName.COLLAPSING);
+        });
+
+        this._parent.find('> ' + Selector.CARD_HEADER + ' ' + this._settings.collapseTrigger + ' .' + this._settings.collapseIcon).addClass(this._settings.expandIcon).removeClass(this._settings.collapseIcon);
+
+        var collapsed = $.Event(Event.COLLAPSED);
+
+        this._element.trigger(collapsed, this._parent);
+      };
+
+      _proto.expand = function expand() {
+        var _this2 = this;
+
+        this._parent.addClass(ClassName.EXPANDING).children(Selector.CARD_BODY + ", " + Selector.CARD_FOOTER).slideDown(this._settings.animationSpeed, function () {
+          _this2._parent.removeClass(ClassName.COLLAPSED).removeClass(ClassName.EXPANDING);
+        });
+
+        this._parent.find('> ' + Selector.CARD_HEADER + ' ' + this._settings.collapseTrigger + ' .' + this._settings.expandIcon).addClass(this._settings.collapseIcon).removeClass(this._settings.expandIcon);
+
+        var expanded = $.Event(Event.EXPANDED);
+
+        this._element.trigger(expanded, this._parent);
+      };
+
+      _proto.remove = function remove() {
+        this._parent.slideUp();
+
+        var removed = $.Event(Event.REMOVED);
+
+        this._element.trigger(removed, this._parent);
+      };
+
+      _proto.toggle = function toggle() {
+        if (this._parent.hasClass(ClassName.COLLAPSED)) {
+          this.expand();
+          return;
+        }
+
+        this.collapse();
+      };
+
+      _proto.maximize = function maximize() {
+        this._parent.find(this._settings.maximizeTrigger + ' .' + this._settings.maximizeIcon).addClass(this._settings.minimizeIcon).removeClass(this._settings.maximizeIcon);
+
+        this._parent.css({
+          'height': this._parent.height(),
+          'width': this._parent.width(),
+          'transition': 'all .15s'
+        }).delay(150).queue(function () {
+          $(this).addClass(ClassName.MAXIMIZED);
+          $('html').addClass(ClassName.MAXIMIZED);
+
+          if ($(this).hasClass(ClassName.COLLAPSED)) {
+            $(this).addClass(ClassName.WAS_COLLAPSED);
+          }
+
+          $(this).dequeue();
+        });
+
+        var maximized = $.Event(Event.MAXIMIZED);
+
+        this._element.trigger(maximized, this._parent);
+      };
+
+      _proto.minimize = function minimize() {
+        this._parent.find(this._settings.maximizeTrigger + ' .' + this._settings.minimizeIcon).addClass(this._settings.maximizeIcon).removeClass(this._settings.minimizeIcon);
+
+        this._parent.css('cssText', 'height:' + this._parent[0].style.height + ' !important;' + 'width:' + this._parent[0].style.width + ' !important; transition: all .15s;').delay(10).queue(function () {
+          $(this).removeClass(ClassName.MAXIMIZED);
+          $('html').removeClass(ClassName.MAXIMIZED);
+          $(this).css({
+            'height': 'inherit',
+            'width': 'inherit'
+          });
+
+          if ($(this).hasClass(ClassName.WAS_COLLAPSED)) {
+            $(this).removeClass(ClassName.WAS_COLLAPSED);
+          }
+
+          $(this).dequeue();
+        });
+
+        var MINIMIZED = $.Event(Event.MINIMIZED);
+
+        this._element.trigger(MINIMIZED, this._parent);
+      };
+
+      _proto.toggleMaximize = function toggleMaximize() {
+        if (this._parent.hasClass(ClassName.MAXIMIZED)) {
+          this.minimize();
+          return;
+        }
+
+        this.maximize();
+      } // Private
+      ;
+
+      _proto._init = function _init(card) {
+        var _this3 = this;
+
+        this._parent = card;
+        $(this).find(this._settings.collapseTrigger).click(function () {
+          _this3.toggle();
+        });
+        $(this).find(this._settings.maximizeTrigger).click(function () {
+          _this3.toggleMaximize();
+        });
+        $(this).find(this._settings.removeTrigger).click(function () {
+          _this3.remove();
+        });
+      } // Static
+      ;
+
+      CardWidget._jQueryInterface = function _jQueryInterface(config) {
+        var data = $(this).data(DATA_KEY);
+
+        var _options = $.extend({}, Default, $(this).data());
+
+        if (!data) {
+          data = new CardWidget($(this), _options);
+          $(this).data(DATA_KEY, typeof config === 'string' ? data : config);
+        }
+
+        if (typeof config === 'string' && config.match(/collapse|expand|remove|toggle|maximize|minimize|toggleMaximize/)) {
+          data[config]();
+        } else if (_typeof(config) === 'object') {
+          data._init($(this));
+        }
+      };
+
+      return CardWidget;
+    }();
+    /**
+     * Data API
+     * ====================================================
+     */
+
+
+    $(document).on('click', Selector.DATA_COLLAPSE, function (event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      CardWidget._jQueryInterface.call($(this), 'toggle');
+    });
+    $(document).on('click', Selector.DATA_REMOVE, function (event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      CardWidget._jQueryInterface.call($(this), 'remove');
+    });
+    $(document).on('click', Selector.DATA_MAXIMIZE, function (event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      CardWidget._jQueryInterface.call($(this), 'toggleMaximize');
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = CardWidget._jQueryInterface;
+    $.fn[NAME].Constructor = CardWidget;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return CardWidget._jQueryInterface;
+    };
+
+    return CardWidget;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE CardRefresh.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var CardRefresh = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'CardRefresh';
+    var DATA_KEY = 'lte.cardrefresh';
+    var EVENT_KEY = "." + DATA_KEY;
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Event = {
+      LOADED: "loaded" + EVENT_KEY,
+      OVERLAY_ADDED: "overlay.added" + EVENT_KEY,
+      OVERLAY_REMOVED: "overlay.removed" + EVENT_KEY
+    };
+    var ClassName = {
+      CARD: 'card'
+    };
+    var Selector = {
+      CARD: "." + ClassName.CARD,
+      DATA_REFRESH: '[data-card-widget="card-refresh"]'
+    };
+    var Default = {
+      source: '',
+      sourceSelector: '',
+      params: {},
+      trigger: Selector.DATA_REFRESH,
+      content: '.card-body',
+      loadInContent: true,
+      loadOnInit: true,
+      responseType: '',
+      overlayTemplate: '<div class="overlay"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>',
+      onLoadStart: function onLoadStart() {},
+      onLoadDone: function onLoadDone(response) {
+        return response;
+      }
+    };
+
+    var CardRefresh = /*#__PURE__*/function () {
+      function CardRefresh(element, settings) {
+        this._element = element;
+        this._parent = element.parents(Selector.CARD).first();
+        this._settings = $.extend({}, Default, settings);
+        this._overlay = $(this._settings.overlayTemplate);
+
+        if (element.hasClass(ClassName.CARD)) {
+          this._parent = element;
+        }
+
+        if (this._settings.source === '') {
+          throw new Error('Source url was not defined. Please specify a url in your CardRefresh source option.');
+        }
+      }
+
+      var _proto = CardRefresh.prototype;
+
+      _proto.load = function load() {
+        this._addOverlay();
+
+        this._settings.onLoadStart.call($(this));
+
+        $.get(this._settings.source, this._settings.params, function (response) {
+          if (this._settings.loadInContent) {
+            if (this._settings.sourceSelector != '') {
+              response = $(response).find(this._settings.sourceSelector).html();
+            }
+
+            this._parent.find(this._settings.content).html(response);
+          }
+
+          this._settings.onLoadDone.call($(this), response);
+
+          this._removeOverlay();
+        }.bind(this), this._settings.responseType !== '' && this._settings.responseType);
+        var loadedEvent = $.Event(Event.LOADED);
+        $(this._element).trigger(loadedEvent);
+      };
+
+      _proto._addOverlay = function _addOverlay() {
+        this._parent.append(this._overlay);
+
+        var overlayAddedEvent = $.Event(Event.OVERLAY_ADDED);
+        $(this._element).trigger(overlayAddedEvent);
+      };
+
+      _proto._removeOverlay = function _removeOverlay() {
+        this._parent.find(this._overlay).remove();
+
+        var overlayRemovedEvent = $.Event(Event.OVERLAY_REMOVED);
+        $(this._element).trigger(overlayRemovedEvent);
+      }; // Private
+
+
+      _proto._init = function _init(card) {
+        var _this = this;
+
+        $(this).find(this._settings.trigger).on('click', function () {
+          _this.load();
+        });
+
+        if (this._settings.loadOnInit) {
+          this.load();
+        }
+      } // Static
+      ;
+
+      CardRefresh._jQueryInterface = function _jQueryInterface(config) {
+        var data = $(this).data(DATA_KEY);
+
+        var _options = $.extend({}, Default, $(this).data());
+
+        if (!data) {
+          data = new CardRefresh($(this), _options);
+          $(this).data(DATA_KEY, typeof config === 'string' ? data : config);
+        }
+
+        if (typeof config === 'string' && config.match(/load/)) {
+          data[config]();
+        } else {
+          data._init($(this));
+        }
+      };
+
+      return CardRefresh;
+    }();
+    /**
+     * Data API
+     * ====================================================
+     */
+
+
+    $(document).on('click', Selector.DATA_REFRESH, function (event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      CardRefresh._jQueryInterface.call($(this), 'load');
+    });
+    $(document).ready(function () {
+      $(Selector.DATA_REFRESH).each(function () {
+        CardRefresh._jQueryInterface.call($(this));
+      });
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = CardRefresh._jQueryInterface;
+    $.fn[NAME].Constructor = CardRefresh;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return CardRefresh._jQueryInterface;
+    };
+
+    return CardRefresh;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE Dropdown.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var Dropdown = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'Dropdown';
+    var DATA_KEY = 'lte.dropdown';
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Selector = {
+      NAVBAR: '.navbar',
+      DROPDOWN_MENU: '.dropdown-menu',
+      DROPDOWN_MENU_ACTIVE: '.dropdown-menu.show',
+      DROPDOWN_TOGGLE: '[data-toggle="dropdown"]'
+    };
+    var ClassName = {
+      DROPDOWN_HOVER: 'dropdown-hover',
+      DROPDOWN_RIGHT: 'dropdown-menu-right'
+    };
+    var Default = {};
+    /**
+     * Class Definition
+     * ====================================================
+     */
+
+    var Dropdown = /*#__PURE__*/function () {
+      function Dropdown(element, config) {
+        this._config = config;
+        this._element = element;
+      } // Public
+
+
+      var _proto = Dropdown.prototype;
+
+      _proto.toggleSubmenu = function toggleSubmenu() {
+        this._element.siblings().show().toggleClass("show");
+
+        if (!this._element.next().hasClass('show')) {
+          this._element.parents('.dropdown-menu').first().find('.show').removeClass("show").hide();
+        }
+
+        this._element.parents('li.nav-item.dropdown.show').on('hidden.bs.dropdown', function (e) {
+          $('.dropdown-submenu .show').removeClass("show").hide();
+        });
+      };
+
+      _proto.fixPosition = function fixPosition() {
+        var elm = $(Selector.DROPDOWN_MENU_ACTIVE);
+
+        if (elm.length !== 0) {
+          if (elm.hasClass(ClassName.DROPDOWN_RIGHT)) {
+            elm.css('left', 'inherit');
+            elm.css('right', 0);
+          } else {
+            elm.css('left', 0);
+            elm.css('right', 'inherit');
+          }
+
+          var offset = elm.offset();
+          var width = elm.width();
+          var windowWidth = $(window).width();
+          var visiblePart = windowWidth - offset.left;
+
+          if (offset.left < 0) {
+            elm.css('left', 'inherit');
+            elm.css('right', offset.left - 5);
+          } else {
+            if (visiblePart < width) {
+              elm.css('left', 'inherit');
+              elm.css('right', 0);
+            }
+          }
+        }
+      } // Static
+      ;
+
+      Dropdown._jQueryInterface = function _jQueryInterface(config) {
+        return this.each(function () {
+          var data = $(this).data(DATA_KEY);
+
+          var _config = $.extend({}, Default, $(this).data());
+
+          if (!data) {
+            data = new Dropdown($(this), _config);
+            $(this).data(DATA_KEY, data);
+          }
+
+          if (config === 'toggleSubmenu' || config == 'fixPosition') {
+            data[config]();
+          }
+        });
+      };
+
+      return Dropdown;
+    }();
+    /**
+     * Data API
+     * ====================================================
+     */
+
+
+    $(Selector.DROPDOWN_MENU + ' ' + Selector.DROPDOWN_TOGGLE).on("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      Dropdown._jQueryInterface.call($(this), 'toggleSubmenu');
+    });
+    $(Selector.NAVBAR + ' ' + Selector.DROPDOWN_TOGGLE).on("click", function (event) {
+      event.preventDefault();
+      setTimeout(function () {
+        Dropdown._jQueryInterface.call($(this), 'fixPosition');
+      }, 1);
+    });
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+    $.fn[NAME] = Dropdown._jQueryInterface;
+    $.fn[NAME].Constructor = Dropdown;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return Dropdown._jQueryInterface;
+    };
+
+    return Dropdown;
+  }(jQuery);
+  /**
+   * --------------------------------------------
+   * AdminLTE Toasts.js
+   * License MIT
+   * --------------------------------------------
+   */
+
+
+  var Toasts = function ($) {
+    /**
+     * Constants
+     * ====================================================
+     */
+    var NAME = 'Toasts';
+    var DATA_KEY = 'lte.toasts';
+    var EVENT_KEY = "." + DATA_KEY;
+    var JQUERY_NO_CONFLICT = $.fn[NAME];
+    var Event = {
+      INIT: "init" + EVENT_KEY,
+      CREATED: "created" + EVENT_KEY,
+      REMOVED: "removed" + EVENT_KEY
+    };
+    var Selector = {
+      BODY: 'toast-body',
+      CONTAINER_TOP_RIGHT: '#toastsContainerTopRight',
+      CONTAINER_TOP_LEFT: '#toastsContainerTopLeft',
+      CONTAINER_BOTTOM_RIGHT: '#toastsContainerBottomRight',
+      CONTAINER_BOTTOM_LEFT: '#toastsContainerBottomLeft'
+    };
+    var ClassName = {
+      TOP_RIGHT: 'toasts-top-right',
+      TOP_LEFT: 'toasts-top-left',
+      BOTTOM_RIGHT: 'toasts-bottom-right',
+      BOTTOM_LEFT: 'toasts-bottom-left',
+      FADE: 'fade'
+    };
+    var Position = {
+      TOP_RIGHT: 'topRight',
+      TOP_LEFT: 'topLeft',
+      BOTTOM_RIGHT: 'bottomRight',
+      BOTTOM_LEFT: 'bottomLeft'
+    };
+    var Default = {
+      position: Position.TOP_RIGHT,
+      fixed: true,
+      autohide: false,
+      autoremove: true,
+      delay: 1000,
+      fade: true,
+      icon: null,
+      image: null,
+      imageAlt: null,
+      imageHeight: '25px',
+      title: null,
+      subtitle: null,
+      close: true,
+      body: null,
+      "class": null
+    };
+    /**
+     * Class Definition
+     * ====================================================
+     */
+
+    var Toasts = /*#__PURE__*/function () {
+      function Toasts(element, config) {
+        this._config = config;
+
+        this._prepareContainer();
+
+        var initEvent = $.Event(Event.INIT);
+        $('body').trigger(initEvent);
+      } // Public
+
+
+      var _proto = Toasts.prototype;
+
+      _proto.create = function create() {
+        var toast = $('<div class="toast" role="alert" aria-live="assertive" aria-atomic="true"/>');
+        toast.data('autohide', this._config.autohide);
+        toast.data('animation', this._config.fade);
+
+        if (this._config["class"]) {
+          toast.addClass(this._config["class"]);
+        }
+
+        if (this._config.delay && this._config.delay != 500) {
+          toast.data('delay', this._config.delay);
+        }
+
+        var toast_header = $('<div class="toast-header">');
+
+        if (this._config.image != null) {
+          var toast_image = $('<img />').addClass('rounded mr-2').attr('src', this._config.image).attr('alt', this._config.imageAlt);
+
+          if (this._config.imageHeight != null) {
+            toast_image.height(this._config.imageHeight).width('auto');
+          }
+
+          toast_header.append(toast_image);
+        }
+
+        if (this._config.icon != null) {
+          toast_header.append($('<i />').addClass('mr-2').addClass(this._config.icon));
+        }
+
+        if (this._config.title != null) {
+          toast_header.append($('<strong />').addClass('mr-auto').html(this._config.title));
+        }
+
+        if (this._config.subtitle != null) {
+          toast_header.append($('<small />').html(this._config.subtitle));
+        }
+
+        if (this._config.close == true) {
+          var toast_close = $('<button data-dismiss="toast" />').attr('type', 'button').addClass('ml-2 mb-1 close').attr('aria-label', 'Close').append('<span aria-hidden="true">&times;</span>');
+
+          if (this._config.title == null) {
+            toast_close.toggleClass('ml-2 ml-auto');
+          }
+
+          toast_header.append(toast_close);
+        }
+
+        toast.append(toast_header);
+
+        if (this._config.body != null) {
+          toast.append($('<div class="toast-body" />').html(this._config.body));
+        }
+
+        $(this._getContainerId()).prepend(toast);
+        var createdEvent = $.Event(Event.CREATED);
+        $('body').trigger(createdEvent);
+        toast.toast('show');
+
+        if (this._config.autoremove) {
+          toast.on('hidden.bs.toast', function () {
+            $(this).delay(200).remove();
+            var removedEvent = $.Event(Event.REMOVED);
+            $('body').trigger(removedEvent);
+          });
+        }
+      } // Static
+      ;
+
+      _proto._getContainerId = function _getContainerId() {
+        if (this._config.position == Position.TOP_RIGHT) {
+          return Selector.CONTAINER_TOP_RIGHT;
+        } else if (this._config.position == Position.TOP_LEFT) {
+          return Selector.CONTAINER_TOP_LEFT;
+        } else if (this._config.position == Position.BOTTOM_RIGHT) {
+          return Selector.CONTAINER_BOTTOM_RIGHT;
+        } else if (this._config.position == Position.BOTTOM_LEFT) {
+          return Selector.CONTAINER_BOTTOM_LEFT;
+        }
+      };
+
+      _proto._prepareContainer = function _prepareContainer() {
+        if ($(this._getContainerId()).length === 0) {
+          var container = $('<div />').attr('id', this._getContainerId().replace('#', ''));
+
+          if (this._config.position == Position.TOP_RIGHT) {
+            container.addClass(ClassName.TOP_RIGHT);
+          } else if (this._config.position == Position.TOP_LEFT) {
+            container.addClass(ClassName.TOP_LEFT);
+          } else if (this._config.position == Position.BOTTOM_RIGHT) {
+            container.addClass(ClassName.BOTTOM_RIGHT);
+          } else if (this._config.position == Position.BOTTOM_LEFT) {
+            container.addClass(ClassName.BOTTOM_LEFT);
+          }
+
+          $('body').append(container);
+        }
+
+        if (this._config.fixed) {
+          $(this._getContainerId()).addClass('fixed');
+        } else {
+          $(this._getContainerId()).removeClass('fixed');
+        }
+      } // Static
+      ;
+
+      Toasts._jQueryInterface = function _jQueryInterface(option, config) {
+        return this.each(function () {
+          var _options = $.extend({}, Default, config);
+
+          var toast = new Toasts($(this), _options);
+
+          if (option === 'create') {
+            toast[option]();
+          }
+        });
+      };
+
+      return Toasts;
+    }();
+    /**
+     * jQuery API
+     * ====================================================
+     */
+
+
+    $.fn[NAME] = Toasts._jQueryInterface;
+    $.fn[NAME].Constructor = Toasts;
+
+    $.fn[NAME].noConflict = function () {
+      $.fn[NAME] = JQUERY_NO_CONFLICT;
+      return Toasts._jQueryInterface;
+    };
+
+    return Toasts;
+  }(jQuery);
+
+  exports.CardRefresh = CardRefresh;
+  exports.CardWidget = CardWidget;
+  exports.ControlSidebar = ControlSidebar;
+  exports.DirectChat = DirectChat;
+  exports.Dropdown = Dropdown;
+  exports.Layout = Layout;
+  exports.PushMenu = PushMenu;
+  exports.Toasts = Toasts;
+  exports.TodoList = TodoList;
+  exports.Treeview = Treeview;
+  Object.defineProperty(exports, '__esModule', {
+    value: true
+  });
+});
+
+/***/ }),
+
+/***/ 0:
+/*!*************************************************************!*\
+  !*** multi ./resources/js/app.js ./resources/sass/app.scss ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(/*! /home/allison/Documentos/Projetos/medical-scheduling/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /home/allison/Documentos/Projetos/medical-scheduling/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })

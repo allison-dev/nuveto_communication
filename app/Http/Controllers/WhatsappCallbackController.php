@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -177,7 +178,8 @@ class WhatsappCallbackController extends Controller
                                     'userId'            => $sender_phone,
                                     'conversationId'    => $create_conversation['body']['id'],
                                     'tenantId'          => $create_session['orgId'],
-                                    'farmId'            => $create_session['context']['farmId']
+                                    'farmId'            => $create_session['context']['farmId'],
+                                    "created_at"        =>  Carbon::now()
                                 ];
 
                                 $insert_params_whatsapp = [
@@ -187,7 +189,8 @@ class WhatsappCallbackController extends Controller
                                     'conversationId'    => $create_conversation['body']['id'],
                                     'farmId'            => $create_session['context']['farmId'],
                                     'farmId'            => $create_session['context']['farmId'],
-                                    'payload'           => $request
+                                    'payload'           => $request,
+                                    "created_at"        =>  Carbon::now()
                                 ];
 
                                 DB::table('conversation_sessions')->insert($insert_params_conversation);
@@ -295,7 +298,8 @@ class WhatsappCallbackController extends Controller
                                 'userId'            => $sender_phone,
                                 'conversationId'    => $create_conversation['body']['id'],
                                 'tenantId'          => $create_session['orgId'],
-                                'farmId'            => $create_session['context']['farmId']
+                                'farmId'            => $create_session['context']['farmId'],
+                                "created_at"        =>  Carbon::now()
                             ];
 
                             $insert_params_whatsapp = [
@@ -304,7 +308,8 @@ class WhatsappCallbackController extends Controller
                                 'text'              => $text,
                                 'conversationId'    => $create_conversation['body']['id'],
                                 'farmId'            => $create_session['context']['farmId'],
-                                'payload'           => $request
+                                'payload'           => $request,
+                                "created_at"        =>  Carbon::now()
                             ];
 
                             DB::table('conversation_sessions')->insert($insert_params_conversation);
