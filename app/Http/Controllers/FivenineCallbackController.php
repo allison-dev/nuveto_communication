@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Facades\ChatifyMessenger as Chatify;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Faker\Factory as Faker;
 
@@ -21,6 +22,7 @@ class fivenineCallbackController extends Controller
             'password'          => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'conversation_id'   => $request['correlationId'],
             'remember_token'    => Str::random(10),
+            "created_at"        => Carbon::now()
         ];
 
         DB::table('users')->insert($insert_params);
@@ -89,14 +91,14 @@ class fivenineCallbackController extends Controller
     public function chatTerminate(Request $request)
     {
         // DB::table('users')->where('conversation_id', $request['correlationId'])->delete();
-        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1']);
+        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1', "updated_at" => Carbon::now()]);
 
         return response()->json([], 204);
     }
 
     public function chatAccept(Request $request)
     {
-        DB::table('users')->where('conversation_id', $request['correlationId'])->update(['name' => $request['displayName']]);
+        DB::table('users')->where('conversation_id', $request['correlationId'])->update(['name' => $request['displayName'],"updated_at" => Carbon::now()]);
 
         return response()->json([], 204);
     }

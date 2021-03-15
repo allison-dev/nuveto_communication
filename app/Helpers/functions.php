@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\ServerException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Facades\ChatifyMessenger as Chatify;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Thujohn\Twitter\Facades\Twitter;
@@ -246,11 +247,12 @@ if (!function_exists('sendMessageTwitter')) {
             ];
 
             $insert_params_messages = [
-                'id'        => $data['messageId'],
-                'type'      => 'twitter',
-                'from_id'   => $data['externalId'],
-                'to_id'     => $data['to'],
-                "first_interation" => 1
+                'id'                => $data['messageId'],
+                'type'              => 'twitter',
+                'from_id'           => $data['externalId'],
+                'to_id'             => $data['to'],
+                "first_interation"  => 1,
+                "created_at"        => Carbon::now()
             ];
 
             DB::table('messages')->insert($insert_params_messages);
@@ -411,7 +413,7 @@ if (!function_exists('sendMessageWhatsapp')) {
 
             $get_token = getBotmakerToken($header, 'auth/credentials');
 
-            DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'whatsapp')->update(['refreshToken' => $get_token['refreshToken']]);
+            DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'whatsapp')->update(['refreshToken' => $get_token['refreshToken'], "updated_at" => Carbon::now()]);
 
             $botmaker_token = $get_token['accessToken'];
 

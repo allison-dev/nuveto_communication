@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Response;
 use App\Models\Favorite;
 use App\Facades\ChatifyMessenger as Chatify;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -99,7 +100,8 @@ class MessagesController extends Controller
                         'conversationId'    => $create_conversation['body']['id'],
                         'tenantId'          => $create_session['orgId'],
                         'channel'           => 'chat',
-                        'farmId'            => $create_session['context']['farmId']
+                        'farmId'            => $create_session['context']['farmId'],
+                        "created_at"        => Carbon::now()
                     ];
 
                     DB::table('conversation_sessions')->insert($insert_params);
