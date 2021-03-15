@@ -38,7 +38,7 @@
         "spatie/laravel-webhook-client": "^2.7",
         "thujohn/twitter": "^2.3",
         "tinify/tinify": "^1.5",
-        "laravellegends/pt-br-validator": "^8.0",
+        "laravellegends/pt-br-validator": "^8.0"
     },
     "require-dev": {
         "facade/ignition": "^2.3.6",
