@@ -19,10 +19,11 @@ class WhatsappCallbackController extends Controller
         sendMessageWhatsapp($request);
 
         $insert_params_messages = [
-            'id'        => $request->correlationId,
-            'type'      => 'whatsapp',
-            'from_id'   => $request->correlationId,
-            'to_id'     => $request->externalId,
+            'id'            => $request->correlationId,
+            'type'          => 'whatsapp',
+            'from_id'       => $request->correlationId,
+            'to_id'         => $request->externalId,
+            "created_at"    => Carbon::now()
         ];
 
         DB::table('messages')->insert($insert_params_messages);
@@ -43,7 +44,7 @@ class WhatsappCallbackController extends Controller
 
     public function whatsappTerminate(Request $request)
     {
-        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1']);
+        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1',"updated_at" => Carbon::now()]);
 
         return response()->json([], 204);
     }
@@ -219,7 +220,8 @@ class WhatsappCallbackController extends Controller
                             'text'              => $text,
                             'conversationId'    => $whatsapp_session->conversationId,
                             'farmId'            => $verify_session->farmId,
-                            'payload'           => $request
+                            'payload'           => $request,
+                            "created_at"        => Carbon::now()
                         ];
 
                         DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
