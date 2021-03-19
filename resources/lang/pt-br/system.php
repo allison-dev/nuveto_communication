@@ -107,6 +107,11 @@ return [
     'twitter'               => 'Twitter',
     'price'                 => 'Valor por Canal',
     'tax'                   => 'Adicional (%)',
+    'general_table'         => 'Utilização Total',
+    'general_table_empty'   => 'dado utilizado até o momento',
+    'conversation_id'       => 'Identificador Five9',
+    'terminate'             => 'Finalizado',
+    'updated_at'            => 'Data de Termino',
 	'403'                   => [
 		'title' => 'Erro 403: Permissão negada!',
 		'msg'   => 'Desculpe.Você não tem permissão de acessar esta página!',

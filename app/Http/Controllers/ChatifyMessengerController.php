@@ -59,7 +59,7 @@ class ChatifyMessengerController extends Controller
             '6' => '#4CAF50',
             '7' => '#FFC107',
             '8' => '#FF9800',
-            '9' => '#d02c2f',
+            '9' => '#f2282b',
             '10' => '#9C27B0',
         ];
     }

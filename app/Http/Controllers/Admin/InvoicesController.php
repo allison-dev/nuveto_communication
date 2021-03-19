@@ -20,12 +20,19 @@ class InvoicesController extends Controller
     public function index()
     {
         $invoices = $this->invoicesService->index();
-
+        $invoices->company = DB::table('companies')->first();
         return view('pages.admin.invoices.index')->with(compact(['invoices']));
     }
 
     public function generate(InvoicesRequest $request)
     {
+        $facebook_sessions = 0;
+        $twitter_sessions = 0;
+        $whatsapp_sessions = 0;
+        $get_billing_facebook = false;
+        $get_billing_twitter = false;
+        $get_billing_whatsapp = false;
+
         $request->validated();
 
         $get_billings = DB::table('billings')->get();
@@ -34,17 +41,17 @@ class InvoicesController extends Controller
             $network = strtolower($billings->network);
             switch ($network) {
                 case 'facebook':
-                    $facebook_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=',$network)->whereBetween('created_at', [$request['ini_date'], $request['end_date']])->count();
+                    $facebook_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=',$network)->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') >= '" .$request['ini_date']."'")->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') <= '".$request['end_date']."'")->orderBy('created_at', 'desc')->count();
                     $get_billing_facebook = DB::table('billings')->where('network', '=', $network)->first();
                     $totals[$network] = $facebook_sessions * $get_billing_facebook->price;
                     break;
                 case 'twitter':
-                    $twitter_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=', $network)->whereBetween('created_at', [$request['ini_date'], $request['end_date']])->count();
+                    $twitter_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=',$network)->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') >= '" .$request['ini_date']."'")->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') <= '".$request['end_date']."'")->orderBy('created_at', 'desc')->count();
                     $get_billing_twitter = DB::table('billings')->where('network', '=', $network)->first();
                     $totals[$network] = $twitter_sessions * $get_billing_twitter->price;
                     break;
                 case 'whatsapp':
-                    $whatsapp_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=', $network)->whereBetween('created_at', [$request['ini_date'], $request['end_date']])->count();
+                    $whatsapp_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=',$network)->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') >= '" .$request['ini_date']."'")->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') <= '".$request['end_date']."'")->orderBy('created_at', 'desc')->count();
                     $get_billing_whatsapp = DB::table('billings')->where('network', '=', $network)->first();
                     $totals[$network] = $whatsapp_sessions * $get_billing_whatsapp->price;
                     break;

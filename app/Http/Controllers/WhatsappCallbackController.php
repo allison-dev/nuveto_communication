@@ -88,12 +88,12 @@ class WhatsappCallbackController extends Controller
 
             if (!is_null($billing_sessions->sessions) && $count_sessions >= $billing_sessions->sessions) {
 
-                $request = (object) [
+                $send_whatsapp = (object) [
                     'externalId' => $sender_phone,
                     "text" => 'No momento, todos os nossos agentes estão ocupados, por favor retorne o seu contato mais tarde.',
                 ];
 
-                sendMessageWhatsapp($request);
+                sendMessageWhatsapp($send_whatsapp);
             } else {
                 if (!is_null($interations_verify)) {
                     $bot_variable = $interations_verify->variable;
@@ -111,7 +111,7 @@ class WhatsappCallbackController extends Controller
                         if (!$send_five9) {
                             if (isset($bot_interations) && $bot_interations) {
 
-                                $message = 'Em qual Central deseja iniciar o Atendimento ?';
+                                $message = 'Em qual Central deseja iniciar o Atendimento?';
 
                                 $message .= "
 ";
@@ -122,12 +122,14 @@ class WhatsappCallbackController extends Controller
                                     $message .= '*' . $options->choice . '-* ' . $options->options;
                                 }
 
-                                $request = (object) [
+                                $send_whatsapp = (object) [
                                     'externalId' => $sender_phone,
                                     'text' => $message
                                 ];
 
-                                sendMessageWhatsapp($request);
+                                sendMessageWhatsapp($send_whatsapp);
+                            } else {
+                                $send_five9 = true;
                             }
                         }
 
@@ -244,12 +246,14 @@ class WhatsappCallbackController extends Controller
                                 $message .= '*' . $options->choice . '-* ' . $options->options;
                             }
 
-                            $request = (object) [
+                            $send_whatsapp = (object) [
                                 'externalId' => $sender_phone,
                                 'text' => $message
                             ];
 
-                            sendMessageWhatsapp($request);
+                            sendMessageWhatsapp($send_whatsapp);
+                        } else {
+                            $send_five9 = true;
                         }
                     }
 
