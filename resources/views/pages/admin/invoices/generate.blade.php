@@ -27,7 +27,7 @@
                     <div class="row">
                         <div class="col" style="transform: translate3d(0px, -28px, 0px);">
                             <a target="_blank" href="https://nuveto.com.br">
-                                <img src="{{ asset(config('adminlte.logo_img')) }}">
+                                <img src="{{ asset(config('adminlte.logo_img_invoice')) }}">
                             </a>
                         </div>
                         <div class="col company-details">

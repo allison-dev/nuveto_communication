@@ -33,7 +33,7 @@
     .bar3 {
         width           : 20px;
         height          : 3px;
-        background-color: #d02c2f;
+        background-color: #f2282b;
         margin          : 2px auto;
     }
 

@@ -181,6 +181,9 @@ return [
         'year'      => 'ano',
         'description' => 'descrição',
         'password_confirmation' => 'confirmação da senha',
+        'price' => 'preço',
+        'network' => 'canal',
+        'sessions' => 'sessões simultâneas'
     ],
 
 ];

@@ -3,8 +3,6 @@
 	<script src="{{ asset('custom/admin/plugins/multi-select/js/jquery.multi-select.js') }}"></script>
     <script src="{{ asset('js/postcode.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/3.1.60/inputmask/jquery.inputmask.js"></script>
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.18/dist/css/bootstrap-select.min.css">
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.18/dist/js/bootstrap-select.min.js"></script>
     <!-- (Optional) Latest compiled and minified JavaScript translation files -->
@@ -33,15 +31,15 @@
             keepStatic: true,
         });
         $('#days_week').selectpicker({
-            'actionsBox' : true,
-            'liveSearch' : true,
-            'width'      : 'fit',
-            'noneSelectedText' : 'Selecione os Dias da Semana',
-            'style' : '',
-            'styleBase' : 'form-control',
-            'showTick' : true,
-            'deselectAllText' : 'Desmarcar',
-            'selectAllText' : 'Selecionar',
+            'actionsBox': true,
+            'liveSearch': true,
+            'width': 'fit',
+            'noneSelectedText': 'Selecione os Dias da Semana',
+            'style': '',
+            'styleBase': 'form-control',
+            'showTick': true,
+            'deselectAllText': 'Desmarcar',
+            'selectAllText': 'Selecionar',
         });
 
         $('#companies-table').DataTable({
@@ -57,8 +55,7 @@
         });
 
         // swalDestroy
-        function swalDestroy (id, cancelSuccessText, title, text, formText = 'destroy')
-        {
+        function swalDestroy(id, cancelSuccessText, title, text, formText = 'destroy') {
             let textTitle = false;
             let textText = false;
 
@@ -90,5 +87,84 @@
                 }
             });
         }
+
+        $(document).on('click', '#redirect', function (e) {
+            e.preventDefault();
+            if($('#error_ini_date').length){
+                $('#error_ini_date').remove();
+            }
+
+            if($('#error_end_date').length){
+                $('#error_end_date').remove();
+            }
+
+            if(!empty($('#ini_date').val())){
+                $('#ini_date').removeAttr('style');
+            }
+
+            if(!empty($('#end_date').val())) {
+                $('#end_date').removeAttr('style');
+            }
+            let url = '{{ route('admin.invoice.generate') }}';
+
+            if(empty($('#ini_date').val())) {
+                $('#ini_date').attr({
+                        style : 'border-color:#f2282b; color:#f2282b'
+                    });
+                animateCSS('#ini_date', 'tada').then((message) => {
+                    $('#ini_date').after("<div id='error_ini_date' style='color:red;'>Por favor selecione uma Data Inicial Valida.</div>");
+                    animateCSS('#error_ini_date', 'lightSpeedInLeft');
+                });
+            } else if (empty($('#end_date').val())) {
+                $('#end_date').attr({
+                        style : 'border-color:#f2282b; color:#f2282b'
+                    });
+                animateCSS('#end_date', 'tada').then((message) => {
+                    $('#end_date').after("<div id='error_end_date' style='color:red;'>Por favor selecione uma Data Final Valida.</div>");
+                    animateCSS('#error_end_date', 'lightSpeedInRight');
+                });
+            } else if (!empty($('#ini_date').val()) && !empty($('#end_date').val())) {
+                url += '?ini_date=' + $('#ini_date').val() + '&end_date=' + $('#end_date').val();
+
+                window.open(url, '_blank');
+            }
+        });
+
+        function empty(e) {
+            switch (e) {
+                case "":
+                case 0:
+                case "0":
+                case null:
+                case false:
+                case typeof (e) == "undefined":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        const animateCSS = animate();
+
+        function animate() {
+            return (element, animation, prefix = 'animate__') =>
+                // We create a Promise and return it
+                new Promise((resolve) => {
+                    const animationName = `${prefix}${animation}`;
+                    const node = document.querySelector(element);
+
+                    node.classList.add(`${prefix}animated`, animationName);
+
+                    // When the animation ends, we clean the classes and resolve the Promise
+                    function handleAnimationEnd(event) {
+                        event.stopPropagation();
+                        node.classList.remove(`${prefix}animated`, animationName);
+                        resolve('Animation ended');
+                    }
+
+                    node.addEventListener('animationend', handleAnimationEnd, { once: true });
+                });
+        }
+
 	</script>
 @endsection

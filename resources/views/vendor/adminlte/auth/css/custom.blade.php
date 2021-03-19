@@ -2,11 +2,14 @@
 @import url('https://fonts.googleapis.com/css?family=Numans');
 html,
 body {
-    background-image : url("{{ asset('vendor/adminlte/dist/img/nuvetoback.jpg') }}") !important;
+    background-image : url("{{ asset('vendor/adminlte/dist/img/sigma-folder.png') }}") !important;
     background-size  : cover !important;
     background-repeat: no-repeat !important;
     height           : 100% !important;
     font-family      : 'Numans', sans-serif !important;
+    background-color: #3e4c57 !important;
+    background-position: center !important;
+    position: relative !important;
 }
 .card {
     height          : 370px !important;
@@ -54,8 +57,8 @@ input:focus {
 
 .login_btn, .register_btn, .send_mail_btn {
     color           : #fff !important;
-    background-color: #D02C2F !important;
-    border-color : #D02C2F !important;
+    background-color: #f2282b !important;
+    border-color : #f2282b !important;
 }
 
 .login_btn:hover, .register_btn:hover {
@@ -64,7 +67,7 @@ input:focus {
 }
 
 .input-group-text span{
-    color : #D02C2F !important;
+    color : #f2282b !important;
 }
 
 p.my-0 {
@@ -72,7 +75,7 @@ p.my-0 {
 }
 
 p.my-0 a:hover {
-    color: #D02C2F;
+    color: #f2282b;
 }
 
 </style>
