@@ -46,11 +46,14 @@ return [
     */
 
     'logo' => '<b>Sigma</b>',
-    'logo_img' => 'vendor/adminlte/dist/img/logo-nuveto-header-v2.png',
-    'logo_img_class' => 'brand-image img-circle elevation-3',
+    'logo_img' => 'vendor/adminlte/dist/img/Sigma_negative_2.png',
+    'logo_img_dashboard' => 'vendor/adminlte/dist/img/Sigma_negative_1.png',
+    'logo_img_invoice' => 'vendor/adminlte/dist/img/Sigma_positive_2.png',
+    // 'logo_img' => 'vendor/adminlte/dist/img/logo-nuveto-header-v2.png',
+    'logo_img_class' => 'brand-image',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'centro-medico',
+    'logo_img_alt' => 'Sigma',
 
     /*
     |--------------------------------------------------------------------------
@@ -241,26 +244,31 @@ return [
             'icon'  => 'fas fa-tools',
             'submenu' => [
                 [
-                    'text' => 'Faturamento',
-                    'url'  => 'admin/faturamento',
-                    'icon' => 'fas fa-book',
-                ],
-                [
                     'text' => 'Faturas',
                     'url'  => 'admin/faturas',
                     'icon' => 'fas fa-file-invoice-dollar',
+                ],
+                [
+                    'text' => 'Utilização Total',
+                    'url'  => 'admin/total',
+                    'icon' => 'fas fa-table',
                 ]
             ]
         ],
         [
-            'text'  => 'Cadastrar',
-            'icon'  => 'fas fa-user-plus',
+            'text'  => 'Faturamento',
+            'icon'  => 'fas fa-book',
             'submenu' => [
                 [
-                    'text' => 'Empresa',
-                    'url'  => 'admin/empresa',
-                    'icon' => 'far fa-building',
-                ]
+                    'text' => 'Canais',
+                    'url'  => 'admin/faturamento',
+                    'icon' => 'fas fa-project-diagram',
+                ],
+                [
+                    'text' => 'Dados',
+                    'url'  => 'admin/dados-faturamento',
+                    'icon' => 'far fa-address-book',
+                ],
             ]
         ],
         [

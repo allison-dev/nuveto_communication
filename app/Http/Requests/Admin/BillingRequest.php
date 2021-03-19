@@ -24,14 +24,16 @@ class BillingRequest extends FormRequest
 		switch ($this->method()) {
 			case 'POST':
 				return [
-					'network'		=> 'required|max:255',
-					'sessions' 		=> 'required|max:200',
+					'network'		=> 'required|unique:billings',
+					'sessions' 		=> 'required',
+					'price' 		=> 'required',
 				];
 				break;
 			case 'PUT':
 				return [
-					'network'		=> 'required|max:255',
-					'sessions' 		=> 'required|max:200',
+					'network'		=> 'required|unique:billings,id,' . $this->id,
+					'sessions' 		=> 'required',
+                    'price' 		=> 'required',
 				];
 				break;
 			default:

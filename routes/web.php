@@ -137,8 +137,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('', 'HomeController@index')->name('admin');
 
-        Route::post('addresses/showByPostcode', 'Admin\AddressController@showByPostcode')->name('address.showByPostcode');
-
         Route::resource('usuarios', 'Admin\UserController', ['as' => 'users'])->names([
             'index'   => 'users.index',
             'create'  => 'users.create',
@@ -157,7 +155,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             'destroy' => 'billings.destroy',
         ]);
 
-        Route::resource('empresa', 'Admin\CompanyController', ['as' => 'company'])->names([
+        Route::resource('dados-faturamento', 'Admin\CompanyController', ['as' => 'company'])->names([
             'index'   => 'company.index',
             'create'  => 'company.create',
             'store'   => 'company.store',
@@ -175,7 +173,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             'destroy'  => 'invoices.destroy',
         ]);
 
-        Route::post('faturas/gerar', 'Admin\InvoicesController@generate')->name('invoices.generate');
+        Route::get('fatura/gerar', 'Admin\InvoicesController@generate')->name('invoice.generate');
+
+        Route::get('total', 'Admin\GeneralTableController@index')->name('generaltable');
+
+        Route::post('addresses/showByPostcode', 'Admin\AddressController@showByPostcode')->name('address.showByPostcode');
 
         Route::get('unauthorized', 'Admin\ErrorController@error403')->name('errors.403');
     });
