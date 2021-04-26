@@ -161,6 +161,8 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+        Dacastro4\LaravelGmail\LaravelGmailServiceProvider::class,
+        Webklex\IMAP\Providers\LaravelServiceProvider::class,
 
         /*
          * Package Service Providers...
@@ -173,6 +175,7 @@ return [
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
+        App\Providers\HorizonServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\FortifyServiceProvider::class,
         App\Providers\JetstreamServiceProvider::class,
@@ -231,7 +234,8 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
         'Chatify' => Chatify\Facades\ChatifyMessenger::class,
-
+        'LaravelGmail' => Dacastro4\LaravelGmail\Facade\LaravelGmail::class,
+        'Client' => Webklex\IMAP\Facades\Client::class,
     ],
 
 ];

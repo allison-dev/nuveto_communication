@@ -105,6 +105,7 @@ return [
     'facebook'              => 'Facebook',
     'whatsapp'              => 'Whatsapp',
     'twitter'               => 'Twitter',
+    'reclame_aqui'          => 'Reclame Aqui',
     'price'                 => 'Valor por Canal',
     'tax'                   => 'Adicional (%)',
     'general_table'         => 'Utilização Total',

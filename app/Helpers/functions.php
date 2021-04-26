@@ -53,6 +53,18 @@ if (!function_exists('sendFivenine')) {
                 $conversation_id = $data->conversationId;
                 $send = true;
             }
+        } else if ($channel == 'reclame_aqui') {
+
+            $data = DB::table('reclame_aqui_conversation')->where('ticket_id', '=', $id)->orderBy('id', 'desc')->first();
+
+            if (!is_null($data)) {
+                $message = $data->text;
+                $external_id = $data->ticket_id;
+                $token_id = $data->tokenId;
+                $farm_id = $data->farmId;
+                $conversation_id = $data->conversationId;
+                $send = true;
+            }
         } else {
 
             $data = DB::table('users')->where('id', '=', $id)->first();
@@ -499,6 +511,74 @@ if (!function_exists('sendMessageWhatsapp')) {
     }
 }
 
+if (!function_exists('sendMessageReclameAqui')) {
+    function sendMessageReclameAqui($request)
+    {
+        $return = [];
+
+        $config = DB::table('setting')->where('channel', '=', 'reclame_aqui')->first();
+
+        if (!empty($config->clientId) && !empty($config->secretId)) {
+            $header = [
+                'clientId'      => $config->clientId,
+                'secretId'      => $config->secretId,
+                'Content-Type'  => 'application/json',
+            ];
+
+            $get_token = getReclameAquiToken($header, 'auth/oauth/token?grant_type=client_credentials');
+
+            DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'reclame_aqui')->update(['refreshToken' => $get_token['access_token'], "updated_at" => Carbon::now()]);
+
+            $reclame_aqui_token = $get_token['access_token'];
+
+            $baseUrl = 'https://app.hugme.com.br/api/';
+
+            $endpoint = 'ticket/v1/tickets/message/public';
+
+            $url = $baseUrl . $endpoint;
+
+            $curl = curl_init();
+
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => array('id' => $request->externalId, 'message' => $request->text),
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: multipart/form-data',
+                    'Authorization: Bearer ' . $reclame_aqui_token
+                ),
+            ));
+
+            $response = curl_exec($curl);
+            $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+            curl_close($curl);
+
+            $content = json_decode($response, true);
+
+            if ($code != 200) {
+
+                $return = [
+                    'success' => false,
+                    'code'    => $code,
+                    'body'    => $content,
+                ];
+            } else {
+
+                $return = $content;
+            }
+
+            Log::debug(json_encode($return));
+        }
+    }
+}
+
 if (!function_exists('getBotmakerToken')) {
     function getBotmakerToken($header, $endpoint, $method = 'post', $parameters = false)
     {
@@ -698,119 +778,374 @@ if (!function_exists('localAPI')) {
 
 if (!function_exists('menuActive')) {
 
-	function menuActive($list)
-	{
-		$class = '';
+    function menuActive($list)
+    {
+        $class = '';
 
-		if (in_array(str_replace('-', '_', request()->segment(2)), $list, true)) {
-			$class = 'active open';
-		}
-		return $class;
-	}
+        if (in_array(str_replace('-', '_', request()->segment(2)), $list, true)) {
+            $class = 'active open';
+        }
+        return $class;
+    }
 }
 
 if (!function_exists('cashFormat')) {
 
-	function cashFormat($value, $decimals = 2, $p = ',', $p2 = '.')
-	{
-		return number_format($value, $decimals, $p, $p2);
-	}
+    function cashFormat($value, $decimals = 2, $p = ',', $p2 = '.')
+    {
+        return number_format($value, $decimals, $p, $p2);
+    }
 }
 
 if (!function_exists('formatMask')) {
 
-	function formatMask($val, $mask)
-	{
-		$maskared = '';
-		$k = 0;
-		for ($i = 0; $i <= strlen($mask) - 1; $i++) {
-			if ($mask[$i] === '#') {
-				if (isset($val[$k])) {
-					$maskared .= $val[$k++];
-				}
-			} else if (isset($mask[$i])) {
-				$maskared .= $mask[$i];
-			}
-		}
-		return $maskared;
-	}
+    function formatMask($val, $mask)
+    {
+        $maskared = '';
+        $k = 0;
+        for ($i = 0; $i <= strlen($mask) - 1; $i++) {
+            if ($mask[$i] === '#') {
+                if (isset($val[$k])) {
+                    $maskared .= $val[$k++];
+                }
+            } else if (isset($mask[$i])) {
+                $maskared .= $mask[$i];
+            }
+        }
+        return $maskared;
+    }
 }
 
 if (!function_exists('daysWeek')) {
-	function daysWeek()
-	{
-		return [
-			[
-				'value' => 'Sunday',
-				'name'  => 'Domingo',
-			],
-			[
-				'value' => 'Monday',
-				'name'  => 'Segunda-Feira',
-			],
-			[
-				'value' => 'Tuesday',
-				'name'  => 'Terça-Feira',
-			],
-			[
-				'value' => 'Wednesday',
-				'name'  => 'Quarta-feira',
-			],
-			[
-				'value' => 'Thursday',
-				'name'  => 'Quinta-feira',
-			],
-			[
-				'value' => 'Friday',
-				'name'  => 'Sexta-feira',
-			],
-			[
-				'value' => 'Saturday',
-				'name'  => 'Sábado',
-			],
-		];
-	}
+    function daysWeek()
+    {
+        return [
+            [
+                'value' => 'Sunday',
+                'name'  => 'Domingo',
+            ],
+            [
+                'value' => 'Monday',
+                'name'  => 'Segunda-Feira',
+            ],
+            [
+                'value' => 'Tuesday',
+                'name'  => 'Terça-Feira',
+            ],
+            [
+                'value' => 'Wednesday',
+                'name'  => 'Quarta-feira',
+            ],
+            [
+                'value' => 'Thursday',
+                'name'  => 'Quinta-feira',
+            ],
+            [
+                'value' => 'Friday',
+                'name'  => 'Sexta-feira',
+            ],
+            [
+                'value' => 'Saturday',
+                'name'  => 'Sábado',
+            ],
+        ];
+    }
 }
 
 if (!function_exists('postomonAPI')) {
-	function postomonAPI($header, $url, $method = 'get', $parameters = false)
-	{
-		$data = [
-			'headers' => $header,
-		];
-		if ($parameters) {
-			$data['parameters'] = json_encode($parameters);
-		}
-		$client = new Client();
-		$error = false;
-		$msg = false;
-		try {
-			$response = $client->{$method}($url, $data);
-		} catch (ClientException $e) {
-			$error = true;
-			$msg = $e->getMessage();
-		} catch (ServerException $e) {
-			$error = true;
-			$msg = $e->getMessage();
-		} catch (RequestException $e) {
-			$error = true;
-			$msg = $e->getMessage();
-		}
-		if ($error) {
-			return [
-				'success' => false,
-				'body'    => $msg,
-			];
-		}
-		$content = json_decode($response->getBody(), true);
-		if ($response->getStatusCode() != 200) {
-			return [
-				'success' => false,
-				'code'    => $response->getStatusCode(),
-				'body'    => $content,
-			];
-		}
-		return $content;
-	}
+    function postomonAPI($header, $url, $method = 'get', $parameters = false)
+    {
+        $data = [
+            'headers' => $header,
+        ];
+        if ($parameters) {
+            $data['parameters'] = json_encode($parameters);
+        }
+        $client = new Client();
+        $error = false;
+        $msg = false;
+        try {
+            $response = $client->{$method}($url, $data);
+        } catch (ClientException $e) {
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (ServerException $e) {
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (RequestException $e) {
+            $error = true;
+            $msg = $e->getMessage();
+        }
+        if ($error) {
+            return [
+                'success' => false,
+                'body'    => $msg,
+            ];
+        }
+        $content = json_decode($response->getBody(), true);
+        if ($response->getStatusCode() != 200) {
+            return [
+                'success' => false,
+                'code'    => $response->getStatusCode(),
+                'body'    => $content,
+            ];
+        }
+        return $content;
+    }
 }
 
+if (!function_exists('getReclameAquiToken')) {
+    function getReclameAquiToken($header, $endpoint, $method = 'post', $parameters = false)
+    {
+        $baseUrl = 'https://app.hugme.com.br/api/';
+
+        $client_id = $header['clientId'];
+        $secret_id = $header['secretId'];
+
+        unset($header['clientId'], $header['secretId']);
+
+        $url = $baseUrl . $endpoint;
+
+        $data = [
+            'headers' => $header,
+        ];
+
+        if ($parameters) {
+            $data['body'] = json_encode($parameters);
+        }
+
+        $client = new Client([
+            'auth' => [$client_id, $secret_id],
+        ]);
+
+        $error = false;
+
+        $msg = false;
+
+        try {
+
+            $response = $client->{$method}($url, $data);
+        } catch (ClientException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (ServerException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        } catch (RequestException $e) {
+
+            $error = true;
+            $msg = $e->getMessage();
+        }
+
+        if ($error) {
+
+            return [
+                'success' => false,
+                'body'    => $msg,
+            ];
+        }
+
+        $content = json_decode($response->getBody(), true);
+
+        if ($response->getStatusCode() != 200) {
+
+            return [
+                'success' => false,
+                'code'    => $response->getStatusCode(),
+                'body'    => $content,
+            ];
+        }
+
+        return $content;
+    }
+}
+
+if (!function_exists('getReclameAquiTickets')) {
+    function getReclameAquiTickets()
+    {
+        $return = [];
+
+        $config = DB::table('setting')->where('channel', '=', 'reclame_aqui')->first();
+
+        if (!empty($config->clientId) && !empty($config->secretId)) {
+            $header = [
+                'clientId'      => $config->clientId,
+                'secretId'      => $config->secretId,
+                'Content-Type'  => 'application/json',
+            ];
+
+            $get_token = getReclameAquiToken($header, 'auth/oauth/token?grant_type=client_credentials');
+
+            DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'reclame_aqui')->update(['refreshToken' => $get_token['access_token'], "updated_at" => Carbon::now()]);
+
+            $reclame_aqui_token = $get_token['access_token'];
+
+            $baseUrl = 'https://app.hugme.com.br/api/';
+
+            $endpoint = 'ticket/v1/tickets?page[size]=3&page[number]=1&sort[creation_date]=DESC';
+
+            $url = $baseUrl . $endpoint;
+
+            $data = [
+                'headers' => [
+                    'Content-Type'      => 'application/json',
+                    'Accept'            => "application/json",
+                    'Accept-Encoding'   => 'gzip, deflate, br',
+                    'Connection'        => 'keep-alive',
+                    "Authorization"     => "Bearer " . $reclame_aqui_token
+                ]
+            ];
+
+            $method = 'get';
+
+            $client = new Client();
+
+            $error = false;
+
+            $msg = false;
+
+            try {
+
+                $response = $client->{$method}($url, $data);
+            } catch (ClientException $e) {
+
+                $error = true;
+                $msg = $e->getMessage();
+            } catch (ServerException $e) {
+
+                $error = true;
+                $msg = $e->getMessage();
+            } catch (RequestException $e) {
+
+                $error = true;
+                $msg = $e->getMessage();
+            }
+
+            if ($error) {
+                $return = [
+                    'success' => false,
+                    'body'    => $msg,
+                ];
+            } else {
+                $content = json_decode($response->getBody(), true);
+
+                if ($response->getStatusCode() != 200) {
+
+                    $return = [
+                        'success' => false,
+                        'code'    => $response->getStatusCode(),
+                        'body'    => $content,
+                    ];
+                } else {
+
+                    $return = $content;
+                }
+            }
+            return $return;
+        }
+    }
+}
+if (!function_exists('fiveNineSend')) {
+    function fiveNineSend($request)
+    {
+        if (isset($request['id']) && isset($request['complaint_content'])) {
+
+            $ticket_id = $request['id'];
+            $text = $request['complaint_content'];
+            $name = $request['customer']['name'];
+            $email = $request['customer']['email'][0];
+            if (isset($request['customer']['phone_numbers']) && $request['customer']['phone_numbers']) {
+                foreach ($request['customer']['phone_numbers'] as $phone_numbers) {
+                    $i = 1;
+                    $number[$i] = $phone_numbers;
+                    $i++;
+                }
+            }
+
+            $config = DB::table('setting')->where('channel', '=', 'reclame_aqui')->first();
+
+            $header = [
+                'Accept'       => 'application/json',
+                'Content-Type' => 'application/json',
+            ];
+
+            $endpoint = 'auth/anon?cookieless=true';
+
+            $params = [
+                'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
+            ];
+
+            $create_session = apiCall($header, $endpoint, 'POST', $params);
+
+            if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                $header = [
+                    'Content-Type'  => 'application/json',
+                    'Authorization' => 'Bearer-' . $create_session['tokenId'],
+                    'farmId'        => $create_session['context']['farmId']
+                ];
+
+                $endpoint = 'conversations';
+
+                $params = [
+                    'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/facebook',
+                    'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
+                    'contact' => [
+                        'firstName' => isset($name) ? trim($name) : 'Reclame Aqui User',
+                        'number1' => isset($number[1]) ? '+55' . $number[1] : '+5511999999999',
+                        'number2' => isset($number[2]) ? '+55' . $number[2] : '+5511999999999',
+                        'email' => isset($email) && $email ? $email : 'noreply@reclameaqui.com.br',
+                    ],
+                    'externalId' => $ticket_id,
+                    'disableAutoClose' => true,
+                    'tenantId' => $create_session['orgId'],
+                ];
+
+                $create_conversation = apiCall($header, $endpoint, 'POST', $params);
+
+                if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
+                    $insert_params_conversation = [
+                        'tokenId'           => $create_session['tokenId'],
+                        'userId'            => $ticket_id,
+                        'conversationId'    => $create_conversation['body']['id'],
+                        'tenantId'          => $create_session['orgId'],
+                        'farmId'            => $create_session['context']['farmId'],
+                        'channel'           => 'reclame_aqui',
+                        "created_at"        =>  Carbon::now()
+                    ];
+
+                    $insert_params_reclame_aqui = [
+                        'tokenId'           => $create_session['tokenId'],
+                        'ticket_id'         => $ticket_id,
+                        'text'              => $text,
+                        'conversationId'    => $create_conversation['body']['id'],
+                        'farmId'            => $create_session['context']['farmId'],
+                        'payload'           => json_encode($request),
+                        "created_at"        => Carbon::now()
+                    ];
+
+                    DB::table('conversation_sessions')->insert($insert_params_conversation);
+                    DB::table('reclame_aqui_conversation')->insert($insert_params_reclame_aqui);
+                }
+            }
+
+            sendFivenine($ticket_id, '', 'reclame_aqui');
+        }
+
+        return response()->json(['success' => true, 'response' => 'Menssagem enviada ao Agente'], 200);
+    }
+
+    function salute($name = '')
+    {
+        date_default_timezone_set('America/Sao_Paulo');
+        $hora = date('H');
+        if ($hora >= 6 && $hora <= 12)
+            return 'Bom dia' . (empty($name) ? '' : ', ' . $name);
+        else if ($hora > 12 && $hora <= 18)
+            return 'Boa tarde' . (empty($name) ? '' : ', ' . $name);
+        else
+            return 'Boa noite' . (empty($name) ? '' : ', ' . $name);
+    }
+}

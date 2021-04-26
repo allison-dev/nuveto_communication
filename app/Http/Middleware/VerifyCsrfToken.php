@@ -16,6 +16,7 @@ class VerifyCsrfToken extends Middleware
         '/sigma/callback/*',
         'twitter/*',
         'facebook/*',
-        'whatsapp/*'
+        'whatsapp/*',
+        'reclame_aqui/*',
     ];
 }

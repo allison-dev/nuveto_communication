@@ -13,7 +13,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        Commands\SendMail::class,
+        Commands\RetrieveMail::class,
     ];
 
     /**
@@ -26,6 +27,9 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('telescope:prune --hours=48')->daily();
+        $schedule->command('horizon:snapshot')->everyFiveMinutes();
+        $schedule->command("send:mail 'Reclame Aqui'")->everyFiveMinutes();
+        $schedule->command("retrieve:mail")->everyFiveMinutes();
     }
 
     /**

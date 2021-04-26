@@ -13,6 +13,9 @@
                     <option value="Whatsapp" {{ strtolower($billing->network) == 'whatsapp' ? 'selected="selected"' : '' }}>
 						@lang('system.whatsapp')
 					</option>
+                    <option value="Reclame_Aqui" {{ strtolower($billing->network) == 'reclame_aqui' ? 'selected="selected"' : '' }}>
+						@lang('system.reclame_aqui')
+					</option>
 				@else
                     <option value="Facebook" {{ old('network') == 'facebook' ? 'selected="selected"' : '' }}>
 						@lang('system.facebook')
@@ -22,6 +25,9 @@
 					</option>
                     <option value="Whatsapp" {{ old('network') == 'whatsapp' ? 'selected="selected"' : '' }}>
 						@lang('system.whatsapp')
+					</option>
+                    <option value="Reclame_Aqui" {{ old('network') == 'reclame_aqui' ? 'selected="selected"' : '' }}>
+						@lang('system.reclame_aqui')
 					</option>
 				@endif
 			</select>

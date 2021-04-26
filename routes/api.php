@@ -19,7 +19,7 @@ Route::group(['prefix' => 'v1'], function () {
 		return response()->json([
 			'content' => date('c'),
 			'author'  => 'Allison Oliveira',
-			'Message' => 'Teste FullStack(Agendamento Medico)',
+			'Message' => 'Sigma',
 		]);
 	});
 
@@ -27,11 +27,23 @@ Route::group(['prefix' => 'v1'], function () {
 		return response()->json([
 			'content' => date('c'),
 			'author'  => 'Allison Oliveira',
-			'Message' => 'Teste FullStack(Agendamento Medico)',
+			'Message' => 'Sigma',
 		]);
 	});
 
-	Route::group(['prefix' => 'users'], function () {
+    Route::group(['prefix' => 'billing'], function () {
+        Route::post('', 'Api\v1\Billing\BillingController@index')->name('v1.billing.index');
+    });
+
+    Route::group(['prefix' => 'user'], function () {
+        Route::post('', 'Api\v1\User\UserController@index')->name('v1.user.index');
+    });
+
+    Route::group(['prefix' => 'mail'], function () {
+        Route::post('', 'Api\v1\Mail\sendMailController@index')->name('v1.mail.index');
+    });
+
+	/* Route::group(['prefix' => 'users'], function () {
 		Route::post('token', 'Api\v1\User\TokenController@token')->name('v1.users.token');
 	});
 
@@ -39,5 +51,5 @@ Route::group(['prefix' => 'v1'], function () {
 		Route::group(['prefix' => 'doctors'], function () {
 			Route::get('', 'Api\v1\Doctor\DoctorController@index')->name('v1.doctors.index');
 		});
-	});
+	}); */
 });
