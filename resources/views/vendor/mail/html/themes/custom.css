@@ -1,0 +1,274 @@
+body {
+    margin          : 0;
+    padding         : 0;
+    background-color: #3f3f3f;
+    color           : #919191;
+}
+
+img {
+    border : 0px;
+    display: block;
+}
+
+.socialLinks {
+    font-size: 6px;
+}
+
+.socialLinks a {
+    display: inline-block;
+}
+
+.long-text p {
+    margin: 1em 0px;
+}
+
+.long-text p:last-child {
+    margin-bottom: 0px;
+}
+
+.long-text p:first-child {
+    margin-top: 0px;
+}
+
+/* yahoo, hotmail */
+.ExternalClass,
+.ExternalClass p,
+.ExternalClass span,
+.ExternalClass font,
+.ExternalClass td,
+.ExternalClass div {
+    line-height: 100%;
+}
+
+.yshortcuts a {
+    border-bottom: none !important;
+}
+
+.vb-outer {
+    min-width: 0 !important;
+}
+
+.RMsgBdy,
+.ExternalClass {
+    width           : 100%;
+    background-color: #3f3f3f;
+    background-color: #3f3f3f
+}
+
+/* outlook/office365 add buttons outside not-linked images and safari have 2px margin */
+[o365] button {
+    margin: 0 !important;
+}
+
+/* outlook */
+table .vb-outer {
+    background-color: #bfbfbf;
+}
+
+td .vb-outer {
+    padding-left : 9px;
+    padding-right: 9px;
+    font-size    : 0;
+}
+
+.vb-row {
+    border-collapse : separate;
+    width           : 100%;
+    background-color: #ffffff;
+    border-spacing  : 9px;
+    max-width       : 600px;
+}
+
+.vb-row td {
+    font-size: 0;
+}
+
+.vb-row td div {
+    width     : 100%;
+    max-width : 600px;
+    -mru-width: 0px;
+}
+
+.title {
+    display       : inline-block;
+    vertical-align: top;
+    max-width     : 368px;
+    -mru-width    : 0px;
+    width         : 100%;
+}
+
+#title table {
+    border-collapse: separate;
+    width          : 100%;
+    mso-cellspacing: 9px;
+    border-spacing : 9px;
+}
+
+#text-title {
+    font-weight: normal;
+    color      : #000000;
+    font-size  : 18px;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align : center;
+}
+
+#text-title span {
+    font-weight: normal;
+}
+
+#message {
+    font-weight: normal;
+    color      : #858585;
+    font-size  : 14px;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align : center;
+    line-height: 150%;
+}
+
+#message p {
+    margin       : 1em 0px;
+    margin-bottom: 0px;
+}
+
+#title-icon {
+    display       : inline-block;
+    vertical-align: top;
+    width         : 100%;
+    max-width     : 184px;
+    -mru-width    : 0px;
+}
+
+#title-icon table {
+    border-collapse: separate;
+    width          : 100%;
+    mso-cellspacing: 9px;
+    border-spacing : 9px;
+}
+
+#footer {
+    border        : 0px;
+    display       : block;
+    vertical-align: top;
+    height        : auto;
+    margin        : 0 auto;
+    color         : #3f3f3f;
+    font-size     : 13px;
+    font-family   : Arial, Helvetica, sans-serif;
+    width         : 100%;
+    max-width     : 600px;
+    height        : auto;
+}
+
+table tbody tr td {
+    background-color: #ffffff;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#body {
+    display: flex;
+}
+
+.first {
+    margin   : 0 auto;
+    max-width: 600px;
+}
+
+.vb-container {
+    border-collapse : separate;
+    width           : 100%;
+    background-color: #ffffff;
+    border-spacing  : 0px;
+    max-width       : 600px;
+}
+
+#outlook a {
+    padding: 0;
+}
+
+.header-image {
+    border        : 0px;
+    display       : block;
+    vertical-align: top;
+    height        : auto;
+    margin        : 0 auto;
+    color         : #3f3f3f;
+    font-size     : 13px;
+    font-family   : Arial, Helvetica, sans-serif;
+    width         : 100%;
+    max-width     : 600px;
+    height        : auto;
+}
+
+img {
+    outline               : none;
+    text-decoration       : none;
+    border                : none;
+    -ms-interpolation-mode: bicubic;
+}
+
+a img {
+    border: none;
+}
+
+@media screen and (max-width: 600px) {
+
+    table.vb-container,
+    table.vb-row {
+        width: 95% !important;
+    }
+
+    .mobile-hide {
+        display: none !important;
+    }
+
+    .mobile-textcenter {
+        text-align: center !important;
+    }
+
+    .mobile-full {
+        width    : 100% !important;
+        max-width: none !important;
+    }
+}
+
+#ko_sideArticleBlock_5 .links-color a,
+#ko_sideArticleBlock_5 .links-color a:link,
+#ko_sideArticleBlock_5 .links-color a:visited,
+#ko_sideArticleBlock_5 .links-color a:hover {
+    color          : #3f3f3f;
+    color          : #3f3f3f;
+    text-decoration: underline
+}
+
+#ko_footerBlock_2 .links-color a,
+#ko_footerBlock_2 .links-color a:link,
+#ko_footerBlock_2 .links-color a:visited,
+#ko_footerBlock_2 .links-color a:hover {
+    color          : #cccccc;
+    color          : #cccccc;
+    text-decoration: underline
+}
+
+#ko_imageBlock_3 a,
+#ko_imageBlock_3 a:link,
+#ko_imageBlock_3 a:visited,
+#ko_imageBlock_3 a:hover {
+    color          : #3f3f3f;
+    color          : #3f3f3f;
+    text-decoration: underline
+}
+
+#ko_imageBlock_4 a,
+#ko_imageBlock_4 a:link,
+#ko_imageBlock_4 a:visited,
+#ko_imageBlock_4 a:hover {
+    color          : #3f3f3f;
+    color          : #3f3f3f;
+    text-decoration: underline
+}

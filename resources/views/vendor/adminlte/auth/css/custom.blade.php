@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css?family=Numans');
 html,
 body {
-    background-image : url("{{ asset('vendor/adminlte/dist/img/sigma-folder.png') }}") !important;
+    background-image : url("{{ asset('vendor/adminlte/dist/img/site-Sigma_background.png') }}") !important;
     background-size  : cover !important;
     background-repeat: no-repeat !important;
     height           : 100% !important;
@@ -16,7 +16,7 @@ body {
     margin-top      : auto !important;
     margin-bottom   : auto !important;
     width           : 400px !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
+    background-color: rgb(218 218 218 / 65%) !important;
 }
 
 .card-header:first-child {
@@ -57,8 +57,8 @@ input:focus {
 
 .login_btn, .register_btn, .send_mail_btn {
     color           : #fff !important;
-    background-color: #f2282b !important;
-    border-color : #f2282b !important;
+    background-color: #748F9F !important;
+    border-color    : #748F9F !important;
 }
 
 .login_btn:hover, .register_btn:hover {
@@ -67,15 +67,19 @@ input:focus {
 }
 
 .input-group-text span{
-    color : #f2282b !important;
+    color: #748F9F !important;
 }
 
 p.my-0 {
     color: #fff;
 }
 
+p.my-0 a {
+    color: #323E48 !important;
+}
+
 p.my-0 a:hover {
-    color: #f2282b;
+    color: #748F9F;
 }
 
 </style>

@@ -49,6 +49,8 @@ return [
     'logo_img' => 'vendor/adminlte/dist/img/Sigma_negative_2.png',
     'logo_img_dashboard' => 'vendor/adminlte/dist/img/Sigma_negative_1.png',
     'logo_img_invoice' => 'vendor/adminlte/dist/img/Sigma_positive_2.png',
+    'mail_img_header' => 'vendor/adminlte/dist/img/Header-email_Nuveto-sigma.png',
+    'mail_img_footer' => 'vendor/adminlte/dist/img/Footer-email_sigma-2.png',
     // 'logo_img' => 'vendor/adminlte/dist/img/logo-nuveto-header-v2.png',
     'logo_img_class' => 'brand-image',
     'logo_img_xl' => null,
