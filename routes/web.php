@@ -1,7 +1,12 @@
 <?php
 
+use App\Jobs\SendMail;
+use Dacastro4\LaravelGmail\Facade\LaravelGmail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Webklex\IMAP\Facades\Client;
 
 Route::get('/', function () {
     return redirect('admin');
@@ -222,5 +227,32 @@ Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
     Route::put('/conversations/{cid}/typing', 'WhatsappCallbackController@whatsappTyping');
 });
 
+Route::prefix('reclame_aqui')->name('reclame_aqui.')->group(function () {
+    Route::post('/conversations/{cid}/create', 'ReclameAquiCallbackController@ReclameAquiSession');
+    Route::post('/conversations/{cid}/message', 'ReclameAquiCallbackController@ReclameAquiMessageCallback');
+    Route::post('/conversations/{cid}/terminate', 'ReclameAquiCallbackController@ReclameAquiTerminate');
+    Route::put('/conversations/{cid}/accept', 'ReclameAquiCallbackController@ReclameAquiAccept');
+    Route::put('/conversations/{cid}/typing', 'ReclameAquiCallbackController@ReclameAquiTyping');
+});
+
+Route::prefix('test')->name('test.')->group(function () {
+    Route::get('/client_mail', 'TestController@clientMail')->name('client_mail');;
+    Route::get('/send_mail_html', 'TestController@sendMailHtml')->name('send_mail_html');;
+});
+
 Route::get('auth/facebook', 'FacebookController@redirectToFacebook');
 Route::get('auth/facebook/callback', 'FacebookController@handleFacebookCallback');
+
+/* Route::get('/oauth/gmail', function () {
+    return LaravelGmail::redirect();
+});
+
+Route::get('/oauth/gmail/callback', function () {
+    LaravelGmail::makeToken();
+    return redirect()->to('/');
+});
+
+Route::get('/oauth/gmail/logout', function () {
+    LaravelGmail::logout(); //It returns exception if fails
+    return redirect()->to('/');
+});*/

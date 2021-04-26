@@ -10,7 +10,6 @@
         Fatura - Sigma
     </title>
 </head>
-
 <body>
     <div id="invoice">
         <div class="toolbar hidden-print">
@@ -97,6 +96,18 @@
                                     <td class="unit">R${{$invoices->get_billing_whatsapp->price}}</td>
                                     <td class="qty">{{$invoices->whatsapp_sessions}}</td>
                                     <td class="total">R${{$invoices->total->whatsapp}}</td>
+                                </tr>
+                            @endif
+                            @if ($invoices->reclame_aqui_sessions)
+                                <tr>
+                                    <td class="no">04</td>
+                                    <td class="text-left">
+                                        <h3>Sessões Simultaneas - Reclame Aqui</h3>Quantidade de sessões utilizada no periodo
+                                        através do Reclame Aqui
+                                    </td>
+                                    <td class="unit">R${{$invoices->get_billing_reclame_aqui->price}}</td>
+                                    <td class="qty">{{$invoices->reclame_aqui_sessions}}</td>
+                                    <td class="total">R${{$invoices->total->reclame_aqui}}</td>
                                 </tr>
                             @endif
                         </tbody>
