@@ -13,3 +13,4 @@ yarn-error.log
 .phpunit.result.cache
 /ngrok
 /.vscode/sftp.json
+dump.rdb

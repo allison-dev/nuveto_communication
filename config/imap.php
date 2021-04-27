@@ -77,8 +77,8 @@ return [
             'protocol'  => 'imap', //might also use imap, [pop3 or nntp (untested)]
             'encryption'    => 'ssl', // Supported: false, 'ssl', 'tls'
             'validate_cert' => false,
-            'username' => 'all_oli@hotmail.com',
-            'password' => 'Son-Of-Odin',
+            'username' => '',
+            'password' => '',
         ]
 
         /*

@@ -20,7 +20,7 @@ class TestController extends Controller
         $client->connect();
         $folders = $client->getFolders();
         $folder = $client->getFolder('INBOX');
-        $messages = $folder->query()->from('sigmaout@nuveto.com.br')->since(now()->subDays(5))->get();
+        $messages = $folder->query()->unseen()->from('sigmain@nuveto.com.br')->since(now()->subDays(5))->get();
         dd($messages);
 
         $messages->each(function ($message) {
