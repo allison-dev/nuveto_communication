@@ -43,6 +43,10 @@ class SendReclameAqui implements ShouldQueue
      */
     public function handle()
     {
-        sendMessageReclameAqui($this->data);
+        $raSend = (object)[
+            'externalId'    => $this->data['externalId'],
+            'text'          => $this->data['text']
+        ];
+        sendMessageReclameAqui($raSend);
     }
 }

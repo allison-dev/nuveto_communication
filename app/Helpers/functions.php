@@ -963,7 +963,7 @@ if (!function_exists('getReclameAquiToken')) {
 }
 
 if (!function_exists('getReclameAquiTickets')) {
-    function getReclameAquiTickets()
+    function getReclameAquiTickets($page = 1)
     {
         $return = [];
 
@@ -982,9 +982,12 @@ if (!function_exists('getReclameAquiTickets')) {
 
             $reclame_aqui_token = $get_token['access_token'];
 
-            $baseUrl = 'https://app.hugme.com.br/api/';
+            $baseUrl = 'https://app.hugme.com.br/api/v1/';
 
-            $endpoint = 'ticket/v1/tickets?page[size]=3&page[number]=1&sort[creation_date]=DESC';
+            $lte_date = Carbon::now()->toISOString();
+            $gte_date = Carbon::now()->subMonths(1)->toISOString();
+
+            $endpoint = 'tickets?last_modification_date[gte]=' . $gte_date . '&last_modification_date[lte]=' . $lte_date . '&page[size]=1&page[number]=' . $page . '&sort[creation_date]=ASC&hugme_status.id[in]=1,16,21';
 
             $url = $baseUrl . $endpoint;
 
