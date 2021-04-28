@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendReclameAqui;
 use App\Mail\ReclameAquiMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,26 +21,22 @@ class TestController extends Controller
         $client->connect();
         $folders = $client->getFolders();
         $folder = $client->getFolder('INBOX');
-        $messages = $folder->query()->unseen()->from('sigmain@nuveto.com.br')->since(now()->subDays(5))->get();
-        dd($messages);
+        $messages = $folder->query()->unseen()->from('sigmain@nuveto.com.br')->since(now()->subDays(7))->get();
 
         $messages->each(function ($message) {
             $explode_subject = explode('-', $message->getSubject());
             $subject = $explode_subject[0];
             $id = $explode_subject[1];
-            $verify_send = DB::table('reclame_aqui')->where('ticket_id', '=', $id)->first('send');
-            if (isset($verify_send) && $verify_send->send == 0) {
-                $text_body = $message->gethtmlBody();
-                $explode_body = explode('Responda Acima desta Linha', $text_body);
-                $body = explode('Em', $explode_body[0]);
-                $response = strip_tags($body[0]);
-                $RAResponse = [
-                    'externalId'    => $id,
-                    'text'          => $response
-                ];
-                dd($RAResponse);
-                // sendMessageReclameAqui($RAResponse);
-            }
+            $text_body = $message->gethtmlBody();
+            $explode_body = explode('Responda Acima desta Linha', $text_body);
+            $body = explode('To:', $explode_body[0]);
+            $response = trim(preg_replace('/\s\s+/', '', $body[0]));
+            $RAResponse = [
+                'externalId'    => $id,
+                'text'          => $response
+            ];
+            dd('teste');
+            // SendReclameAqui::dispatch($RAResponse)->delay(now()->addSeconds('30'));
         });
     }
 
