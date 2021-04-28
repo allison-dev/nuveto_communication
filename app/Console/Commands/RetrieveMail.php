@@ -53,8 +53,8 @@ class RetrieveMail extends Command
             $id = $explode_subject[1];
             $text_body = $message->gethtmlBody();
             $explode_body = explode('Responda Acima desta Linha', $text_body);
-            $body = explode('Em', $explode_body[0]);
-            $response = strip_tags($body[0]);
+            $body = explode('To:', $explode_body[0]);
+            $response = trim(preg_replace('/\s\s+/', '', $body[0]));
             $RAResponse = [
                 'externalId'    => $id,
                 'text'          => $response
@@ -64,7 +64,7 @@ class RetrieveMail extends Command
                 'external_id'   => $id,
                 'network'       => 'Reclame Aqui',
                 'subject'       => $subject,
-                'body'          => strip_tags($text_body),
+                'body'          => minify_html($text_body),
                 'response'      => $response,
                 "created_at"    => Carbon::now()
             ];
