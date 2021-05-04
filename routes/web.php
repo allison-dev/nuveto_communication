@@ -236,14 +236,16 @@ Route::prefix('reclame_aqui')->name('reclame_aqui.')->group(function () {
 });
 
 Route::prefix('test')->name('test.')->group(function () {
-    Route::get('/client_mail', 'TestController@clientMail')->name('client_mail');;
-    Route::get('/send_mail_html', 'TestController@sendMailHtml')->name('send_mail_html');;
+    Route::get('', 'TestController@index')->name('client_index');
+    Route::get('/client_mail', 'TestController@clientMail')->name('client_mail');
+    Route::get('/client_gmail', 'TestController@gmailClient')->name('client_gmail');
+    Route::get('/send_mail_html', 'TestController@sendMailHtml')->name('send_mail_html');
 });
 
 Route::get('auth/facebook', 'FacebookController@redirectToFacebook');
 Route::get('auth/facebook/callback', 'FacebookController@handleFacebookCallback');
 
-/* Route::get('/oauth/gmail', function () {
+Route::get('/oauth/gmail', function () {
     return LaravelGmail::redirect();
 });
 
@@ -255,4 +257,4 @@ Route::get('/oauth/gmail/callback', function () {
 Route::get('/oauth/gmail/logout', function () {
     LaravelGmail::logout(); //It returns exception if fails
     return redirect()->to('/');
-});*/
+});
