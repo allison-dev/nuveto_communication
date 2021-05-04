@@ -35,6 +35,7 @@
         "laravellegends/pt-br-validator": "^8.0",
         "livewire/livewire": "^2.0",
         "lucascudo/laravel-pt-br-localization": "^1.1",
+        "mailjet/mailjet-apiv3-php": "^1.5",
         "nesbot/carbon": "^2.42",
         "predis/predis": "^1.1",
         "pusher/pusher-php-server": "^4.1",
