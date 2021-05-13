@@ -31,7 +31,7 @@ class ReclameAquiMail extends Mailable
     {
         $this->subject($this->data['complaint_title']);
         $this->to('sigmain@nuveto.com.br', 'Sigma - ' . $this->data['network']);
-        $this->replyTo('sigmaout@nuveto.com.br', 'Sigma - '.$this->data['network']);
+        $this->replyTo('sigmaout@nuveto.com.br', 'Sigma - ' . $this->data['network']);
         $this->from($this->data['customer_email'], $this->data['customer_name']);
         return $this->view('mail.ReclameAqui', [
             'icon'              => $this->data['icon'],

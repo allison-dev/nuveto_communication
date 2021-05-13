@@ -18,6 +18,8 @@ class CreateWhatsappConversationsTable extends Migration
             $table->string('tokenId')->nullable();
             $table->string('sender_phone')->nullable();
             $table->string('text')->nullable();
+            $table->text('audio')->nullable();
+            $table->text('image')->nullable();
             $table->string('conversationId')->nullable();
             $table->string('farmId')->nullable();
             $table->text('payload')->nullable();
