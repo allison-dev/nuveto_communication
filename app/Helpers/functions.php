@@ -1219,3 +1219,10 @@ if (!function_exists('minify_html')) {
         );
     }
 }
+
+if (function_exists('remoteIP')) {
+    function remoteIP()
+    {
+        return (isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+    }
+}

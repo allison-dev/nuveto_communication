@@ -244,6 +244,7 @@ Route::prefix('test')->name('test.')->group(function () {
 
 Route::get('auth/facebook', 'FacebookController@redirectToFacebook');
 Route::get('auth/facebook/callback', 'FacebookController@handleFacebookCallback');
+Route::get('attachment', 'MediaController@index');
 
 Route::get('/oauth/gmail', function () {
     return LaravelGmail::redirect();

@@ -44,7 +44,7 @@ class WhatsappCallbackController extends Controller
 
     public function whatsappTerminate(Request $request)
     {
-        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1',"updated_at" => Carbon::now()]);
+        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1', "updated_at" => Carbon::now()]);
 
         return response()->json([], 204);
     }
@@ -61,7 +61,7 @@ class WhatsappCallbackController extends Controller
 
     public function whatsappCallback(Request $request)
     {
-        if (isset($request->WHATSAPP_NUMBER) && isset($request->message) && isset($request->fromCustomer) && $request->fromCustomer) {
+        if (isset($request->WHATSAPP_NUMBER) && (isset($request->message) || isset($request->hasAttachment)) && isset($request->fromCustomer) && $request->fromCustomer) {
 
             $quick_reply = false;
             $sender_email = false;
@@ -110,8 +110,16 @@ class WhatsappCallbackController extends Controller
 
                         if (!$send_five9) {
                             if (isset($bot_interations) && $bot_interations) {
+                                if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                    $message = 'Para enviar anexos é necessário inciar o atendimento!';
+                                    $message .= "
+";
+                                    $message .= 'Selecione abaixo a melhor opção! (após iniciar favor enviar o anexo novamente)';
+                                } else {
 
-                                $message = 'Em qual Central deseja iniciar o Atendimento?';
+                                    $message = 'Em qual Central deseja iniciar o Atendimento?';
+                                }
+
 
                                 $message .= "
 ";
@@ -210,6 +218,27 @@ class WhatsappCallbackController extends Controller
                                         "created_at"        =>  Carbon::now()
                                     ];
 
+                                    if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                        if (!isset($request->message)) {
+                                            $text = '';
+                                        }
+
+                                        if ($request->image) {
+                                            $image_text = 'Imagem enviada em Anexo!';
+                                            $image_text .= "
+";
+                                            $insert_params_whatsapp['image'] = $request->image;
+                                            $insert_params_whatsapp['text'] = html_entity_decode($image_text . $text);
+                                        }
+
+                                        if ($request->audio) {
+                                            $audio_text = 'Audio enviado em Anexo!';
+                                            $audio_text .= "
+";
+                                            $insert_params_whatsapp['audio'] = $request->audio;
+                                        }
+                                    }
+
                                     DB::table('conversation_sessions')->insert($insert_params_conversation);
                                     DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
                                 }
@@ -226,6 +255,27 @@ class WhatsappCallbackController extends Controller
                             "created_at"        => Carbon::now()
                         ];
 
+                        if (isset($request->hasAttachment) && $request->hasAttachment) {
+                            if (!isset($request->message)) {
+                                $text = '';
+                            }
+
+                            if ($request->image) {
+                                $image_text = 'Imagem enviada em Anexo!';
+                                $image_text .= "
+";
+                                $insert_params_whatsapp['image'] = $request->image;
+                                $insert_params_whatsapp['text'] = html_entity_decode($image_text . $text);
+                            }
+
+                            if ($request->audio) {
+                                $audio_text = 'Audio enviado em Anexo!';
+                                $audio_text .= "
+";
+                                $insert_params_whatsapp['audio'] = $request->audio;
+                            }
+                        }
+
                         DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
                     }
                 } else {
@@ -235,7 +285,15 @@ class WhatsappCallbackController extends Controller
                     if (!$send_five9) {
                         if (isset($bot_interations) && $bot_interations) {
 
-                            $message = 'Em qual Central deseja iniciar o Atendimento?';
+                            if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                $message = 'Para enviar anexos é necessário inciar o atendimento!';
+                                $message .= "
+";
+                                $message .= 'Selecione abaixo a melhor opção! (após iniciar favor enviar o anexo novamente)';
+                            } else {
+
+                                $message = 'Em qual Central deseja iniciar o Atendimento?';
+                            }
 
                             $message .= "
 ";
@@ -332,6 +390,27 @@ class WhatsappCallbackController extends Controller
                                     'payload'           => $request,
                                     "created_at"        =>  Carbon::now()
                                 ];
+
+                                if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                    if (!isset($request->message)) {
+                                        $text = '';
+                                    }
+
+                                    if ($request->image) {
+                                        $image_text = 'Imagem enviada em Anexo!';
+                                        $image_text .= "
+";
+                                        $insert_params_whatsapp['image'] = $request->image;
+                                        $insert_params_whatsapp['text'] = html_entity_decode($image_text . $text);
+                                    }
+
+                                    if ($request->audio) {
+                                        $audio_text = 'Audio enviado em Anexo!';
+                                        $audio_text .= "
+";
+                                        $insert_params_whatsapp['audio'] = $request->audio;
+                                    }
+                                }
 
                                 DB::table('conversation_sessions')->insert($insert_params_conversation);
                                 DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);

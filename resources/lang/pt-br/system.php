@@ -85,6 +85,7 @@ return [
 	'doctors'               => 'Médicos',
 	'invoice'               => 'Fatura',
 	'invoices'              => 'Faturas',
+	'medias'                => 'Anexos',
 	'sex'                   => 'Sexo',
 	'crm'                   => 'CRM',
 	'scheduling'            => 'Agendamento',
