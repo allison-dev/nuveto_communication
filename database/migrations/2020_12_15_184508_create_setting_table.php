@@ -20,6 +20,7 @@ class CreateSettingTable extends Migration
             $table->string('clientId')->nullable();
             $table->string('secretId')->nullable();
             $table->text('refreshToken')->nullable();
+            $table->text('whatsappdefaulttoken')->nullable();
             $table->string('callbackUrl')->nullable();
             $table->string('campaignName')->nullable();
             $table->string('tenantName')->nullable();
