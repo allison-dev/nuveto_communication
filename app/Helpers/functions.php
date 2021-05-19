@@ -425,9 +425,15 @@ if (!function_exists('sendMessageWhatsapp')) {
 
             $get_token = getBotmakerToken($header, 'auth/credentials');
 
-            if (isset($get_token['refreshToken']) && !empty($get_token['refreshToken'])) {
-
-                DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'whatsapp')->update(['refreshToken' => $get_token['refreshToken'], "updated_at" => Carbon::now()]);
+            if (isset($get_token['accessToken']) && !empty($get_token['accessToken'])) {
+                $botmaker_token = $get_token['accessToken'];
+            } else {
+                $db_token = DB::table('setting')->where('channel', '=', 'whatsapp')->first();
+                if (!empty($db_token->refreshToken)) {
+                    $botmaker_token = $db_token->refreshToken;
+                } else {
+                    $botmaker_token = $db_token->whatsappdefaulttoken;
+                }
             }
 
             $botmaker_token = $get_token['accessToken'];

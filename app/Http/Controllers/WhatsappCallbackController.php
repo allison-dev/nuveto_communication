@@ -163,6 +163,9 @@ class WhatsappCallbackController extends Controller
                                 } else if (isset($request->contactId) && $request->contactId == "5511991239261") {
                                     $contact_name = "Andre Romeiro";
                                     $sender_email = "alromeiro@nuveto.com.br";
+                                } else if (isset($request->contactId) && $request->contactId == "5511987563372") {
+                                    $contact_name = "Flamarion Contadini";
+                                    $sender_email = "fcontadini@nuveto.com.br";
                                 }
 
                                 $header = [
@@ -337,6 +340,9 @@ class WhatsappCallbackController extends Controller
                             } else if (isset($request->contactId) && $request->contactId == "5511991239261") {
                                 $contact_name = "Andre Romeiro";
                                 $sender_email = "alromeiro@nuveto.com.br";
+                            } else if (isset($request->contactId) && $request->contactId == "5511987563372") {
+                                $contact_name = "Flamarion Contadini";
+                                $sender_email = "fcontadini@nuveto.com.br";
                             }
 
                             $header = [
