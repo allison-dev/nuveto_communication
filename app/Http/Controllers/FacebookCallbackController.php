@@ -46,7 +46,7 @@ class FacebookCallbackController extends Controller
 
     public function facebookTerminate(Request $request)
     {
-        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1',"updated_at" => Carbon::now()]);
+        DB::table('conversation_sessions')->where('conversationId', '=', $request['correlationId'])->update(['terminate' => '1', "updated_at" => Carbon::now()]);
 
         DB::table('bot_interations')->where('sender_id', '=', $request['externalId'])->update(['terminate' => '1', 'send_five9' => '0', "updated_at" => Carbon::now()]);
 
@@ -137,7 +137,7 @@ class FacebookCallbackController extends Controller
                                 $verify_facebook_email = true;
                                 $sender_email = $events['messaging'][0]['message']['quick_reply']['payload'];
 
-                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['sender_email' => $sender_email,"updated_at" => Carbon::now()]);
+                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['sender_email' => $sender_email, "updated_at" => Carbon::now()]);
                             } else {
 
                                 $choice = explode(':', $payload);
@@ -147,7 +147,7 @@ class FacebookCallbackController extends Controller
                                     'choice'    => $choice[1]
                                 ];
 
-                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_variable' => $choice[0], 'bot_choice' => $choice[1], 'response' => json_encode($bot_response),"updated_at" => Carbon::now()]);
+                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_variable' => $choice[0], 'bot_choice' => $choice[1], 'response' => json_encode($bot_response), "updated_at" => Carbon::now()]);
 
                                 $bot_order++;
 
@@ -241,6 +241,9 @@ class FacebookCallbackController extends Controller
                                             } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@hotmail.com") {
                                                 $getSenderInfo['name'] = "Andre Romeiro";
                                                 $sender_email = "alromeiro@nuveto.com.br";
+                                            } else if (isset($sender_email) && strtolower($sender_email) == "fcontadini@hotmail.com") {
+                                                $getSenderInfo['name'] = "Flamarion Contadini";
+                                                $sender_email = "fcontadini@nuveto.com.br";
                                             }
 
                                             $header = [
@@ -351,7 +354,7 @@ class FacebookCallbackController extends Controller
                                             sendMessageFacebook($facebook_req, true, 'text', $text_options);
                                         }
 
-                                        DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order,"updated_at" => Carbon::now()]);
+                                        DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order, "updated_at" => Carbon::now()]);
                                     } else {
 
                                         $text_options[] = [
@@ -401,6 +404,9 @@ class FacebookCallbackController extends Controller
                                         } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@hotmail.com") {
                                             $getSenderInfo['name'] = "Andre Romeiro";
                                             $sender_email = "alromeiro@nuveto.com.br";
+                                        } else if (isset($sender_email) && strtolower($sender_email) == "fcontadini@hotmail.com") {
+                                            $getSenderInfo['name'] = "Flamarion Contadini";
+                                            $sender_email = "fcontadini@nuveto.com.br";
                                         }
 
                                         $header = [
