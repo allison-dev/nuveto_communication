@@ -114,6 +114,12 @@ return [
     'conversation_id'       => 'Identificador Five9',
     'terminate'             => 'Finalizado',
     'updated_at'            => 'Data de Termino',
+    'ticket_id'             => 'Ticket ID',
+    'message'               => 'Mensagem',
+    'reason'                => 'Razão',
+    'file'                  => 'Selecionar Arquivo',
+    'moderation'            => 'Moderação',
+    'send'                  => 'Enviar :value',
 	'403'                   => [
 		'title' => 'Erro 403: Permissão negada!',
 		'msg'   => 'Desculpe.Você não tem permissão de acessar esta página!',

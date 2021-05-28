@@ -228,9 +228,11 @@ Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
 });
 
 Route::prefix('reclame_aqui')->name('reclame_aqui.')->group(function () {
+    Route::get('/moderation', 'ReclameAquiModerationController@index');
     Route::post('/conversations/{cid}/create', 'ReclameAquiCallbackController@ReclameAquiSession');
     Route::post('/conversations/{cid}/message', 'ReclameAquiCallbackController@ReclameAquiMessageCallback');
     Route::post('/conversations/{cid}/terminate', 'ReclameAquiCallbackController@ReclameAquiTerminate');
+    Route::post('/moderation', 'ReclameAquiModerationController@SendModeration')->name('moderation');
     Route::put('/conversations/{cid}/accept', 'ReclameAquiCallbackController@ReclameAquiAccept');
     Route::put('/conversations/{cid}/typing', 'ReclameAquiCallbackController@ReclameAquiTyping');
 });
