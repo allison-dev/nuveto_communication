@@ -521,7 +521,7 @@ if (!function_exists('sendMessageWhatsapp')) {
 }
 
 if (!function_exists('sendMessageReclameAqui')) {
-    function sendMessageReclameAqui($request)
+    function sendMessageReclameAqui($request, $type = 'pub')
     {
         $return = [];
 
@@ -542,27 +542,53 @@ if (!function_exists('sendMessageReclameAqui')) {
 
             $baseUrl = 'https://app.hugme.com.br/api/';
 
-            $endpoint = 'ticket/v1/tickets/message/public';
+            if ($type == 'priv') {
 
-            $url = $baseUrl . $endpoint;
+                $endpoint = 'ticket/v1/tickets/message/private';
 
-            $curl = curl_init();
+                $url = $baseUrl . $endpoint;
 
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => $url,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => '',
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 0,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => 'POST',
-                CURLOPT_POSTFIELDS => array('id' => $request->externalId, 'message' => $request->text),
-                CURLOPT_HTTPHEADER => array(
-                    'Content-Type: multipart/form-data',
-                    'Authorization: Bearer ' . $reclame_aqui_token
-                ),
-            ));
+                $curl = curl_init();
+
+                curl_setopt_array($curl, array(
+                    CURLOPT_URL => $url,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_ENCODING => '',
+                    CURLOPT_MAXREDIRS => 10,
+                    CURLOPT_TIMEOUT => 0,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_CUSTOMREQUEST => 'POST',
+                    CURLOPT_POSTFIELDS => array('id' => $request->externalId, 'email' => $request->sender, 'message' => $request->text),
+                    CURLOPT_HTTPHEADER => array(
+                        'Content-Type: multipart/form-data',
+                        'Authorization: Bearer ' . $reclame_aqui_token
+                    ),
+                ));
+            } else {
+
+                $endpoint = 'ticket/v1/tickets/message/public';
+
+                $url = $baseUrl . $endpoint;
+
+                $curl = curl_init();
+
+                curl_setopt_array($curl, array(
+                    CURLOPT_URL => $url,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_ENCODING => '',
+                    CURLOPT_MAXREDIRS => 10,
+                    CURLOPT_TIMEOUT => 0,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_CUSTOMREQUEST => 'POST',
+                    CURLOPT_POSTFIELDS => array('id' => $request->externalId, 'message' => $request->text),
+                    CURLOPT_HTTPHEADER => array(
+                        'Content-Type: multipart/form-data',
+                        'Authorization: Bearer ' . $reclame_aqui_token
+                    ),
+                ));
+            }
 
             $response = curl_exec($curl);
             $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -1230,5 +1256,80 @@ if (function_exists('remoteIP')) {
     function remoteIP()
     {
         return (isset($_SERVER['HTTP_CLIENT_IP']) ? $_SERVER['HTTP_CLIENT_IP'] : isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
+    }
+}
+
+if (!function_exists('sendModeration')) {
+
+    function sendModeration($request)
+    {
+        $return = [];
+
+        $config = DB::table('setting')->where('channel', '=', 'reclame_aqui')->first();
+
+        if (!empty($config->clientId) && !empty($config->secretId)) {
+            $header = [
+                'clientId'      => $config->clientId,
+                'secretId'      => $config->secretId,
+                'Content-Type'  => 'application/json',
+            ];
+
+            $get_token = getReclameAquiToken($header, 'auth/oauth/token?grant_type=client_credentials');
+
+            DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'reclame_aqui')->update(['refreshToken' => $get_token['access_token'], "updated_at" => Carbon::now()]);
+
+            $reclame_aqui_token = $get_token['access_token'];
+
+            $baseUrl = 'https://app.hugme.com.br/api/';
+
+            $endpoint = 'ticket/v1/tickets/moderation';
+
+            $url = $baseUrl . $endpoint;
+
+            $curl = curl_init();
+
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => array('id' => $request->ticket_id, 'reason' => $request->reason, 'message' => $request->message),
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: multipart/form-data',
+                    'Authorization: Bearer ' . $reclame_aqui_token
+                ),
+            ));
+
+            $response = curl_exec($curl);
+            $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+            curl_close($curl);
+
+            $content = json_decode($response, true);
+
+            if (substr($code, 0, 1) == '2') {
+
+                $return = [
+                    'success' => true,
+                    'code'    => $code,
+                    'body'    => $content,
+                ];
+            } else {
+
+                $return = [
+                    'success' => false,
+                    'code'    => $code,
+                    'body'    => $content,
+                ];
+            }
+
+            Log::debug(json_encode($return));
+
+            return $return;
+        }
     }
 }
