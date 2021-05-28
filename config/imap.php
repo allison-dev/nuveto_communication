@@ -71,6 +71,15 @@ return [
             'username' => 'sigmaout@nuveto.com.br',
             'password' => 'x@vEpe9itAs',
         ],
+        'priv' => [ // account identifier
+            'host' => 'imap.gmail.com',
+            'port' => 993,
+            'protocol'  => 'imap', //might also use imap, [pop3 or nntp (untested)]
+            'encryption' => 'ssl',
+            'validate_cert' => false,
+            'username' => 'sigmapriv@nuveto.com.br',
+            'password' => 'x@vEpe9itAs',
+        ],
         'outlook' => [ // account identifier
             'host'  => 'outlook.office365.com',
             'port'  => 993,
