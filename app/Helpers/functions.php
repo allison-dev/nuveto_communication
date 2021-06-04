@@ -302,7 +302,7 @@ if (!function_exists('sendMessageFacebook')) {
 
         $version = 'v9.0/';
 
-        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBAIj1eRo4LztVZC6FrOWywXRxOr6AA4dhyo8gIcS9uNMML9gOBUToJePJZAO64zLZAU41O2cRnm3Nu0Gc7JPJZAFzNPlP5gdZBWc5TYk19X1pZAXGJ4UjUquoDHhj7wpZCRxzYeneKFkuP3ZBt7aY6PI66jLZBp6IEz5FIT0JTioec');
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAMNolX1ZCDUBAMbLyPXt1F0nRofs7jnZA4rxEoI1M3SvaMDyqjhtstpZCjWbhKW6h5qqyLWBgbWZAcORsBdswGTmlnPV2HK1BAe6ZCCcHqPESspxU2TCQ7UT3sUM8lWv0YyzsbpfYvRhR8DZCwNP9DltgEnrYcAdaZBoCL6T1pFmkZCA78Vum00');
 
         $endpoint = 'me/messages?access_token=' . $page_token;
 
@@ -425,6 +425,8 @@ if (!function_exists('sendMessageWhatsapp')) {
 
             $get_token = getBotmakerToken($header, 'auth/credentials');
 
+            Log::alert(json_encode($get_token));
+
             if (isset($get_token['accessToken']) && !empty($get_token['accessToken'])) {
                 $botmaker_token = $get_token['accessToken'];
             } else {
@@ -436,7 +438,7 @@ if (!function_exists('sendMessageWhatsapp')) {
                 }
             }
 
-            $botmaker_token = $get_token['accessToken'];
+            DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'whatsapp')->update(['refreshToken' => $botmaker_token, "updated_at" => Carbon::now()]);
 
             $baseUrl = 'https://go.botmaker.com/api/';
 
@@ -597,6 +599,9 @@ if (!function_exists('sendMessageReclameAqui')) {
 
             $content = json_decode($response, true);
 
+            Log::notice(json_encode($content));
+            Log::notice(json_encode($type));
+
             if ($code != 200) {
 
                 $return = [
@@ -624,6 +629,8 @@ if (!function_exists('getBotmakerToken')) {
         $data = [
             'headers' => $header,
         ];
+
+        Log::critical(json_encode($header));
 
         if ($parameters) {
             $data['body'] = json_encode($parameters);
@@ -682,7 +689,7 @@ if (!function_exists('getMessengerInfo')) {
 
         $baseUrl = 'https://graph.facebook.com/';
 
-        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAnrDZBZALHKwBAIj1eRo4LztVZC6FrOWywXRxOr6AA4dhyo8gIcS9uNMML9gOBUToJePJZAO64zLZAU41O2cRnm3Nu0Gc7JPJZAFzNPlP5gdZBWc5TYk19X1pZAXGJ4UjUquoDHhj7wpZCRxzYeneKFkuP3ZBt7aY6PI66jLZBp6IEz5FIT0JTioec');
+        $page_token = env('FACEBOOK_PAGE_TOKEN', 'EAAMNolX1ZCDUBAMbLyPXt1F0nRofs7jnZA4rxEoI1M3SvaMDyqjhtstpZCjWbhKW6h5qqyLWBgbWZAcORsBdswGTmlnPV2HK1BAe6ZCCcHqPESspxU2TCQ7UT3sUM8lWv0YyzsbpfYvRhR8DZCwNP9DltgEnrYcAdaZBoCL6T1pFmkZCA78Vum00');
 
         $endpoint = '?fields=name,gender,profile_pic&access_token=' . $page_token;
 
@@ -1024,7 +1031,7 @@ if (!function_exists('getReclameAquiTickets')) {
 
             $endpoint = 'tickets?last_modification_date[gte]=' . $gte_date . '&last_modification_date[lte]=' . $lte_date . '&page[size]=1&page[number]=' . $page . '&sort[creation_date]=DESC&hugme_status.id[in]=1,16,21';
 
-            // $endpoint = 'tickets?id[eq]=43512021';
+            //$endpoint = 'tickets?id[eq]=44172884';
 
             $url = $baseUrl . $endpoint;
 
@@ -1252,6 +1259,84 @@ if (!function_exists('minify_html')) {
     }
 }
 
+if (!function_exists('minify_css')) {
+    function minify_css($input)
+    {
+        if (trim($input) === "") return $input;
+        return preg_replace(
+            array(
+                // Remove comment(s)
+                '#("(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\')|\/\*(?!\!)(?>.*?\*\/)|^\s*|\s*$#s',
+                // Remove unused white-space(s)
+                '#("(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\'|\/\*(?>.*?\*\/))|\s*+;\s*+(})\s*+|\s*+([*$~^|]?+=|[{};,>~]|\s(?![0-9\.])|!important\b)\s*+|([[(:])\s++|\s++([])])|\s++(:)\s*+(?!(?>[^{}"\']++|"(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\')*+{)|^\s++|\s++\z|(\s)\s+#si',
+                // Replace `0(cm|em|ex|in|mm|pc|pt|px|vh|vw|%)` with `0`
+                '#(?<=[\s:])(0)(cm|em|ex|in|mm|pc|pt|px|vh|vw|%)#si',
+                // Replace `:0 0 0 0` with `:0`
+                '#:(0\s+0|0\s+0\s+0\s+0)(?=[;\}]|\!important)#i',
+                // Replace `background-position:0` with `background-position:0 0`
+                '#(background-position):0(?=[;\}])#si',
+                // Replace `0.6` with `.6`, but only when preceded by `:`, `,`, `-` or a white-space
+                '#(?<=[\s:,\-])0+\.(\d+)#s',
+                // Minify string value
+                '#(\/\*(?>.*?\*\/))|(?<!content\:)([\'"])([a-z_][a-z0-9\-_]*?)\2(?=[\s\{\}\];,])#si',
+                '#(\/\*(?>.*?\*\/))|(\burl\()([\'"])([^\s]+?)\3(\))#si',
+                // Minify HEX color code
+                '#(?<=[\s:,\-]\#)([a-f0-6]+)\1([a-f0-6]+)\2([a-f0-6]+)\3#i',
+                // Replace `(border|outline):none` with `(border|outline):0`
+                '#(?<=[\{;])(border|outline):none(?=[;\}\!])#',
+                // Remove empty selector(s)
+                '#(\/\*(?>.*?\*\/))|(^|[\{\}])(?:[^\s\{\}]+)\{\}#s'
+            ),
+            array(
+                '$1',
+                '$1$2$3$4$5$6$7',
+                '$1',
+                ':0',
+                '$1:0 0',
+                '.$1',
+                '$1$3',
+                '$1$2$4$5',
+                '$1$2$3',
+                '$1:0',
+                '$1$2'
+            ),
+            $input
+        );
+    }
+}
+
+if (!function_exists('minify_js')) {
+    // JavaScript Minifier
+    function minify_js($input)
+    {
+        if (trim($input) === "") return $input;
+        return preg_replace(
+            array(
+                // Remove comment(s)
+                '#\s*("(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\')\s*|\s*\/\*(?!\!|@cc_on)(?>[\s\S]*?\*\/)\s*|\s*(?<![\:\=])\/\/.*(?=[\n\r]|$)|^\s*|\s*$#',
+                // Remove white-space(s) outside the string and regex
+                '#("(?:[^"\\\]++|\\\.)*+"|\'(?:[^\'\\\\]++|\\\.)*+\'|\/\*(?>.*?\*\/)|\/(?!\/)[^\n\r]*?\/(?=[\s.,;]|[gimuy]|$))|\s*([!%&*\(\)\-=+\[\]\{\}|;:,.<>?\/])\s*#s',
+                // Remove the last semicolon
+                '#;+\}#',
+                // Minify object attribute(s) except JSON attribute(s). From `{'foo':'bar'}` to `{foo:'bar'}`
+                '#([\{,])([\'])(\d+|[a-z_][a-z0-9_]*)\2(?=\:)#i',
+                // --ibid. From `foo['bar']` to `foo.bar`
+                '#([a-z0-9_\)\]])\[([\'"])([a-z_][a-z0-9_]*)\2\]#i'
+            ),
+            array(
+                '$1',
+                '$1$2',
+                '}',
+                '$1$3',
+                '$1.$3'
+            ),
+            $input
+        );
+    }
+}
+
+
+
 if (function_exists('remoteIP')) {
     function remoteIP()
     {
@@ -1327,7 +1412,7 @@ if (!function_exists('sendModeration')) {
                 ];
             }
 
-            Log::debug(json_encode($return));
+            Log::notice(json_encode($return));
 
             return $return;
         }

@@ -76,8 +76,8 @@ class TestController extends Controller
                 'network'           => 'Reclame Aqui'
             ];
         }
-        JobsSendMail::dispatch($send_info)->delay(now()->addSeconds('5'));
-        // return new ReclameAquiMail($send_info);
+        // JobsSendMail::dispatch($send_info)->delay(now()->addSeconds('5'));
+        return new ReclameAquiMail($send_info);
     }
 
     function closetags($html)

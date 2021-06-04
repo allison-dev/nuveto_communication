@@ -1,48 +1,36 @@
 {
     "name": "laravel/laravel",
     "type": "project",
-    "description": "The Laravel Framework.",
+    "description": "Sigma Ominichannel",
     "keywords": [
         "framework",
         "laravel"
     ],
     "license": "MIT",
     "require": {
-        "php": "^7.3",
+        "php": "^7.3|^8.0",
         "ext-bcmath": "*",
         "ext-json": "*",
-        "almasaeed2010/adminlte": "~3.0",
-        "browner12/helpers": "^3.1",
-        "dacastro4/laravel-gmail": "^5.1",
         "fideloper/proxy": "^4.2",
         "fruitcake/laravel-cors": "^2.0",
         "fzaninotto/faker": "^1.9",
-        "google/apiclient": "^2.0",
         "guzzlehttp/guzzle": "^7.1",
         "jeroennoten/laravel-adminlte": "^3.5",
         "laracasts/flash": "^3.1",
         "laravel-notification-channels/facebook": "^0.2.1",
-        "laravel/fortify": "^1.7",
         "laravel/framework": "^8.0",
         "laravel/horizon": "^5.7",
-        "laravel/jetstream": "^1.6",
         "laravel/passport": "^10.0",
-        "laravel/sanctum": "^2.6",
-        "laravel/socialite": "^5.1",
         "laravel/telescope": "^4.3",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^3.0",
         "laravellegends/pt-br-validator": "^8.0",
-        "livewire/livewire": "^2.0",
         "lucascudo/laravel-pt-br-localization": "^1.1",
-        "mailjet/mailjet-apiv3-php": "^1.5",
         "nesbot/carbon": "^2.42",
         "predis/predis": "^1.1",
         "pusher/pusher-php-server": "^4.1",
         "snapappointments/bootstrap-select": "^1.13",
-        "spatie/laravel-webhook-client": "^2.7",
         "thujohn/twitter": "^2.3",
-        "tinify/tinify": "^1.5",
         "webklex/laravel-imap": "^2.4",
         "webklex/php-imap": "^2.5",
         "your-app-rocks/eloquent-uuid": "^2.4"
@@ -94,12 +82,13 @@
             "@php artisan key:generate --ansi"
         ],
         "post-install-cmd": [
-            "php artisan clear-compiled",
             "chmod -R 777 storage",
-            "php artisan passport:keys"
+            "@php artisan clear-compiled",
+            "@php artisan passport:keys"
         ],
         "post-update-cmd": [
-            "@php artisan horizon:publish --ansi"
+            "@php artisan horizon:publish --ansi",
+            "@php artisan telescope:publish --ansi"
         ]
     }
 }

@@ -43,6 +43,7 @@ class RetrieveMail extends Command
     public function handle()
     {
         $type = $this->argument('type');
+
         if ($type == 'priv') {
             $client = Client::account('priv');
         } else {
@@ -55,19 +56,15 @@ class RetrieveMail extends Command
 
         $messages->each(function ($message) {
             $type = $this->argument('type');
-            $sender = $message->getHeader()->sender[0]->mail;
+            $RAResponse = [];
             $explode_subject = explode('-', $message->getSubject());
             $subject = $explode_subject[0];
             $id = $explode_subject[1];
             $text_body = $message->gethtmlBody();
             $explode_body = explode('Responda Acima desta Linha', $text_body);
+            /* $body = explode('<br><div class="gmail_quote">', $explode_body[0]); */
             $body = explode('To:', $explode_body[0]);
-            $response = trim(preg_replace('/\s\s+/', '', $body[0]));
-            $RAResponse = [
-                'externalId'    => $id,
-                'text'          => $response,
-                'sender'        => $sender
-            ];
+            $response = trim(preg_replace('/\s\s+/', '', strip_tags($body[0])));
 
             $insert_params = [
                 'external_id'   => $id,
@@ -83,8 +80,19 @@ class RetrieveMail extends Command
             DB::table('reclame_aqui')->where('ticket_id', '=', $id)->update(['send' => 1]);
 
             if ($type == 'priv') {
+                $get_sender = DB::table('reclame_aqui')->where('ticket_id', '=', $id)->orderBy('id', 'desc')->first('customer_email');
+
+                $RAResponse = [
+                    'externalId'    => $id,
+                    'text'          => $response,
+                    'sender'        => $get_sender->customer_email
+                ];
                 SendReclameAquiPriv::dispatch($RAResponse)->delay(now()->addSeconds('30'));
             } else {
+                $RAResponse = [
+                    'externalId'    => $id,
+                    'text'          => $response,
+                ];
                 SendReclameAqui::dispatch($RAResponse)->delay(now()->addSeconds('30'));
             }
         });

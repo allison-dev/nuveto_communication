@@ -32,9 +32,11 @@ class InvoicesController extends Controller
         $facebook_sessions = 0;
         $twitter_sessions = 0;
         $whatsapp_sessions = 0;
+        $reclame_aqui_sessions = 0;
         $get_billing_facebook = false;
         $get_billing_twitter = false;
         $get_billing_whatsapp = false;
+        $get_billing_reclame_aqui = false;
 
         $request->validated();
 
