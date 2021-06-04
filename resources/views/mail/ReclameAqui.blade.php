@@ -198,10 +198,10 @@
                                                         </span>
                                                     </td>
                                                 </tr>
-                                                <tr style="float: right; text-align: right; width: 30%">
+                                                <tr style="float: right; text-align: right;">
                                                     <td width="100%" valign="middle" class="links-color">
-                                                        <img width="166" src="{{ $icon }}" alt="icon-Sigma"
-                                                            style="max-width:166px; width:100%; display: inline-block; border: 0px;height:auto!important;" />
+                                                        <img width="140" src="{{ $icon }}" alt="icon-Sigma"
+                                                            style="max-width:140px; width:100%; display: inline-block; border: 0px;height:auto!important;" />
                                                     </td>
                                                 </tr>
                                                 <tr>
