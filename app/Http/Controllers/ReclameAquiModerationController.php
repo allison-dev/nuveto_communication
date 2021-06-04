@@ -20,7 +20,7 @@ class ReclameAquiModerationController extends Controller
                 '17'    => 'A empresa não violou o direito do consumidor',
                 '19'    => 'Este é um caso de fraude',
             ],
-            'ticket_id' => isset($request->ticket_id) && $request->ticket_id ? $request->ticket_id : null,
+            'ticket_id' => isset($request->ticketid) && $request->ticketid ? $request->ticketid : null,
         ];
         return view('pages.moderation.index')->with(compact(['moderation']));
     }
@@ -42,7 +42,7 @@ class ReclameAquiModerationController extends Controller
                 '17'    => 'A empresa não violou o direito do consumidor',
                 '19'    => 'Este é um caso de fraude',
             ],
-            'ticket_id' => isset($request->ticket_id) && $request->ticket_id ? $request->ticket_id : null,
+            'ticket_id' => isset($request->ticketid) && $request->ticketid ? $request->ticketid : null,
             'message'   => $result['body']['message']
         ];
 

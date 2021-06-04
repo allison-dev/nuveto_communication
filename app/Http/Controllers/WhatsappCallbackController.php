@@ -280,6 +280,8 @@ class WhatsappCallbackController extends Controller
                         }
 
                         DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
+
+                        $send_five9 = true;
                     }
                 } else {
 

@@ -78,7 +78,7 @@ return [
             'encryption' => 'ssl',
             'validate_cert' => false,
             'username' => 'sigmapriv@nuveto.com.br',
-            'password' => 'x@vEpe9itAs',
+            'password' => 'nQFEodNtgRNE',
         ],
         'outlook' => [ // account identifier
             'host'  => 'outlook.office365.com',

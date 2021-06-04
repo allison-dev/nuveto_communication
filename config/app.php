@@ -161,7 +161,6 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-        Dacastro4\LaravelGmail\LaravelGmailServiceProvider::class,
         Webklex\IMAP\Providers\LaravelServiceProvider::class,
 
         /*
@@ -177,8 +176,6 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\HorizonServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\FortifyServiceProvider::class,
-        App\Providers\JetstreamServiceProvider::class,
         App\Providers\TelescopeServiceProvider::class,
         App\Providers\TelescopeServiceProvider::class,
 
