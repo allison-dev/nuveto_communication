@@ -1005,7 +1005,7 @@ if (!function_exists('getReclameAquiToken')) {
 }
 
 if (!function_exists('getReclameAquiTickets')) {
-    function getReclameAquiTickets($page = 1)
+    function getReclameAquiTickets($page = 1, $ticket_id = false)
     {
         $return = [];
 
@@ -1029,9 +1029,11 @@ if (!function_exists('getReclameAquiTickets')) {
             $lte_date = Carbon::now()->toISOString();
             $gte_date = Carbon::now()->subMonths(1)->toISOString();
 
-            $endpoint = 'tickets?last_modification_date[gte]=' . $gte_date . '&last_modification_date[lte]=' . $lte_date . '&page[size]=1&page[number]=' . $page . '&sort[creation_date]=DESC&hugme_status.id[in]=1,16,21';
-
-            //$endpoint = 'tickets?id[eq]=44172884';
+            if ($ticket_id) {
+                $endpoint = 'tickets?id[eq]='.$ticket_id.'&ra_status.id[eq]=8';
+            } else {
+                $endpoint = 'tickets?last_modification_date[gte]=' . $gte_date . '&last_modification_date[lte]=' . $lte_date . '&page[size]=1&page[number]=' . $page . '&sort[creation_date]=DESC&hugme_status.id[in]=1,16,21';
+            }
 
             $url = $baseUrl . $endpoint;
 
@@ -1137,7 +1139,7 @@ if (!function_exists('fiveNineSend')) {
                 $endpoint = 'conversations';
 
                 $params = [
-                    'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/facebook',
+                    'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/reclame_aqui',
                     'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
                     'contact' => [
                         'firstName' => isset($name) ? trim($name) : 'Reclame Aqui User',
@@ -1383,6 +1385,81 @@ if (!function_exists('sendModeration')) {
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST => 'POST',
                 CURLOPT_POSTFIELDS => array('id' => $request->ticket_id, 'reason' => $request->reason, 'message' => $request->message),
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: multipart/form-data',
+                    'Authorization: Bearer ' . $reclame_aqui_token
+                ),
+            ));
+
+            $response = curl_exec($curl);
+            $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+            curl_close($curl);
+
+            $content = json_decode($response, true);
+
+            if (substr($code, 0, 1) == '2') {
+
+                $return = [
+                    'success' => true,
+                    'code'    => $code,
+                    'body'    => $content,
+                ];
+            } else {
+
+                $return = [
+                    'success' => false,
+                    'code'    => $code,
+                    'body'    => $content,
+                ];
+            }
+
+            Log::notice(json_encode($return));
+
+            return $return;
+        }
+    }
+}
+
+if (!function_exists('sendEvaluation')) {
+
+    function sendEvaluation($request)
+    {
+        $return = [];
+
+        $config = DB::table('setting')->where('channel', '=', 'reclame_aqui')->first();
+
+        if (!empty($config->clientId) && !empty($config->secretId)) {
+            $header = [
+                'clientId'      => $config->clientId,
+                'secretId'      => $config->secretId,
+                'Content-Type'  => 'application/json',
+            ];
+
+            $get_token = getReclameAquiToken($header, 'auth/oauth/token?grant_type=client_credentials');
+
+            DB::table('setting')->where('secretId', '=', $config->secretId)->where('channel', '=', 'reclame_aqui')->update(['refreshToken' => $get_token['access_token'], "updated_at" => Carbon::now()]);
+
+            $reclame_aqui_token = $get_token['access_token'];
+
+            $baseUrl = 'https://app.hugme.com.br/api/';
+
+            $endpoint = 'ticket/v1/tickets/evaluation';
+
+            $url = $baseUrl . $endpoint;
+
+            $curl = curl_init();
+
+            curl_setopt_array($curl, array(
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING => '',
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'POST',
+                CURLOPT_POSTFIELDS => array('id' => $request->ticket_id),
                 CURLOPT_HTTPHEADER => array(
                     'Content-Type: multipart/form-data',
                     'Authorization: Bearer ' . $reclame_aqui_token

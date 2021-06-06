@@ -8,6 +8,6 @@
 		</a>
 	</ol>
 	<ol class="breadcrumb-item active">
-		@lang('system.moderation')
+		@lang('system.evaluation')
 	</ol>
 @endsection
