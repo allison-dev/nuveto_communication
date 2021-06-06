@@ -119,6 +119,7 @@ return [
     'reason'                => 'Razão',
     'file'                  => 'Selecionar Arquivo',
     'moderation'            => 'Moderação',
+    'evaluation'            => 'Avaliação',
     'send'                  => 'Enviar :value',
 	'403'                   => [
 		'title' => 'Erro 403: Permissão negada!',
