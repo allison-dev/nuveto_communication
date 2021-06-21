@@ -46,22 +46,26 @@ class InvoicesController extends Controller
             $network = strtolower($billings->network);
             switch ($network) {
                 case 'facebook':
-                    $facebook_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=', $network)->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') >= '" . $request['ini_date'] . "'")->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') <= '" . $request['end_date'] . "'")->orderBy('created_at', 'desc')->count();
+                    $facebook_sessions = DB::table(DB::raw('sig_conversation_sessions cs,
+                    sig_conversation_sessions cs2'))->whereRaw('cs.terminate = 1')->whereRaw('cs.channel = "' . $network . '"')->whereRaw('cs.channel = cs2.channel')->whereRaw("DATE_FORMAT(cs.created_at, '%Y-%m-%d') >= '" . $request['ini_date'] . "'")->whereRaw("DATE_FORMAT(cs.created_at, '%Y-%m-%d') <= '" . $request['end_date'] . "'")->whereRaw('cs.created_at BETWEEN cs2.created_at AND cs2.updated_at')->groupBy(DB::raw('cs.created_at'))->orderBy(DB::raw('cs.created_at'))->get([DB::raw('cs.created_at'), DB::raw('cs.channel'), DB::raw('COUNT(*) AS CountSimultaneous')])->max('CountSimultaneous');
                     $get_billing_facebook = DB::table('billings')->where('network', '=', $network)->first();
                     $totals[$network] = $facebook_sessions * $get_billing_facebook->price;
                     break;
                 case 'twitter':
-                    $twitter_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=', $network)->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') >= '" . $request['ini_date'] . "'")->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') <= '" . $request['end_date'] . "'")->orderBy('created_at', 'desc')->count();
+                    $twitter_sessions = DB::table(DB::raw('sig_conversation_sessions cs,
+                    sig_conversation_sessions cs2'))->whereRaw('cs.terminate = 1')->whereRaw('cs.channel = "' . $network . '"')->whereRaw('cs.channel = cs2.channel')->whereRaw("DATE_FORMAT(cs.created_at, '%Y-%m-%d') >= '" . $request['ini_date'] . "'")->whereRaw("DATE_FORMAT(cs.created_at, '%Y-%m-%d') <= '" . $request['end_date'] . "'")->whereRaw('cs.created_at BETWEEN cs2.created_at AND cs2.updated_at')->groupBy(DB::raw('cs.created_at'))->orderBy(DB::raw('cs.created_at'))->get([DB::raw('cs.created_at'), DB::raw('cs.channel'), DB::raw('COUNT(*) AS CountSimultaneous')])->max('CountSimultaneous');
                     $get_billing_twitter = DB::table('billings')->where('network', '=', $network)->first();
                     $totals[$network] = $twitter_sessions * $get_billing_twitter->price;
                     break;
                 case 'whatsapp':
-                    $whatsapp_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=', $network)->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') >= '" . $request['ini_date'] . "'")->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') <= '" . $request['end_date'] . "'")->orderBy('created_at', 'desc')->count();
+                    $whatsapp_sessions = DB::table(DB::raw('sig_conversation_sessions cs,
+                    sig_conversation_sessions cs2'))->whereRaw('cs.terminate = 1')->whereRaw('cs.channel = "' . $network . '"')->whereRaw('cs.channel = cs2.channel')->whereRaw("DATE_FORMAT(cs.created_at, '%Y-%m-%d') >= '" . $request['ini_date'] . "'")->whereRaw("DATE_FORMAT(cs.created_at, '%Y-%m-%d') <= '" . $request['end_date'] . "'")->whereRaw('cs.created_at BETWEEN cs2.created_at AND cs2.updated_at')->groupBy(DB::raw('cs.created_at'))->orderBy(DB::raw('cs.created_at'))->get([DB::raw('cs.created_at'), DB::raw('cs.channel'), DB::raw('COUNT(*) AS CountSimultaneous')])->max('CountSimultaneous');
                     $get_billing_whatsapp = DB::table('billings')->where('network', '=', $network)->first();
                     $totals[$network] = $whatsapp_sessions * $get_billing_whatsapp->price;
                     break;
                 case 'reclame_aqui':
-                    $reclame_aqui_sessions = DB::table('conversation_sessions')->where('terminate', '=', 1)->where('channel', '=', $network)->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') >= '" . $request['ini_date'] . "'")->whereRaw("DATE_FORMAT(`created_at`, '%Y-%m-%d') <= '" . $request['end_date'] . "'")->orderBy('created_at', 'desc')->count();
+                    $reclame_aqui_sessions = DB::table(DB::raw('sig_conversation_sessions cs,
+                    sig_conversation_sessions cs2'))->whereRaw('cs.terminate = 1')->whereRaw('cs.channel = "' . $network . '"')->whereRaw('cs.channel = cs2.channel')->whereRaw("DATE_FORMAT(cs.created_at, '%Y-%m-%d') >= '" . $request['ini_date'] . "'")->whereRaw("DATE_FORMAT(cs.created_at, '%Y-%m-%d') <= '" . $request['end_date'] . "'")->whereRaw('cs.created_at BETWEEN cs2.created_at AND cs2.updated_at')->groupBy(DB::raw('cs.created_at'))->orderBy(DB::raw('cs.created_at'))->get([DB::raw('cs.created_at'), DB::raw('cs.channel'), DB::raw('COUNT(*) AS CountSimultaneous')])->max('CountSimultaneous');
                     $get_billing_reclame_aqui = DB::table('billings')->where('network', '=', $network)->first();
                     $totals[$network] = $reclame_aqui_sessions * $get_billing_reclame_aqui->price;
                     break;
@@ -80,7 +84,7 @@ class InvoicesController extends Controller
 
         $invoice_id = random_int(1000000, 9999999);
 
-        $invoice_obj = (object)array_merge_recursive((array)$get_company, (array)$get_address, ['facebook_sessions' => $facebook_sessions, 'twitter_sessions' => $twitter_sessions, 'whatsapp_sessions' => $whatsapp_sessions,'reclame_aqui_sessions' => $reclame_aqui_sessions, 'get_billing_facebook' => $get_billing_facebook, 'get_billing_twitter' => $get_billing_twitter, 'get_billing_whatsapp' => $get_billing_whatsapp,'get_billing_reclame_aqui' => $get_billing_reclame_aqui, 'invoice_id' => $invoice_id, 'date_ini' => $request['ini_date'], 'date_end' => $request['end_date'], 'total' => json_encode($totals), 'subtotal' => $subtotal, 'full_total' => $full_total]);
+        $invoice_obj = (object)array_merge_recursive((array)$get_company, (array)$get_address, ['facebook_sessions' => $facebook_sessions, 'twitter_sessions' => $twitter_sessions, 'whatsapp_sessions' => $whatsapp_sessions, 'reclame_aqui_sessions' => $reclame_aqui_sessions, 'get_billing_facebook' => $get_billing_facebook, 'get_billing_twitter' => $get_billing_twitter, 'get_billing_whatsapp' => $get_billing_whatsapp, 'get_billing_reclame_aqui' => $get_billing_reclame_aqui, 'invoice_id' => $invoice_id, 'date_ini' => $request['ini_date'], 'date_end' => $request['end_date'], 'total' => json_encode($totals), 'subtotal' => $subtotal, 'full_total' => $full_total]);
 
         $invoice_obj->birthday = date('d/m/Y', strtotime($invoice_obj->birthday));
         $invoice_obj->date_ini = date('d/m/Y', strtotime($invoice_obj->date_ini));

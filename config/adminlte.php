@@ -47,7 +47,7 @@ return [
 
     'logo' => '<b>Sigma</b>',
     'logo_img' => 'vendor/adminlte/dist/img/Sigma_negative_2.png',
-    'logo_img_dashboard' => 'vendor/adminlte/dist/img/Sigma_negative_1.png',
+    'logo_img_dashboard' => 'vendor/adminlte/dist/img/Sigma_positive_1.png',
     'logo_img_invoice' => 'vendor/adminlte/dist/img/Sigma_positive_2.png',
     'mail_img_header' => 'vendor/adminlte/dist/img/Header-email_Nuveto-sigma.png',
     'mail_img_footer' => 'vendor/adminlte/dist/img/Footer-email_sigma-2.png',
@@ -332,17 +332,47 @@ return [
                 [
                     'type' => 'js',
                     'asset' => true,
-                    'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js',
+                    'location' => '//cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js',
                 ],
                 [
                     'type' => 'js',
                     'asset' => true,
-                    'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js',
+                    'location' => 'https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js',
                 ],
                 [
                     'type' => 'css',
                     'asset' => true,
-                    'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css',
+                    'location' => '//cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css',
                 ],
             ],
         ],
@@ -367,7 +397,17 @@ return [
                 [
                     'type' => 'js',
                     'asset' => true,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js',
+                    'location' => 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.3.2/chart.min.js',
+                ],
+            ],
+        ],
+        'datalabels' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0-rc.1/chartjs-plugin-datalabels.min.js',
                 ],
             ],
         ],

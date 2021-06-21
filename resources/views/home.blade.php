@@ -7,13 +7,14 @@
 @stop
 
 @section('content')
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <p class="mb-0">Navegue no menu a esquerda e Aproveite nossos serviços.</p>
-                </div>
-            </div>
-        </div>
+    <div class="chart-container col-sm-12" style="position: relative;">
+        {!! $line_chartjs->render() !!}
+        {!! $bar_chartjs->render() !!}
+        {!! $pie_chartjs->render() !!}
     </div>
 @stop
+
+<script>
+    var delayed;
+
+</script>
