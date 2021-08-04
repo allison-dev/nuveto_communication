@@ -2,4 +2,5 @@
     "editor.wordWrap": "on",
     "files.trimTrailingWhitespace": true,
     "trailing-spaces.trimOnSave": true,
+    "git.ignoreLimitWarning": true,
 }
