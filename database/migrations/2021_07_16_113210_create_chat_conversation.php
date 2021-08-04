@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAppsTable extends Migration
+class CreateChatConversation extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,13 @@ class CreateAppsTable extends Migration
      */
     public function up()
     {
-        Schema::create('apps', function (Blueprint $table) {
+        Schema::create('chat_conversation', function (Blueprint $table) {
             $table->id();
-            $table->string('app_name');
-            $table->string('app_type');
-            $table->string('description');
+            $table->string('text')->nullable();
+            $table->string('conversationId')->nullable();
+            $table->string('clientId')->nullable();
+            $table->string('farmId')->nullable();
+            $table->text('payload')->nullable();
             $table->timestamps();
         });
     }
@@ -29,6 +31,6 @@ class CreateAppsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('apps');
+        Schema::dropIfExists('chat_conversation');
     }
 }

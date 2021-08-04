@@ -65,6 +65,18 @@ if (!function_exists('sendFivenine')) {
                 $conversation_id = $data->conversationId;
                 $send = true;
             }
+        } else if ($channel == 'chat') {
+
+            $data = DB::table('chat_conversation')->where('conversationId', '=', $id)->orderBy('id', 'desc')->first();
+
+            if (!is_null($data)) {
+                $message = $data->text;
+                $external_id = $data->ticket_id;
+                $token_id = $data->tokenId;
+                $farm_id = $data->farmId;
+                $conversation_id = $data->conversationId;
+                $send = true;
+            }
         } else {
 
             $data = DB::table('users')->where('id', '=', $id)->first();
@@ -1030,7 +1042,7 @@ if (!function_exists('getReclameAquiTickets')) {
             $gte_date = Carbon::now()->subMonths(1)->toISOString();
 
             if ($ticket_id) {
-                $endpoint = 'tickets?id[eq]='.$ticket_id.'&ra_status.id[eq]=8';
+                $endpoint = 'tickets?id[eq]=' . $ticket_id . '&ra_status.id[eq]=8';
             } else {
                 $endpoint = 'tickets?last_modification_date[gte]=' . $gte_date . '&last_modification_date[lte]=' . $lte_date . '&page[size]=1&page[number]=' . $page . '&sort[creation_date]=DESC&hugme_status.id[in]=1,16,21';
             }
