@@ -16,7 +16,7 @@ class CreateReclameAquiTable extends Migration
         Schema::create('reclame_aqui', function (Blueprint $table) {
             $table->id();
             $table->string('ticket_id')->nullable();
-            $table->boolean('reply')->default(0)->nullable();
+            $table->boolean('send')->default(0)->nullable();
             $table->string('customer_id')->nullable();
             $table->string('customer_name')->nullable();
             $table->string('customer_email')->nullable();
