@@ -1,60 +1,39 @@
-<div id="carouselExampleDark" class="carousel carousel-dark slide" data-bs-ride="carousel">
-    <div class="carousel-indicators">
-        @foreach ($medias as $key => $media)
-            @if (isset($media->image))
-                @if ($key == 0)
-                    <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="{{ $key }}"
-                        class="active" aria-current="true" aria-label="Slide {{ $key }}"></button>
-                @else
-                    <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="{{ $key }}"
-                        aria-label="Slide {{ $key }}"></button>
-                @endif
-            @elseif (isset($media->audio))
-                @if ($key == 0)
-                    <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="{{ $key }}"
-                        class="active" aria-current="true" aria-label="Slide {{ $key }}"></button>
-                @else
-                    <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="{{ $key }}"
-                        aria-label="Slide {{ $key }}"></button>
-                @endif
-            @endif
-        @endforeach
-    </div>
-    <div class="carousel-inner">
-        @foreach ($medias as $key => $media)
-            @if (isset($media->image))
-                @if ($key == 0)
-                    <div class="carousel-item active">
-                        <img src="{{ $media->image }}" alt="Sigma-Image {{ $key }}" />
-                    </div>
-                @else
-                    <div class="carousel-item">
-                        <img src="{{ $media->image }}" alt="Sigma-Image {{ $key }}" />
-                    </div>
-                @endif
-            @elseif (isset($media->audio))
-                @if ($key == 0)
-                    <div class="carousel-item active">
-                        <audio class="w-50 audio-control" controls>
-                            <source src="{{$media->audio}}" type="audio/ogg" />
-                        </audio>
-                    </div>
-                @else
-                    <div class="carousel-item">
-                        <audio class="w-50 audio-control" controls>
-                            <source src="{{$media->audio}}" type="audio/ogg" />
-                        </audio>
-                    </div>
-                @endif
-            @endif
-        @endforeach
-    </div>
-    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleDark" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Previous</span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleDark" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Next</span>
-    </button>
-</div>
+@foreach ($medias as $key => $media)
+    @if (isset($media->image))
+        @if (isset($media->type) && $media->type == 's3')
+            {{-- <img style="width: 500px;" src="/anexos/images/{{ $media->image }}" alt="Image-{{ $key }}"
+                class="img-fluid tm-img"> --}}
+           {{--  <div class="col-sm-6 col-md-4 col-lg-3 item">
+                <a href="/anexos/images/{{ $media->image }}" data-lightbox="photos">
+                    <img class="img-fluid" src="/anexos/images/{{ $media->image }}">
+                </a>
+            </div> --}}
+
+            <div class="col-lg-3 col-md-4 col-xs-6 thumb">
+                <a href="/anexos/images/{{ $media->image }}" class="fancybox" rel="ligthbox">
+                    <img src="/anexos/images/{{ $media->image }}" class="zoom img-fluid " alt="">
+                </a>
+            </div>
+        @else
+            {{-- <img style="width: 500px;" src="{{ $media->image }}" alt="Image-{{ $key }}"
+                class="img-fluid tm-img"> --}}
+            {{-- <div class="col-sm-6 col-md-4 col-lg-3 item">
+                <a href="{{ $media->image }}" data-lightbox="photos">
+                    <img class="img-fluid" src="{{ $media->image }}">
+                </a>
+            </div> --}}
+
+            <div class="col-lg-3 col-md-4 col-xs-6 thumb">
+                <a href="{{ $media->image }}" class="fancybox" rel="ligthbox">
+                    <img src="{{ $media->image }}" class="zoom img-fluid " alt="">
+                </a>
+            </div>
+        @endif
+    @elseif (isset($media->audio))
+        <div class="col-sm-6 col-md-4 col-lg-3 item">
+            <audio class="w-50 audio-control" controls>
+                <source src="{{ $media->audio }}" type="audio/ogg" />
+            </audio>
+        </div>
+    @endif
+@endforeach

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateWhatsappConversationsTable extends Migration
+class CreateChatConversations extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,13 @@ class CreateWhatsappConversationsTable extends Migration
      */
     public function up()
     {
-        Schema::create('whatsapp_conversations', function (Blueprint $table) {
+        Schema::create('chat_conversations', function (Blueprint $table) {
             $table->id();
-            $table->string('tokenId')->nullable();
-            $table->string('sender_phone')->nullable();
-            $table->string('text')->nullable();
             $table->string('conversationId')->nullable();
+            $table->string('tokenId')->nullable();
+            $table->string('clientId')->nullable();
             $table->string('farmId')->nullable();
+            $table->string('text')->nullable();
             $table->text('payload')->nullable();
             $table->timestamps();
         });
@@ -32,6 +32,6 @@ class CreateWhatsappConversationsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('whatsapp_conversations');
+        Schema::dropIfExists('chat_conversations');
     }
 }
