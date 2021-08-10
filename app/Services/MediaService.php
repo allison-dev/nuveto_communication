@@ -17,7 +17,7 @@ class MediaService implements MediaServiceInterface
 
     public function index()
     {
-        $medias = DB::table('whatsapp_conversations')->whereNotNull('image')->orWhereNotNull('audio')->orderBy('id','desc')->get();
+        $medias = $this->mediaRepository->orderBy('id', 'DESC')->get();
 
         if (!count($medias)) {
             return false;
@@ -34,7 +34,7 @@ class MediaService implements MediaServiceInterface
     public function show($id)
     {
         try {
-            return $this->mediaRepository->where('id', $id)->first();
+            return $this->mediaRepository->where('conversationId', $id)->get();
         } catch (ModelNotFoundException $e) {
             return false;
         }

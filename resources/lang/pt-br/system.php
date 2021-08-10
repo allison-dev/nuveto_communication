@@ -107,6 +107,7 @@ return [
     'whatsapp'              => 'Whatsapp',
     'twitter'               => 'Twitter',
     'reclame_aqui'          => 'Reclame Aqui',
+    'chat'                  => 'Chat',
     'price'                 => 'Valor por Canal',
     'tax'                   => 'Adicional (%)',
     'general_table'         => 'Utilização Total',

@@ -111,21 +111,27 @@ Route::prefix('reclame_aqui')->name('reclame_aqui.')->group(function () {
 });
 
 Route::prefix('chat')->name('chat.')->group(function () {
+    Route::post('/message', 'ChatCallbackController@chatCallback');
     Route::post('/conversations/{cid}/create', 'ChatCallbackController@chatSession');
     Route::post('/conversations/{cid}/message', 'ChatCallbackController@chatMessageCallback');
     Route::post('/conversations/{cid}/terminate', 'ChatCallbackController@chatTerminate');
     Route::put('/conversations/{cid}/accept', 'ChatCallbackController@chatAccept');
     Route::put('/conversations/{cid}/typing', 'ChatCallbackController@chatTyping');
-    Route::post('/message', 'ChatCallbackController@chatMessage')->name('message');
 });
 
 Route::prefix('test')->name('test.')->group(function () {
-    Route::get('', 'TestController@index')->name('client_index');
+    Route::get('image/{fileName}', 'TestController@index')->name('client_index');
     Route::get('/client_mail', 'TestController@clientMail')->name('client_mail');
     Route::get('/client_gmail', 'TestController@gmailClient')->name('client_gmail');
     Route::get('/send_mail_html', 'TestController@sendMailHtml')->name('send_mail_html');
 });
 
+Route::prefix('anexos')->name('anexos.')->group(function () {
+    Route::get('/', 'MediasController@index');
+    Route::get('/images', 'MediasController@show');
+    Route::get('images/{fileName}', 'ImagesController@getImages');
+    Route::post('images/upload', 'ImagesController@uploadImage')->name('upload');
+});
+
 Route::get('auth/facebook', 'FacebookController@redirectToFacebook');
 Route::get('auth/facebook/callback', 'FacebookController@handleFacebookCallback');
-Route::get('attachment', 'MediaController@index');

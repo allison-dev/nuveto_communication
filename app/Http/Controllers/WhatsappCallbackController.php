@@ -216,21 +216,25 @@ class WhatsappCallbackController extends Controller
                                         'text'              => $text,
                                         'conversationId'    => $create_conversation['body']['id'],
                                         'farmId'            => $create_session['context']['farmId'],
-                                        'farmId'            => $create_session['context']['farmId'],
                                         'payload'           => $request,
                                         "created_at"        =>  Carbon::now()
                                     ];
 
                                     if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                        $insert_params_whatsapp_medias = [
+                                            'conversationId'    => $create_conversation['body']['id'],
+                                            'channel'           => "whatsapp",
+                                            "created_at"        =>  Carbon::now()
+                                        ];
                                         if (!isset($request->message)) {
                                             $text = '';
                                         }
 
-                                        if ($request->image) {
+                                        if ($request->file) {
                                             $image_text = 'Imagem enviada em Anexo!';
                                             $image_text .= "
 ";
-                                            $insert_params_whatsapp['image'] = $request->image;
+                                            $insert_params_whatsapp_medias['image'] = $request->file;
                                             $insert_params_whatsapp['text'] = html_entity_decode($image_text . $text);
                                         }
 
@@ -238,8 +242,10 @@ class WhatsappCallbackController extends Controller
                                             $audio_text = 'Audio enviado em Anexo!';
                                             $audio_text .= "
 ";
-                                            $insert_params_whatsapp['audio'] = $request->audio;
+                                            $insert_params_whatsapp_medias['audio'] = $request->audio;
                                         }
+
+                                        DB::table('medias')->insert($insert_params_whatsapp_medias);
                                     }
 
                                     DB::table('conversation_sessions')->insert($insert_params_conversation);
@@ -259,15 +265,20 @@ class WhatsappCallbackController extends Controller
                         ];
 
                         if (isset($request->hasAttachment) && $request->hasAttachment) {
+                            $insert_params_whatsapp_medias = [
+                                'conversationId'    => $whatsapp_session->conversationId,
+                                'channel'           => "whatsapp",
+                                "created_at"        =>  Carbon::now()
+                            ];
                             if (!isset($request->message)) {
                                 $text = '';
                             }
 
-                            if ($request->image) {
+                            if ($request->file) {
                                 $image_text = 'Imagem enviada em Anexo!';
                                 $image_text .= "
 ";
-                                $insert_params_whatsapp['image'] = $request->image;
+                                $insert_params_whatsapp_medias['image'] = $request->file;
                                 $insert_params_whatsapp['text'] = html_entity_decode($image_text . $text);
                             }
 
@@ -275,8 +286,10 @@ class WhatsappCallbackController extends Controller
                                 $audio_text = 'Audio enviado em Anexo!';
                                 $audio_text .= "
 ";
-                                $insert_params_whatsapp['audio'] = $request->audio;
+                                $insert_params_whatsapp_medias['audio'] = $request->audio;
                             }
+
+                            DB::table('medias')->insert($insert_params_whatsapp_medias);
                         }
 
                         DB::table('whatsapp_conversations')->insert($insert_params_whatsapp);
@@ -400,15 +413,20 @@ class WhatsappCallbackController extends Controller
                                 ];
 
                                 if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                    $insert_params_whatsapp_medias = [
+                                        'conversationId'    => $create_conversation['body']['id'],
+                                        'channel'           => "whatsapp",
+                                        "created_at"        =>  Carbon::now()
+                                    ];
                                     if (!isset($request->message)) {
                                         $text = '';
                                     }
 
-                                    if ($request->image) {
+                                    if ($request->file) {
                                         $image_text = 'Imagem enviada em Anexo!';
                                         $image_text .= "
 ";
-                                        $insert_params_whatsapp['image'] = $request->image;
+                                        $insert_params_whatsapp_medias['image'] = $request->file;
                                         $insert_params_whatsapp['text'] = html_entity_decode($image_text . $text);
                                     }
 
@@ -416,8 +434,10 @@ class WhatsappCallbackController extends Controller
                                         $audio_text = 'Audio enviado em Anexo!';
                                         $audio_text .= "
 ";
-                                        $insert_params_whatsapp['audio'] = $request->audio;
+                                        $insert_params_whatsapp_medias['audio'] = $request->audio;
                                     }
+
+                                    DB::table('medias')->insert($insert_params_whatsapp_medias);
                                 }
 
                                 DB::table('conversation_sessions')->insert($insert_params_conversation);
