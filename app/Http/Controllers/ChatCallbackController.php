@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\MessageSent;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +15,11 @@ class ChatCallbackController extends Controller
 
     public function chatMessageCallback(Request $request)
     {
+        sendMessageChat($request);
+
         $insert_params_messages = [
             'id'            => $request->correlationId,
-            'type'          => 'facebook',
+            'type'          => 'chat',
             'from_id'       => $request->correlationId,
             'to_id'         => $request->externalId,
             "created_at"    =>  Carbon::now()
@@ -47,449 +48,290 @@ class ChatCallbackController extends Controller
         return response()->json([], 204);
     }
 
-    public function facebookTyping(Request $request)
+    public function chatTyping(Request $request)
     {
         return response()->json([], 204);
     }
 
-    public function facebookAccept(Request $request)
+    public function chatAccept(Request $request)
     {
         return response()->json([], 204);
     }
 
     public function chatCallback(Request $request)
     {
-        $sender_email = false;
         $send_five9 = false;
 
-        if (isset($request->entry)) {
-            $data = $request->entry;
+        if (isset($request->message)) {
+            if (isset($request->clientId) && isset($request->message) && isset($request->name) && isset($request->email)) {
 
-            $events = $data[0];
+                $send_five9 = true;
 
-            if (isset($events['messaging'][0]['sender']['id']) && isset($events['messaging'][0]['message']['text'])) {
+                $clientId = $request->clientId;
 
-                $sender_id = $events['messaging'][0]['sender']['id'];
+                $text = $request->message;
 
-                $text = $events['messaging'][0]['message']['text'];
+                $firstname = $request->name;
 
-                $verify_page = DB::table('setting')->where('facebook_page_id', '=', $sender_id)->first();
+                $email = $request->email;
 
-                if (is_null($verify_page)) {
+                $config = DB::table('setting')->where('channel', '=', 'chat')->first();
 
-                    $config = DB::table('setting')->where('channel', '=', 'facebook')->first();
+                $chat_session = DB::table('chat_conversations')->where('clientId', '=', $clientId)->orderBy('id', 'desc')->first();
 
-                    $facebook_session = DB::table('facebook_conversations')->where('sender_id', '=', $sender_id)->orderBy('id', 'desc')->first();
+                $billing_sessions = DB::table('billings')->where('network', '=', 'chat')->first(['sessions']);
 
-                    $bot_session = DB::table('bot_interations')->where('sender_id', '=', $sender_id)->where('terminate', '=', 0)->orderBy('id', 'desc')->first();
+                $count_sessions = DB::table('conversation_sessions')->where('terminate', '=', 0)->where('channel', '=', 'chat')->count();
 
-                    $billing_sessions = DB::table('billings')->where('network', '=', 'facebook')->first(['sessions']);
+                if (!is_null($billing_sessions->sessions) && $count_sessions >= $billing_sessions->sessions) {
+                    $chat_req = (object) [
+                        "text" => 'No momento, todos os nossos agentes estão ocupados, por favor retorne o seu contato mais tarde.',
+                        "externalId" => $clientId,
+                        "Name"  => "Sigma"
+                    ];
 
-                    $count_sessions = DB::table('conversation_sessions')->where('terminate', '=', 0)->where('channel', '=', 'facebook')->count();
+                    sendMessageChat($chat_req);
+                } else {
 
-                    if (!is_null($billing_sessions->sessions) && $count_sessions >= $billing_sessions->sessions) {
-                        $facebook_req = (object) [
-                            "text" => 'No momento, todos os nossos agentes estão ocupados, por favor retorne o seu contato mais tarde.',
-                            "externalId" => $sender_id
-                        ];
+                    if (isset($chat_session->conversationId)) {
 
-                        sendMessageFacebook($facebook_req);
-                    } else {
-                        if (!$bot_session) {
-                            DB::table('bot_interations')->insert(['sender_id' => $sender_id]);
-                        } else {
-                            DB::table('bot_interations')->where('terminate', '=', 0)->update(['sender_id' => $sender_id, "updated_at" => Carbon::now()]);
-                        }
+                        $verify_session = DB::table('conversation_sessions')->where('conversationId', $chat_session->conversationId)->where('terminate', '=', '0')->first();
 
-                        if (isset($bot_session->bot_order) && $bot_session->bot_order) {
-                            $bot_order = $bot_session->bot_order;
-                        } else {
-                            $bot_order = 0;
-                        }
-
-                        if (isset($bot_session->sender_email) && $bot_session->sender_email) {
-                            $sender_email = $bot_session->sender_email;
-                        }
-
-                        if (isset($bot_session->send_five9) && $bot_session->send_five9) {
-                            $send_five9 = $bot_session->send_five9;
-                        }
-
-                        if (isset($events['messaging'][0]['message']['quick_reply']['payload'])) {
-                            $payload = $events['messaging'][0]['message']['quick_reply']['payload'];
-
-                            if ($payload == 'five9') {
-
-                                $send_five9 = true;
-                                $verify_facebook_email = true;
-
-                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['send_five9' => 1, "updated_at" => Carbon::now()]);
-                            } else if (filter_var($payload, FILTER_VALIDATE_EMAIL)) {
-
-                                $verify_facebook_email = true;
-                                $sender_email = $events['messaging'][0]['message']['quick_reply']['payload'];
-
-                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['sender_email' => $sender_email, "updated_at" => Carbon::now()]);
-                            } else {
-
-                                $choice = explode(':', $payload);
-
-                                $bot_response = [
-                                    'variable'  => $choice[0],
-                                    'choice'    => $choice[1]
-                                ];
-
-                                DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_variable' => $choice[0], 'bot_choice' => $choice[1], 'response' => json_encode($bot_response), "updated_at" => Carbon::now()]);
-
-                                $bot_order++;
-
-                                $verify_facebook_email = true;
-                            }
-                        } else {
-                            $verify_facebook_email = false;
-                        }
-
-                        $bot_interations = DB::table('bot_interations')->where('order', '=', $bot_order)->first();
-
-                        $getSenderInfo = getMessengerInfo($sender_id);
-
-                        if (isset($facebook_session->conversationId)) {
-
-                            $verify_session = DB::table('conversation_sessions')->where('conversationId', $facebook_session->conversationId)->where('terminate', '=', '0')->first();
-
-                            if (!$verify_session) {
-                                /* Create Session */
-
-                                if ($verify_facebook_email) {
-
-                                    if (!$send_five9) {
-                                        if (isset($bot_interations) && $bot_interations) {
-                                            if (!empty($bot_interations->options)) {
-
-                                                $bot_options = json_decode($bot_interations->options, true);
-
-                                                foreach ($bot_options['options'] as $options) {
-                                                    $text_options[] = [
-                                                        'content_type' => 'text',
-                                                        'title' => $options['label'],
-                                                        'payload' => $options['variable'] . ":" . $options['choice']
-                                                    ];
-                                                }
-
-                                                $facebook_req = [
-                                                    "text" => $bot_interations->text,
-                                                    "externalId" => $sender_id
-                                                ];
-
-                                                sendMessageFacebook($facebook_req, true, 'text', $text_options);
-                                            }
-
-                                            DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order, "updated_at" => Carbon::now()]);
-                                        } else {
-
-                                            $text_options[] = [
-                                                'content_type' => 'text',
-                                                "title" => "Iniciar Chat",
-                                                "payload" => 'five9',
-                                            ];
-
-                                            $facebook_req = [
-                                                "text" => 'Deseja Interagir com o Atendente?',
-                                                "externalId" => $sender_id
-                                            ];
-
-                                            sendMessageFacebook($facebook_req, true, 'text', $text_options);
-                                        }
-                                    }
-
-                                    if ($send_five9) {
-
-                                        if ($bot_session->bot_variable && $bot_session->bot_choice) {
-                                            $bot_variable = $bot_session->bot_variable;
-                                            $bot_choice = $bot_session->bot_choice;
-                                        } else {
-                                            $bot_variable = false;
-                                            $bot_choice = false;
-                                        }
-
-                                        $header = [
-                                            'Accept'       => 'application/json',
-                                            'Content-Type' => 'application/json',
-                                        ];
-
-                                        $endpoint = 'auth/anon?cookieless=true';
-
-                                        $params = [
-                                            'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
-                                        ];
-
-                                        $create_session = apiCall($header, $endpoint, 'POST', $params);
-
-                                        if (isset($create_session['tokenId']) && $create_session['tokenId']) {
-
-                                            if (isset($getSenderInfo['name']) && strtolower($getSenderInfo['name']) == "cadu leite") {
-                                                $getSenderInfo['name'] = "Carlos Eduardo Leite";
-                                                $sender_email = "ceduardo@nuveto.com.br";
-                                            } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@hotmail.com") {
-                                                $getSenderInfo['name'] = "Andre Romeiro";
-                                                $sender_email = "alromeiro@nuveto.com.br";
-                                            } else if (isset($sender_email) && strtolower($sender_email) == "fcontadini@hotmail.com") {
-                                                $getSenderInfo['name'] = "Flamarion Contadini";
-                                                $sender_email = "fcontadini@nuveto.com.br";
-                                            }
-
-                                            $header = [
-                                                'Content-Type'  => 'application/json',
-                                                'Authorization' => 'Bearer-' . $create_session['tokenId'],
-                                                'farmId'        => $create_session['context']['farmId']
-                                            ];
-
-                                            $endpoint = 'conversations';
-
-                                            $params = [
-                                                'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/facebook',
-                                                'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
-                                                'contact' => [
-                                                    'email' => isset($sender_email) ? $sender_email : 'noreply_' . $sender_id . '@facebook.com',
-                                                    'firstName' => isset($getSenderInfo['name']) ? $getSenderInfo['name'] : 'Facebook User',
-                                                    'socialAccountName' => isset($getSenderInfo['name']) ? $getSenderInfo['name'] : 'Facebook User',
-                                                    'socialAccountProfileUrl' => isset($getSenderInfo['profile_pic']) ? $getSenderInfo['profile_pic'] : 'https://www.facebook.com/profile.php?id=' . $sender_id,
-                                                    'gender' => isset($getSenderInfo['gender']) ? $getSenderInfo['gender'] : 'N',
-                                                ],
-                                                'externalId' => $sender_id,
-                                                'disableAutoClose' => true,
-                                                'tenantId' => $create_session['orgId'],
-                                                'type'  => 'FACEBOOK'
-                                            ];
-
-                                            if ($bot_variable && $bot_choice) {
-                                                $params['attributes'] = [
-                                                    'Custom.' . $bot_variable => $bot_choice
-                                                ];
-                                            }
-
-                                            $create_conversation = apiCall($header, $endpoint, 'POST', $params);
-
-                                            if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
-                                                $insert_params_conversation = [
-                                                    'tokenId'           => $create_session['tokenId'],
-                                                    'userId'            => $sender_id,
-                                                    'conversationId'    => $create_conversation['body']['id'],
-                                                    'tenantId'          => $create_session['orgId'],
-                                                    'farmId'            => $create_session['context']['farmId'],
-                                                    'channel'           => 'facebook',
-                                                    "created_at"        =>  Carbon::now()
-                                                ];
-
-                                                $insert_params_facebook = [
-                                                    'tokenId'           => $create_session['tokenId'],
-                                                    'sender_id'         => $sender_id,
-                                                    'text'              => $text,
-                                                    'conversationId'    => $create_conversation['body']['id'],
-                                                    'farmId'            => $create_session['context']['farmId'],
-                                                    'farmId'            => $create_session['context']['farmId'],
-                                                    'payload'           => $request,
-                                                    "created_at"        =>  Carbon::now()
-                                                ];
-
-                                                DB::table('conversation_sessions')->insert($insert_params_conversation);
-                                                DB::table('facebook_conversations')->insert($insert_params_facebook);
-                                            }
-                                        }
-                                    }
-                                } else {
-
-                                    $facebook_req = [
-                                        "text" => "Por questões de Segurança, clique abaixo para confirmar o seu e-mail!",
-                                        "externalId" => $sender_id
-                                    ];
-
-                                    sendMessageFacebook($facebook_req, true);
-                                }
-                            } else {
-                                $insert_params_facebook = [
-                                    'tokenId'           => $verify_session->tokenId,
-                                    'sender_id'         => $sender_id,
-                                    'text'              => $text,
-                                    'conversationId'    => $facebook_session->conversationId,
-                                    'farmId'            => $verify_session->farmId,
-                                    'payload'           => $request,
-                                    "created_at"        =>  Carbon::now()
-                                ];
-
-                                DB::table('facebook_conversations')->insert($insert_params_facebook);
-                            }
-                        } else {
+                        if (!$verify_session) {
                             /* Create Session */
 
-                            if ($verify_facebook_email) {
-
-                                if (!$send_five9) {
-                                    if (isset($bot_interations) && $bot_interations) {
-                                        if (!empty($bot_interations->options)) {
-
-                                            $bot_options = json_decode($bot_interations->options, true);
-
-                                            foreach ($bot_options['options'] as $options) {
-                                                $text_options[] = [
-                                                    'content_type' => 'text',
-                                                    'title' => $options['label'],
-                                                    'payload' => $options['variable'] . ":" . $options['choice']
-                                                ];
-                                            }
-
-                                            $facebook_req = [
-                                                "text" => $bot_interations->text,
-                                                "externalId" => $sender_id
-                                            ];
-
-                                            sendMessageFacebook($facebook_req, true, 'text', $text_options);
-                                        }
-
-                                        DB::table('bot_interations')->where('terminate', '=', 0)->where('sender_id', '=', $sender_id)->update(['bot_order' => $bot_order, "updated_at" => Carbon::now()]);
-                                    } else {
-
-                                        $text_options[] = [
-                                            'content_type' => 'text',
-                                            "title" => "Iniciar Chat",
-                                            "payload" => 'five9',
-                                        ];
-
-                                        $facebook_req = [
-                                            "text" => "Deseja Interagir com o Atendente?",
-                                            "externalId" => $sender_id
-                                        ];
-
-                                        sendMessageFacebook($facebook_req, true, 'text', $text_options);
-                                    }
-                                }
-
-                                if ($send_five9) {
-
-                                    if ($bot_session->bot_variable && $bot_session->bot_choice) {
-                                        $bot_variable = $bot_session->bot_variable;
-                                        $bot_choice = $bot_session->bot_choice;
-                                    } else {
-                                        $bot_variable = false;
-                                        $bot_choice = false;
-                                    }
-
-
-                                    $header = [
-                                        'Accept'       => 'application/json',
-                                        'Content-Type' => 'application/json',
-                                    ];
-
-                                    $endpoint = 'auth/anon?cookieless=true';
-
-                                    $params = [
-                                        'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
-                                    ];
-
-                                    $create_session = apiCall($header, $endpoint, 'POST', $params);
-
-                                    if (isset($create_session['tokenId']) && $create_session['tokenId']) {
-
-                                        if (isset($getSenderInfo['name']) && strtolower($getSenderInfo['name']) == "cadu leite") {
-                                            $getSenderInfo['name'] = "Carlos Eduardo Leite";
-                                            $sender_email = "ceduardo@nuveto.com.br";
-                                        } else if (isset($sender_email) && strtolower($sender_email) == "alromeiro@hotmail.com") {
-                                            $getSenderInfo['name'] = "Andre Romeiro";
-                                            $sender_email = "alromeiro@nuveto.com.br";
-                                        } else if (isset($sender_email) && strtolower($sender_email) == "fcontadini@hotmail.com") {
-                                            $getSenderInfo['name'] = "Flamarion Contadini";
-                                            $sender_email = "fcontadini@nuveto.com.br";
-                                        }
-
-                                        $header = [
-                                            'Content-Type'  => 'application/json',
-                                            'Authorization' => 'Bearer-' . $create_session['tokenId'],
-                                            'farmId'        => $create_session['context']['farmId']
-                                        ];
-
-                                        $endpoint = 'conversations';
-
-                                        $params = [
-                                            'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/facebook',
-                                            'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
-                                            'contact' => [
-                                                'email' => isset($sender_email) ? $sender_email : 'noreply_' . $sender_id . '@facebook.com',
-                                                'firstName' => isset($getSenderInfo['name']) ? $getSenderInfo['name'] : 'Facebook User',
-                                                'socialAccountName' => isset($getSenderInfo['name']) ? $getSenderInfo['name'] : 'Facebook User',
-                                                'socialAccountProfileUrl' => isset($getSenderInfo['profile_pic']) ? $getSenderInfo['profile_pic'] : 'https://www.facebook.com/profile.php?id=' . $sender_id,
-                                                'gender' => isset($getSenderInfo['gender']) ? $getSenderInfo['gender'] : 'N',
-                                            ],
-                                            'externalId' => $sender_id,
-                                            'disableAutoClose' => true,
-                                            'tenantId' => $create_session['orgId'],
-                                            'type'  => 'FACEBOOK'
-                                        ];
-
-                                        if ($bot_variable && $bot_choice) {
-                                            $params['attributes'] = [
-                                                'Custom.' . $bot_variable => $bot_choice
-                                            ];
-                                        }
-
-                                        $create_conversation = apiCall($header, $endpoint, 'POST', $params);
-
-                                        if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
-                                            $insert_params_conversation = [
-                                                'tokenId'           => $create_session['tokenId'],
-                                                'userId'            => $sender_id,
-                                                'conversationId'    => $create_conversation['body']['id'],
-                                                'tenantId'          => $create_session['orgId'],
-                                                'farmId'            => $create_session['context']['farmId'],
-                                                'channel'           => 'facebook',
-                                                "created_at"        =>  Carbon::now()
-                                            ];
-
-                                            $insert_params_facebook = [
-                                                'tokenId'           => $create_session['tokenId'],
-                                                'sender_id'         => $sender_id,
-                                                'text'              => $text,
-                                                'conversationId'    => $create_conversation['body']['id'],
-                                                'farmId'            => $create_session['context']['farmId'],
-                                                'payload'           => $request,
-                                                "created_at"        =>  Carbon::now()
-                                            ];
-
-                                            DB::table('conversation_sessions')->insert($insert_params_conversation);
-                                            DB::table('facebook_conversations')->insert($insert_params_facebook);
-                                        }
-                                    }
-                                }
-                            } else {
-                                $facebook_req = [
-                                    "text" => "Por questões de Segurança, clique abaixo para confirmar o seu e-mail!",
-                                    "externalId" => $sender_id
+                            if ($send_five9) {
+                                $header = [
+                                    'Accept'       => 'application/json',
+                                    'Content-Type' => 'application/json',
                                 ];
 
-                                sendMessageFacebook($facebook_req, true);
+                                $endpoint = 'auth/anon?cookieless=true';
+
+                                $params = [
+                                    'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
+                                ];
+
+                                $create_session = apiCall($header, $endpoint, 'POST', $params);
+
+                                if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                                    if (isset($firstname) && strtolower($firstname) == "cadu leite") {
+                                        $firstname = "Carlos Eduardo Leite";
+                                        $email = "ceduardo@nuveto.com.br";
+                                    } else if (isset($email) && strtolower($email) == "alromeiro@hotmail.com") {
+                                        $firstname = "Andre Romeiro";
+                                        $email = "alromeiro@nuveto.com.br";
+                                    } else if (isset($email) && strtolower($email) == "fcontadini@hotmail.com") {
+                                        $firstname = "Flamarion Contadini";
+                                        $email = "fcontadini@nuveto.com.br";
+                                    }
+
+                                    $header = [
+                                        'Content-Type'  => 'application/json',
+                                        'Authorization' => 'Bearer-' . $create_session['tokenId'],
+                                        'farmId'        => $create_session['context']['farmId']
+                                    ];
+
+                                    $endpoint = 'conversations';
+
+                                    $params = [
+                                        'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/chat',
+                                        'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
+                                        'contact' => [
+                                            'email' => isset($email) ? $email : 'noreply_' . $clientId . '@chat.com',
+                                            'firstName' => isset($firstname) ? $firstname : 'Sigma Chat User',
+                                        ],
+                                        'externalId' => $clientId,
+                                        'disableAutoClose' => true,
+                                        'tenantId' => $create_session['orgId'],
+                                        'type'  => 'chat'
+                                    ];
+
+                                    $create_conversation = apiCall($header, $endpoint, 'POST', $params);
+
+                                    if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
+                                        $insert_params_conversation = [
+                                            'tokenId'           => $create_session['tokenId'],
+                                            'userId'            => $clientId,
+                                            'conversationId'    => $create_conversation['body']['id'],
+                                            'tenantId'          => $create_session['orgId'],
+                                            'farmId'            => $create_session['context']['farmId'],
+                                            'channel'           => 'chat',
+                                            "created_at"        =>  Carbon::now()
+                                        ];
+
+                                        $insert_params_chat = [
+                                            'tokenId'           => $create_session['tokenId'],
+                                            'clientId'         => $clientId,
+                                            'text'              => $text,
+                                            'conversationId'    => $create_conversation['body']['id'],
+                                            'farmId'            => $create_session['context']['farmId'],
+                                            'farmId'            => $create_session['context']['farmId'],
+                                            'payload'           => $request,
+                                            "created_at"        =>  Carbon::now()
+                                        ];
+
+                                        if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                            $insert_params_chat_medias = [
+                                                'conversationId'    => $create_conversation['body']['id'],
+                                                'channel'           => "chat",
+                                                "type"              => "s3",
+                                                "created_at"        =>  Carbon::now()
+                                            ];
+                                            if ($request->image) {
+                                                $image_text = 'Imagem enviada em Anexo!';
+                                                $image_text .= "
+";
+                                                $insert_params_chat_medias['image'] = $request->image;
+                                                $insert_params_chat['text'] = html_entity_decode($image_text . $text);
+                                            }
+
+                                            DB::table('medias')->insert($insert_params_chat_medias);
+                                        }
+
+                                        DB::table('conversation_sessions')->insert($insert_params_conversation);
+                                        DB::table('chat_conversations')->insert($insert_params_chat);
+                                    }
+                                }
+                            }
+                        } else {
+                            $insert_params_chat = [
+                                'tokenId'           => $verify_session->tokenId,
+                                'clientId'         => $clientId,
+                                'text'              => $text,
+                                'conversationId'    => $chat_session->conversationId,
+                                'farmId'            => $verify_session->farmId,
+                                'payload'           => $request,
+                                "created_at"        =>  Carbon::now()
+                            ];
+
+                            if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                $insert_params_chat_medias = [
+                                    'conversationId'    => $chat_session->conversationId,
+                                    'channel'           => "chat",
+                                    "type"              => "s3",
+                                    "created_at"        =>  Carbon::now()
+                                ];
+                                if ($request->image) {
+                                    $image_text = 'Imagem enviada em Anexo!';
+                                    $image_text .= "
+";
+                                    $insert_params_chat_medias['image'] = $request->image;
+                                    $insert_params_chat['text'] = html_entity_decode($image_text . $text);
+                                }
+
+                                DB::table('medias')->insert($insert_params_chat_medias);
+                            }
+
+                            DB::table('chat_conversations')->insert($insert_params_chat);
+                        }
+                    } else {
+                        /* Create Session */
+                        if ($send_five9) {
+                            $header = [
+                                'Accept'       => 'application/json',
+                                'Content-Type' => 'application/json',
+                            ];
+
+                            $endpoint = 'auth/anon?cookieless=true';
+
+                            $params = [
+                                'tenantName' => isset($config->tenantName) && !empty($config->tenantName) ? $config->tenantName : 'nuveto'
+                            ];
+
+                            $create_session = apiCall($header, $endpoint, 'POST', $params);
+
+                            if (isset($create_session['tokenId']) && $create_session['tokenId']) {
+
+                                if (isset($firstname) && strtolower($firstname) == "cadu leite") {
+                                    $firstname = "Carlos Eduardo Leite";
+                                    $email = "ceduardo@nuveto.com.br";
+                                } else if (isset($email) && strtolower($email) == "alromeiro@hotmail.com") {
+                                    $firstname = "Andre Romeiro";
+                                    $email = "alromeiro@nuveto.com.br";
+                                } else if (isset($email) && strtolower($email) == "fcontadini@hotmail.com") {
+                                    $firstname = "Flamarion Contadini";
+                                    $email = "fcontadini@nuveto.com.br";
+                                }
+
+                                $header = [
+                                    'Content-Type'  => 'application/json',
+                                    'Authorization' => 'Bearer-' . $create_session['tokenId'],
+                                    'farmId'        => $create_session['context']['farmId']
+                                ];
+
+                                $endpoint = 'conversations';
+
+                                $params = [
+                                    'callbackUrl' => isset($config->callbackUrl) && !empty($config->callbackUrl) ? $config->callbackUrl : 'https://sigmademo.nuvetoapps.com.br/chat',
+                                    'campaignName' => isset($config->campaignName) && !empty($config->campaignName) ? $config->campaignName : 'Chat_Nuveto',
+                                    'contact' => [
+                                        'email' => isset($email) ? $email : 'noreply_' . $clientId . '@chat.com',
+                                        'firstName' => isset($firstname) ? $firstname : 'Sigma Chat User',
+                                    ],
+                                    'externalId' => $clientId,
+                                    'disableAutoClose' => true,
+                                    'tenantId' => $create_session['orgId'],
+                                    'type'  => 'chat'
+                                ];
+
+                                $create_conversation = apiCall($header, $endpoint, 'POST', $params);
+
+                                if (isset($create_conversation['body']['id']) && $create_conversation['body']['id']) {
+                                    $insert_params_conversation = [
+                                        'tokenId'           => $create_session['tokenId'],
+                                        'userId'            => $clientId,
+                                        'conversationId'    => $create_conversation['body']['id'],
+                                        'tenantId'          => $create_session['orgId'],
+                                        'farmId'            => $create_session['context']['farmId'],
+                                        'channel'           => 'chat',
+                                        "created_at"        =>  Carbon::now()
+                                    ];
+
+                                    $insert_params_chat = [
+                                        'tokenId'           => $create_session['tokenId'],
+                                        'clientId'         => $clientId,
+                                        'text'              => $text,
+                                        'conversationId'    => $create_conversation['body']['id'],
+                                        'farmId'            => $create_session['context']['farmId'],
+                                        'payload'           => $request,
+                                        "created_at"        =>  Carbon::now()
+                                    ];
+
+                                    if (isset($request->hasAttachment) && $request->hasAttachment) {
+                                        $insert_params_chat_medias = [
+                                            'conversationId'    => $create_conversation['body']['id'],
+                                            'channel'           => "chat",
+                                            "type"              => "s3",
+                                            "created_at"        =>  Carbon::now()
+                                        ];
+
+                                        if ($request->image) {
+                                            $image_text = 'Imagem enviada em Anexo!';
+                                            $image_text .= "
+";
+                                            $insert_params_chat_medias['image'] = $request->image;
+                                            $insert_params_chat['text'] = html_entity_decode($image_text . $text);
+                                        }
+
+                                        DB::table('medias')->insert($insert_params_chat_medias);
+                                    }
+
+                                    DB::table('conversation_sessions')->insert($insert_params_conversation);
+                                    DB::table('chat_conversations')->insert($insert_params_chat);
+                                }
                             }
                         }
+                    }
 
-                        if ($send_five9) {
-
-                            sendFivenine($sender_id, '', 'facebook');
-                        }
+                    if ($send_five9) {
+                        sendFivenine($clientId, '', 'chat');
                     }
                 }
             }
         }
 
         return response()->json(['success' => true, 'response' => 'Menssagem enviada ao Agente'], 200);
-    }
-
-    public function chatMessage(Request $request)
-    {
-        $insert_params_messages = [
-            'text'           => $request->text,
-            "created_at"    =>  Carbon::now()
-        ];
-
-        DB::table('chat_conversation')->insert($insert_params_messages);
-
-        return response()->json([], 204);
     }
 }

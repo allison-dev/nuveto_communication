@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateChatConversation extends Migration
+class CreateMediasTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,13 @@ class CreateChatConversation extends Migration
      */
     public function up()
     {
-        Schema::create('chat_conversation', function (Blueprint $table) {
+        Schema::create('medias', function (Blueprint $table) {
             $table->id();
-            $table->string('text')->nullable();
             $table->string('conversationId')->nullable();
-            $table->string('clientId')->nullable();
-            $table->string('farmId')->nullable();
-            $table->text('payload')->nullable();
+            $table->text('audio')->nullable();
+            $table->text('image')->nullable();
+            $table->string('channel')->default('chat')->nullable();
+            $table->string('type')->nullable();
             $table->timestamps();
         });
     }
@@ -31,6 +31,6 @@ class CreateChatConversation extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('chat_conversation');
+        Schema::dropIfExists('medias');
     }
 }

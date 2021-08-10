@@ -18,5 +18,6 @@ class VerifyCsrfToken extends Middleware
         'facebook/*',
         'whatsapp/*',
         'reclame_aqui/*',
+        'chat/*',
     ];
 }

@@ -155,6 +155,8 @@ class HomeController extends Controller
         $max_bar        = !empty($bar_totals) ? max($bar_totals) : 0;
         $max_concurrent = !empty($concurrent_totals) ? max($concurrent_totals) : 0;
 
+        $concurrent_month = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
         $day = [
             "Domingo",
             "Segunda-Feira",
@@ -531,8 +533,6 @@ class HomeController extends Controller
             } else {
                 $step_size_concurrent = 1;
             }
-
-            $concurrent_month = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
             $concurrent_chartjs = app()->chartjs
                 ->name('concurrentChart')
